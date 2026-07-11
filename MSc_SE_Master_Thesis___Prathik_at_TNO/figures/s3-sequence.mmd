@@ -1,0 +1,13 @@
+sequenceDiagram
+    participant SimR as SimpleRunner
+    participant SM as SyncRunnerMaster
+    participant Agg as Aggregator
+    participant EM as EnumMap
+    participant Log as RAIILogStream
+
+    SimR->>Agg: Aggregator.getAll
+    SimR->>EM: EnumMap.convert (RunStage)
+    SimR->>Log: RAIILogStream.stream (CPSLOG_DEBUG)
+    SimR->>EM: EnumMap.convert (stage enum)
+    SimR->>Log: RAIILogStream.stream (CPSLOG_ERROR)
+    SM->>Log: RAIILogStream.stream (progress)

@@ -1,0 +1,5 @@
+step,source,query,purpose
+1,get-neo4j-schema,"CALL db.schema.nodeTypeProperties() YIELD nodeType, propertyName, propertyTypes RETURN nodeType, propertyName, propertyTypes","Collect node labels and node properties for the schema"
+2,get-neo4j-schema,"CALL db.schema.relTypeProperties() YIELD relType, propertyName, propertyTypes RETURN relType, propertyName, propertyTypes","Collect relationship types and relationship properties for the schema"
+3,get-neo4j-schema,"MATCH (s)-[r]->(t) RETURN DISTINCT labels(s) AS fromLabels, type(r) AS relType, labels(t) AS toLabels","Collect relationship signatures for the schema"
+4,sample-query,"MATCH (n)-[r]-(m) RETURN n,r,m LIMIT 25","Fetch a small sample subgraph for inspection"

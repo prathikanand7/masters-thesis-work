@@ -1,0 +1,23 @@
+graph LR
+    subgraph Synchronization
+        AR[AggregatableRunner]
+        SimR[SimpleRunner]
+        SR[SynchronizedRunner]
+        SRM[SyncRunnerMaster]
+    end
+
+    subgraph Aggregation
+        Agg[Aggregator]
+    end
+
+    subgraph Logging
+        CL[CPSLogger]
+        Log[RAIILogStream]
+    end
+
+    AR -->|getAll| Agg
+    SimR -->|getAll| Agg
+    SR -->|getAll| Agg
+    SimR -->|stream| Log
+    SRM -->|stream| Log
+    SR -->|flush, instance| CL

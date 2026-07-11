@@ -1,0 +1,227 @@
+\chapter{Related Work}\label{ch:related}
+
+This chapter surveys existing work relevant to this thesis. It is organised thematically:
+(i) trace-based interaction model extraction, (ii) scenario-driven and
+functionality-centric analysis, (iii) behavioural pattern mining, (iv) static
+analysis for architecture recovery (including the specific problem of
+publish-subscribe dispatch), (v) hybrid static-dynamic approaches, and (vi) trace
+visualisation for program comprehension.
+For each area, the key techniques are described and their limitations with
+respect to the problem addressed in this thesis are identified.
+Representative studies for each area are summarised in \cref{tab:related-work-summary}.
+
+The role of related work here is threefold. First, it grounds the approach in prior
+techniques. Second, it identifies the gap that motivates this thesis. Third, it
+establishes the baseline against which the results are compared.
+
+\section{Trace-Based Interaction Model Extraction}
+
+A significant body of work reconstructs \ac{UML} sequence or interaction
+diagrams directly from execution traces.
+Early work by \textcite{taniguchi:seqtrace} and \textcite{grati:interactive}
+extracts sequence diagrams from Java execution traces. This demonstrates that
+runtime information can be mapped onto object interactions.
+\textcite{ziadi:dynamic} propose a fully dynamic reconstruction approach that
+relies exclusively on traces with no static analysis support.
+\textcite{hamou-lhadj:tracesummary} instead target scale. They summarise large
+execution traces into compact \ac{UML} sequence diagrams by identifying and
+merging recurring interaction patterns.
+\textcite{baidada:petrinet} take a similar approach. They reconstruct higher-level
+sequence diagrams by merging information from multiple execution traces and
+modelling the result as Petri nets.
+Briand \etal \cite{briand:seqdiag} use scenario-based testing to drive trace
+collection and then synthesise sequence diagrams from the resulting traces.
+This is scenario-specific but requires a scenario to be manually specified and
+exercised up front.
+\textcite{shang:loganalysis} show that even ordinary system logs (never
+intended as execution traces) can be mined into architecture-level interaction
+models. However, this comes at the cost of coarse granularity.
+
+\subsection{Limitations}
+
+All trace-based approaches share the same structural limitation: they can only
+reconstruct interactions that were actually observed.
+Missing events, low logging verbosity, and execution paths that were never
+exercised during recording all show up as gaps in the reconstructed diagram.
+In an industrial system with partial instrumentation, that is the common
+case rather than the exception.
+
+\section{Scenario-Driven and Functionality-Centric Analysis}
+
+A separate line of work treats the \emph{scenario} itself as the organising
+abstraction rather than the raw trace.
+\textcite{egyed:scenario} introduces a scenario-driven approach to trace
+dependency analysis. This approach explicitly links scenarios to execution footprints
+and source-code artefacts. It demonstrates that scenarios can act as a unifying
+concept across requirements, traces, and code.
+Briand \etal \cite{briand:seqdiag} formalise the mapping between runtime
+events and interaction diagrams around execution scenarios in distributed
+systems.
+Despite recognising the value of scenario scoping, none of this work asks
+whether static dependencies could be used to \emph{complete} a scenario-specific
+interaction flow when the corresponding trace is incomplete or noisy.
+The scenario bounds what is observed but does nothing to fill in what was not observed.
+
+\section{Behavioural Pattern Mining and Model Inference}
+
+A third line of research infers higher-level behavioural abstractions from
+execution data rather than concrete interaction flows.
+\textcite{lo:temporalrules} mine quantified temporal rules from execution
+traces to extract recurring behavioural patterns across runs.
+\textcite{gabel:javert} similarly mine general temporal properties expressed
+as finite-state automata over method invocations. They do so fully automatically
+from dynamic traces without requiring a pre-specified property to check against.
+\textcite{walkinshaw:statemachines} reconstruct state-based behavioural
+models (state machines) from software executions.
+All three approaches infer generic behavioural structure purely from dynamic
+traces. They use no static structural component and have no explicit grounding
+in a specific functionality scenario.
+The resulting models are rules, properties, or state machines rather than
+concrete sequence diagrams. This makes them a poor fit for understanding
+one particular execution flow.
+
+\section{Static Analysis for Architecture Recovery}
+
+Static analysis approaches extract architectural information directly from source
+code without executing the system.
+Formal call-graph construction techniques for \Cpp\ (including class hierarchy
+analysis and points-to analysis) are surveyed in \textcite{grove:callgraph}.
+These techniques produce over-approximate graphs that include every possible
+interaction but cannot distinguish which interactions occur in a given scenario.
+
+\textcite{ducasse:softvis} propose the \emph{class blueprint}, a polymetric
+visualisation that overlays software metrics on a class's internal structure
+(methods, attributes, and their invocation relationships) to support a first,
+structural understanding of an unfamiliar class.
+This line of work targets comprehension at the class level rather than
+component-level interaction recovery and does not target \Cpp\ or
+scenario-specific analysis.
+Component-level dependency recovery is instead the focus of tools such as
+Understand and Structure101, which produce rich static dependency graphs but
+do not generate scenario-specific sequence diagrams.
+
+\subsection{Handling Event-Driven Dispatch}
+
+Static analysis of event-driven systems with publish-subscribe topologies is
+particularly challenging. The subscription relationship between a
+publisher and a handler is usually established indirectly (for example, via a
+topic string or a registration callback) rather than through a direct call site.
+\textcite{santos:roscompgraph} address this for \ac{ROS},
+where inter-component communication is mediated by a topic broker.
+Their approach statically extracts the ROS computation graph by matching
+publisher and subscriber declarations by topic name to reconstruct the
+communication topology.
+This is a strategy closely related to the publish-subscribe topology
+resolution developed in this thesis for CPSCore's IDC/Redis layer
+(\cref{sec:idc}).
+
+\section{Hybrid Static and Dynamic Analysis for Behaviour Recovery}
+
+Hybrid approaches combining static and dynamic analysis aim to overcome the
+completeness versus scenario-specificity trade-off directly.
+\textcite{systa:reverse} combines static and dynamic views to support program
+comprehension. This work shows that static structure can contextualise runtime
+behaviour.
+\textcite{hassan:changeprop} combine static and dynamic information to predict
+change propagation. Their work demonstrates the benefit of integrating multiple
+analysis sources for a different task.
+
+\textcite{labiche:hybrid} propose a hybrid static-dynamic approach for
+reverse-engineering scenario diagrams. They combine lightweight dynamic
+instrumentation with static control-flow analysis to generate UML sequence
+diagrams from Java systems.
+Critically, static analysis in their approach is used to \emph{structure and
+contextualise observed executions}. It is not used to infer interactions that
+were never observed. This is the same gap identified in \cref{ch:introduction}.
+\textcite{cornelissen:systematic} conduct a systematic review of dynamic
+analysis for program comprehension and independently identify the lack of
+integration with static information as a major open problem.
+\textcite{kienle:reconstructing} survey the requirements that architecture
+reconstruction tools must satisfy. They argue that effective tools need to
+combine static structure with dynamic (trace) information to identify the
+active subset of a system relevant to a given scenario.
+Rather than presenting a concrete extraction technique, their contribution is
+a requirements framework against which reconstruction tools can be evaluated.
+It does not address \Cpp\ or publish-subscribe indirection specifically.
+More recently, \textcite{abdelmalek:survey} surveys and categorises approaches
+for reverse-engineering behavioural UML diagrams and identifies hybrid
+static-dynamic techniques as a promising direction. However, the work
+remains a categorisation exercise and stops short of a concrete method for
+reconstructing scenario-specific models from incomplete traces.
+
+Overall, hybrid analysis is widely acknowledged as beneficial. However,
+existing approaches primarily enrich or organise already-observed runtime
+behaviour. They do not systematically reason about incomplete traces or
+reconstruct unobserved component interactions within a bounded execution
+scenario.
+
+\section{Trace Visualisation for Program Comprehension}
+
+A further body of work improves program comprehension by presenting execution
+traces at varying levels of abstraction, rather than by reconstructing a
+formal model.
+\textcite{cornelissen:controlled} and \textcite{cornelissen:systematic} study
+trace visualisation techniques and their effectiveness for understanding
+large execution traces.
+\textcite{hamou-lhadj:tracesummary} propose trace summarisation techniques to
+reduce noise and focus attention on relevant behaviour, and
+\textcite{depauw:execpatterns} introduce visual representations of
+object-oriented program execution aimed at scalability.
+These techniques improve trace readability but, again, do not aim to
+reconstruct a formal interaction model or to integrate static analysis to
+complete missing behaviour.
+
+\section{Summary and Positioning}
+
+\Cref{tab:related-work-summary} summarises the approaches reviewed above
+along the dimensions most relevant to this thesis.
+
+\begin{table}[htb]
+\centering
+\caption{Summary of related work.}
+\label{tab:related-work-summary}
+\small
+\begin{tabularx}{\textwidth}{@{} l c c c c c @{}}
+\toprule
+\textbf{Approach} &
+\textbf{Static} &
+\textbf{Trace} &
+\textbf{Hybrid} &
+\textbf{Pub-sub} &
+\textbf{SysML} \\
+\midrule
+Hamou-Lhadj \& Lethbridge \cite{hamou-lhadj:tracesummary}
+  & $\times$ & \checkmark & $\times$ & $\times$ & $\times$ \\
+Briand \etal \cite{briand:seqdiag}
+  & $\times$ & \checkmark & $\times$ & $\times$ & $\times$ \\
+Shang \etal \cite{shang:loganalysis}
+  & $\times$ & \checkmark & $\times$ & $\times$ & $\times$ \\
+Egyed \cite{egyed:scenario}
+  & $\times$ & \checkmark & $\times$ & $\times$ & $\times$ \\
+Lo \etal \cite{lo:temporalrules}
+  & $\times$ & \checkmark & $\times$ & $\times$ & $\times$ \\
+Gabel \& Su \cite{gabel:javert}
+  & $\times$ & \checkmark & $\times$ & $\times$ & $\times$ \\
+Ducasse \& Lanza \cite{ducasse:softvis}
+  & \checkmark & $\times$ & $\times$ & $\times$ & $\times$ \\
+Santos \etal \cite{santos:roscompgraph}
+  & \checkmark & $\times$ & $\times$ & \checkmark & $\times$ \\
+Syst\"{a} \cite{systa:reverse}
+  & \checkmark & \checkmark & \checkmark & $\times$ & $\times$ \\
+Labiche \etal \cite{labiche:hybrid}
+  & \checkmark & \checkmark & \checkmark & $\times$ & $\times$ \\
+Kienle \& M\"{u}ller \cite{kienle:reconstructing}
+  & \checkmark & \checkmark & \checkmark & $\times$ & $\times$ \\
+\midrule
+\textbf{This thesis}
+  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+No existing approach addresses all five dimensions simultaneously.
+In particular, no prior work: (i) fuses static and trace information into a
+unified \acl{PG}; (ii) applies dependence-based slicing to that graph for
+scenario filtering; and (iii) targets \sysml as the output formalism.
+This gap constitutes the primary research contribution of this thesis.
+

@@ -1,0 +1,178 @@
+\chapter{Background}\label{ch:background}
+
+This chapter provides the technical foundation for the approach presented in
+\cref{ch:methods}.
+It introduces \sysml and its Interaction Model constructs. It explains the property
+graph data model. It describes the static and dynamic analysis techniques used.
+Finally, it summarises the dependence-based slicing methodology.
+This chapter contains background knowledge rather than contributions.
+
+\section{SysML v2 and Interaction Models}\label{sec:sysml}
+
+The \acl{OMG} \acl{SysML} version~2 (\sysml) is a general-purpose modelling language
+for systems engineering. It is built on top of the Kernel Modeling Language (\ac{KerML})
+\cite{omg:sysmlv2}.
+Unlike its predecessor (SysML v1, which was a profile of UML), \sysml defines
+its own textual and graphical notation. This enables model interchange via a
+standardised textual syntax.
+
+\subsection{Sequence Diagrams in SysML v2}
+
+Interaction Models in \sysml are expressed as \emph{occurrence specifications}
+that describe ordered sequences of message occurrences between \emph{parts}
+(\ie instances of blocks in the system structure).
+The relevant constructs are:
+\begin{description}
+  \item[\texttt{interaction}] A named container for a scenario-specific interaction
+    model, analogous to a \ac{UML} interaction.
+  \item[\texttt{send} / \texttt{receive}] Action semantics that model
+    message transmission and reception between lifelines.
+  \item[\texttt{MessageOccurrenceSpecification}] A timed event on a lifeline
+    representing the sending or reception of a message.
+  \item[\texttt{CombinedFragment}] Control structures such as \texttt{alt},
+    \texttt{loop}, and \texttt{opt} that express conditional or iterative
+    behaviour.
+\end{description}
+
+An example in \sysml textual notation, corresponding to the S1
+scenario (Aggregator notification chain) used in this thesis:
+
+\begin{minted}[fontsize=\footnotesize]{text}
+package AggregatorNotification {
+    part def SynchronizedRunner;
+    part def Aggregator;
+    part def CPSLogger;
+
+    interaction S1_AggregatorChain {
+        part runner : SynchronizedRunner;
+        part agg    : Aggregator;
+        part log    : CPSLogger;
+
+        message m1 from runner to agg { :>> name = "getAll"; }
+        message m2 from runner to log { :>> name = "stream"; }
+        message m3 from runner to log { :>> name = "flush"; }
+    }
+}
+\end{minted}
+
+\section{Property Graphs}\label{sec:property-graphs}
+
+A \acl{PG} is a directed, attributed multigraph in which both nodes and
+edges carry arbitrary key-value properties \cite{angles:pg-survey}.
+Formally, a \ac{PG} is defined as $G = (V, E, \lambda, \mu)$ where:
+\begin{itemize}
+  \item $V$ is the set of nodes in the graph.
+  \item $\lambda(v) \in \mathcal{L}$ assigns a label from the label set
+    $\mathcal{L}$ to each node $v \in V$.
+  \item $E \subseteq V \times \mathcal{R} \times V$ is the set of directed edges.
+    Each edge carries a relation type $r$ drawn from the relation-type set
+    $\mathcal{R}$.
+  \item $\mu : (V \cup E) \times \mathcal{K} \rightharpoonup \mathcal{V}$
+    is a partial function that assigns property values from value set
+    $\mathcal{V}$ to nodes or edges, indexed by property keys from key set
+    $\mathcal{K}$.
+\end{itemize}
+
+\neo is the most widely deployed \ac{GDB} that implements the \ac{PG} model.
+It is queried using the Cypher declarative query language \cite{neo4j:cypher}.
+The choice of a \ac{PG} over a relational or document store is motivated by the
+need to traverse heterogeneous analysis artefacts (functions, files, modules,
+and trace events) efficiently along typed relationships.
+
+\section{Static Call-Graph Analysis}\label{sec:static-analysis}
+
+A \emph{call graph} is a directed graph in which nodes represent functions
+(or methods) and edges represent potential call relationships
+\cite{grove:callgraph}.
+An edge $(f, g)$ exists if and only if function $f$ may call function $g$
+under some execution. Here, $f$ denotes the caller function and $g$ denotes
+the callee function.
+
+\subsection{Clang and the Renaissance Semantic Extractor}
+
+Clang is the \Cpp\ frontend of the LLVM compiler infrastructure. It exposes
+a rich \ac{AST} traversal \ac{API} that enables static analysis tools to
+extract precise call-graph information \cite{llvm:clang}.
+Rather than driving Clang directly, this thesis uses \emph{Renaissance}.
+Renaissance is a semantic-level \Cpp\ analyser already in use at TNO-ESI.
+It extracts the static call graph and populates the property graph
+(\cref{sec:pg-decision}).
+Renaissance resolves the full \ac{AST}, including template instantiations,
+overload candidates, and macro expansions. It emits the property graph
+schema described in \cref{sec:pg-schema}.
+
+\subsection{Limitations in Event-Driven Systems}
+
+Event-driven systems that route inter-component communication through
+callback registration or publish-subscribe indirection pose a specific
+challenge for static call-graph construction.
+In CPSCore, subscriptions are registered via the IDC layer:
+\begin{minted}{cpp}
+IDC::subscribeOnPacket(channelId, handlerSlot);
+\end{minted}
+Standard \ac{AST} traversal identifies the call to
+\texttt{subscribeOnPacket} but does not resolve which component will
+receive a packet published on the same channel.
+The consequence is a static call graph that contains edges \emph{into} the
+IDC/Redis layer but lacks the cross-component routing information required
+for interaction model reconstruction.
+Resolving this limitation is part of the contribution of this thesis
+(see \cref{sec:macro-resolution}).
+
+\section{Execution Trace Analysis}\label{sec:trace-analysis}
+
+An \emph{execution trace} is a temporally ordered sequence of events recorded
+at runtime. Systems under analysis are typically instrumented with logging
+or profiling statements to produce these events \cite{zaidman:traces}.
+In this thesis, traces take the form of timestamped log entries that record
+function entry and exit events. Each entry also records the component identity
+and the topic name on the message bus.
+
+\subsection{Challenges with Incomplete Traces}
+
+Practical execution traces are almost always \emph{incomplete}:
+\begin{itemize}
+  \item Not all components are instrumented.
+  \item Recording overhead may cause log entries to be dropped.
+  \item A single scenario recording covers only a subset of the system's
+    behaviour.
+\end{itemize}
+
+These gaps motivate the hybrid approach. The static call graph provides
+structural completeness. The trace provides scenario specificity.
+
+\section{Dependence-Based Slicing}\label{sec:slicing}
+
+Program slicing, introduced by Weiser \cite{weiser:slicing}, computes the
+subset of a program that affects the values of a set of \emph{criterion}
+variables at a given point.
+\emph{Dependence-based slicing} operates on the \ac{PDG}. The \ac{PDG}
+combines the \ac{CDG} and the \ac{DDG} into a single graph \cite{ferrante:pdg}.
+
+In the context of interaction model reconstruction, the slicing criterion is
+the entry point of the scenario of interest (for example, a
+\texttt{SynchronizedRunnerMaster::runStage} timeout event).
+The slice then contains only those functions and message exchanges that are
+reachable from the criterion node via dependence edges. This effectively filters
+out interactions that belong to other scenarios running concurrently in the
+system.
+
+The adaptation used in this thesis (\cref{sec:fusion-slicing}) replaces the
+traditional \ac{PDG} traversal with a scope-constrained graph query.
+It operates over the property graph rather than over a source-level program
+representation.
+
+\section{Publish-Subscribe via Callback Registration}\label{sec:pubsub-background}
+
+Many event-driven \Cpp\ systems decouple component communication through a
+publish-subscribe pattern. In these systems, subscriptions are registered at
+runtime via callback slots rather than direct function calls.
+As a result, the publish-subscribe topology is \emph{implicit} in the
+source code. It cannot be recovered by reading function call sites alone.
+
+CPSCore implements this pattern through its \ac{IDC}
+layer. This layer delegates to a pluggable \texttt{INetworkLayer} backed by
+\texttt{boost::signals2} and Redis channels (\cref{sec:idc}).
+Recovering the subscription topology requires matching publisher and subscriber
+call sites by their shared channel identifier. This is the approach taken in
+this thesis (see \cref{sec:macro-resolution}).

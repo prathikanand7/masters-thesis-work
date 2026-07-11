@@ -1,0 +1,12 @@
+InterfaceName,Server,Client
+CppAlias,CppDeclaration,CppDeclaration
+CppCalls,CppFunctionDeclaration; CppFunctionDefinition,CppFunctionDefinition
+CppContains,CppDeclaration; CppFunctionDeclaration; CppFunctionDefinition,CppDeclaration
+CppImplements,CppFunctionDeclaration; CppFunctionDefinition,CppFunctionDefinition
+CppInherits,CppDeclaration; CppForwardDeclaration,CppDeclaration
+CppUses,CppDeclaration; CppForwardDeclaration; CppFunctionDeclaration; CppFunctionDefinition; CppMacroDefinition,HeaderFile; OtherFile; SourceFile
+Include,HeaderFile; OtherFile,HeaderFile; OtherFile; SourceFile
+Name,Symbol,CppDeclaration; CppForwardDeclaration; CppFunctionDeclaration; CppFunctionDefinition; CppMacroDefinition
+ParentFolder,Folder,DynamicLinkLibrary; Executable; Folder; HeaderFile; OtherFile; ProjectCOrCpp; ProjectPropertySheet; Solution; SourceFile
+ProjectCompilesNested,HeaderFile; OtherFile; SourceFile,ProjectCOrCpp
+Source,HeaderFile; OtherFile; SourceFile,CppDeclaration; CppForwardDeclaration; CppFunctionDeclaration; CppFunctionDefinition; CppMacroDefinition

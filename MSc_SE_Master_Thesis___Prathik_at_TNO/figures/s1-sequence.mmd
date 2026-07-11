@@ -1,0 +1,20 @@
+sequenceDiagram
+    participant SRM as SyncRunnerMaster
+    participant SR as SynchronizedRunner
+    participant AR as AggregatableRunner
+    participant SimR as SimpleRunner
+    participant Agg as Aggregator
+    participant Log as RAIILogStream
+    participant CL as CPSLogger
+
+    SRM->>Log: RAIILogStream.stream (init log)
+    SR->>Agg: Aggregator.getAll
+    SR->>CL: CPSLogger.flush
+    SR->>CL: CPSLogger.instance
+    AR->>Agg: Aggregator.getAll
+    SimR->>Agg: Aggregator.getAll
+    SimR->>Log: RAIILogStream.stream (stage)
+    SimR->>Log: RAIILogStream.stream (stages)
+    SimR->>Log: RAIILogStream.stream (allStages)
+    SRM->>Log: RAIILogStream.stream (runAllStages)
+    SRM->>Log: RAIILogStream.stream (runStage)

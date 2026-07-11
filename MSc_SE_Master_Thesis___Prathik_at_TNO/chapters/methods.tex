@@ -1,0 +1,612 @@
+\chapter{Methods}\label{ch:methods}
+
+This chapter describes the design of the hybrid reconstruction pipeline.
+It covers the property graph schema that integrates static and dynamic artefacts,
+the agent skill architecture that orchestrates the extraction and
+generation stages, the pattern-based instrumentation tool used for trace
+collection, and the fusion and slicing algorithms that produce
+scenario-specific interaction models.
+
+\section{Pipeline Overview}\label{sec:pipeline-overview}
+
+The pipeline takes as input a \Cpp\ source tree and (optionally) a set
+of timestamped execution traces. It produces \sysml sequence diagrams
+scoped to a user-specified scenario.
+It is implemented as a chain of twelve composable agent skills. Each skill
+is invocable by natural-language query. The skills are backed by a \neo
+property graph that serves as the shared knowledge store.
+
+The pipeline stages and the skills that implement them are shown in
+\cref{fig:pipeline-overview} and described below.
+
+\begin{figure}[htb]
+\centering
+\begin{tikzpicture}[
+  node distance = 8mm and 14mm,
+  stage/.style = {rectangle, draw, rounded corners, thick,
+                  minimum width=2.6cm, minimum height=1.05cm,
+                  align=center, font=\small},
+  dyn/.style   = {stage, fill=blue!15},
+  stat/.style  = {stage, fill=gray!12},
+  arr/.style   = {-{Stealth[length=2.2mm]}, thick}
+]
+  \node[stat] (extract)  {1. Static\\Extraction};
+  \node[stat, right=of extract] (schema) {2. Schema\\Introspection};
+  \node[stat, right=of schema]  (seqtab) {3--4. Structural /\\Sequence Tables};
+  \node[dyn,  below=of seqtab]  (trace)  {5. Runtime\\Instrumentation};
+  \node[stat, left=of trace]    (slice)  {6. Graph Query\\\& Slicing};
+  \node[stat, left=of slice]    (sysml)  {7. Diagram\\Generation};
+
+  \draw[arr] (extract) -- (schema);
+  \draw[arr] (schema)  -- (seqtab);
+  \draw[arr] (seqtab)  -- (trace);
+  \draw[arr] (trace)   -- (slice);
+  \draw[arr] (slice)   -- (sysml);
+
+  \begin{scope}[on background layer]
+    \node[draw, dashed, fit=(extract)(schema)(seqtab)(sysml),
+          inner sep=6mm, label={[font=\small]above:Static / structural path}] {};
+  \end{scope}
+\end{tikzpicture}
+\caption{Pipeline overview. Numbered stages correspond to the enumeration
+  below. Shaded box (Stage~5) is the only stage that reads dynamic
+  (runtime) information. All other stages operate on the static property
+  graph. Stage~6 (slicing) consumes both the static and trace sub-graphs,
+  which is what makes it the locus of the fusion step
+  (\cref{sec:fusion-slicing}).}
+\label{fig:pipeline-overview}
+\end{figure}
+
+\begin{enumerate}
+  \item \textbf{Static extraction} (\cref{sec:static-impl}).
+    The \Cpp\ source is analysed by the Renaissance semantic extraction
+    tool, which populates the \neo graph with 11 node labels and 11
+    relationship types (\cref{sec:pg-schema}).
+
+  \item \textbf{Schema introspection} (\texttt{get-neo4j-schema}).
+    The graph schema is read dynamically so that downstream skills are
+    codebase-agnostic: they query the live schema rather than
+    hardcoding node labels.
+
+  \item \textbf{Structural dependency extraction}
+    (\texttt{get-interface-dependency-table}).
+    All relationship types are aggregated into a compact CSV table of
+    interface dependencies between components.
+
+  \item \textbf{Sequence dependency extraction}
+    (\texttt{get-sequence-dependency-table}).
+    \texttt{CppCalls} edges are projected into an ordered sequence table
+    with synthetic timestamps, capturing the static calling relationships
+    between all functions in the codebase.
+
+  \item \textbf{Runtime instrumentation and trace collection}
+    (\texttt{add-runtime-instrumentation}, \texttt{get-runtime-traces}).
+    Pattern-based code transformation injects trace probes. Runtime logs
+    are collected and normalised into the sequence table format.
+
+  \item \textbf{Graph query and slicing}
+    (\texttt{text-to-cypher}, \texttt{cypher-to-output}).
+    Natural-language scenario queries are translated into Cypher
+    traversals over the merged graph, effectively performing
+    dependence-based slicing by scope constraint.
+
+  \item \textbf{Diagram generation}
+    (\texttt{draw-sysml-sequence-model},
+     \texttt{draw-sysml-structural-model},
+     \texttt{draw-sequential-mermaid-general},
+     \texttt{draw-structural-mermaid}).
+    The sliced table is projected into \sysml textual notation or
+    Mermaid syntax for visualisation.
+\end{enumerate}
+
+Each skill is stateless and side-effect-free with respect to the graph
+(read-only queries). The only exception is the instrumentation skill which
+modifies source files.
+The skill interface accepts a natural-language prompt and returns a
+structured artefact (CSV, Cypher query, or model file). This allows
+chaining without code changes when the target codebase changes.
+
+\section{Property Graph Schema}\label{sec:pg-schema}
+
+\subsection{Design Decision}\label{sec:pg-decision}
+
+The representation of the unified knowledge store was a key design
+decision.
+A \ac{PG} in \neo was chosen over alternatives (relational database,
+document store, in-memory graph library) for three reasons:
+
+\begin{enumerate}
+  \item \textbf{Heterogeneous traversal.}
+    The pipeline needs to traverse function$\to$file$\to$folder paths,
+    function$\to$function call chains, and class$\to$function containment
+    relationships in the same query.
+    A typed, directed property graph represents all of these as first-class
+    traversal edges rather than as join tables.
+  \item \textbf{Incremental enrichment.}
+    Runtime trace events can be added to the graph without re-running
+    static extraction.
+    The graph is additive: new edge types (trace-derived) coexist with
+    existing edges (static-derived) and are distinguishable by type.
+  \item \textbf{Declarative querying.}
+    Cypher's pattern-matching syntax maps naturally onto the
+    text-to-cypher skill: a natural-language scenario query can be
+    translated into a graph pattern that traverses exactly the relevant
+    relationships.
+\end{enumerate}
+
+\subsection{Node Types}\label{sec:node-types}
+
+\Cref{tab:node-types} lists the 13 node labels used in the property
+graph.
+
+\begin{table}[htb]
+\centering
+\caption{Property graph node labels. Each node carries a
+  \texttt{qualified\_name} property for unique identification and a
+  \texttt{source\_file}/\texttt{line} pair for traceability.}
+\label{tab:node-types}
+\small
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Label} & \textbf{Semantics} \\
+\midrule
+\texttt{CppDeclaration}           & Class, struct, enum, or typedef declaration \\
+\texttt{CppForwardDeclaration}    & Forward declaration of a class or struct \\
+\texttt{CppFunctionDeclaration}   & Function prototype (header) \\
+\texttt{CppFunctionDefinition}    & Function body (implementation) \\
+\texttt{CppMacroDefinition}       & Preprocessor macro definition \\
+\texttt{HeaderFile}               & \texttt{.h}/\texttt{.hpp} file \\
+\texttt{SourceFile}               & \texttt{.cpp}/\texttt{.c} file \\
+\texttt{OtherFile}                & Non-C++ file tracked in the project \\
+\texttt{Folder}                   & Directory in the source tree \\
+\texttt{Symbol}                   & Demangled symbol name (linked to declarations via \texttt{Name} edges) \\
+\texttt{ProjectCOrCpp}            & CMake compilation unit \\
+\addlinespace
+\texttt{TraceEvent}               & Runtime trace entry (added during trace ingestion) \\
+\texttt{Scenario}                 & Named scenario scope node (added during slicing) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The last two labels (\texttt{TraceEvent}, \texttt{Scenario}) are not
+emitted by Renaissance but are added during trace ingestion and
+scenario slicing respectively, demonstrating the additive property of
+the graph representation.
+
+\subsection{Relationship Types}\label{sec:edge-types}
+
+\Cref{tab:edge-types} lists the 11 static relationship types and 2
+dynamic types.
+
+\begin{table}[htb]
+\centering
+\caption{Property graph relationship types. Static types are populated
+  by Renaissance; dynamic types are added during trace ingestion.}
+\label{tab:edge-types}
+\small
+\begin{tabular}{@{} l l l p{5.5cm} @{}}
+\toprule
+\textbf{Type} & \textbf{Source} & \textbf{Target} & \textbf{Semantics} \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{Static (Renaissance-derived)}} \\
+\addlinespace
+\texttt{CppCalls}       & FunctionDef & FunctionDecl/Def & Direct call site \\
+\texttt{CppContains}    & Declaration & Declaration/FunctionDecl/Def & Lexical containment \\
+\texttt{CppImplements}  & FunctionDef & FunctionDecl/Def & Declaration-definition link \\
+\texttt{CppInherits}    & Declaration & Declaration/ForwardDecl & Class inheritance \\
+\texttt{CppAlias}       & Declaration & Declaration & Type alias \\
+\texttt{CppUses}        & File        & Declaration/ForwardDecl/Macro & Symbol usage in file \\
+\texttt{Include}        & File        & File & Preprocessor include \\
+\texttt{Name}           & Cpp* node   & Symbol & Name binding \\
+\texttt{ParentFolder}   & File/Folder & Folder & Directory hierarchy \\
+\texttt{ProjectCompilesNested} & ProjectCOrCpp & File & Compilation membership \\
+\texttt{Source}         & Cpp* node   & File & Source-location back-reference \\
+\addlinespace
+\multicolumn{4}{@{}l}{\textit{Dynamic (trace-derived)}} \\
+\addlinespace
+\texttt{TRACE\_CALLS}   & FunctionDef & FunctionDef & Observed call at runtime \\
+\texttt{SCENARIO\_SCOPE} & Scenario   & FunctionDef & Scenario membership \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The critical distinction between \texttt{CppCalls} and
+\texttt{TRACE\_CALLS} is provenance. The former asserts that a call
+\emph{may} occur (static over-approximation). The latter asserts that
+a call \emph{did} occur during the trace recording (dynamic
+under-approximation).
+The fusion step (\cref{sec:fusion-slicing}) reasons over both types
+simultaneously.
+
+\section{Agent Skill Architecture}\label{sec:skill-design}
+
+The pipeline is not a monolithic script but a set of twelve composable
+agent skills. Each skill is defined by a declarative specification (name,
+description, input/output contracts, and execution instructions) and is
+invocable via natural-language prompt.
+This architecture was chosen for three reasons:
+
+\begin{enumerate}
+  \item \textbf{Codebase agnosticism.}
+    Skills query the graph schema dynamically
+    (\texttt{get-neo4j-schema}) and construct Cypher from the live
+    schema rather than from hardcoded node labels.
+    Switching between target codebases requires only re-running
+    Renaissance and re-invoking the same skills. No skill code
+    needs modification.
+
+  \item \textbf{Composability.}
+    Each skill produces an intermediate artefact (a CSV, a Cypher query,
+    a model file) that is both human-readable and machine-consumable.
+    Engineers can inspect, edit, or override any intermediate before
+    feeding it to the next skill.
+
+  \item \textbf{Scenario flexibility.}
+    The scope of the reconstruction is expressed as a natural-language
+    query (``show me the interaction between Synchronization and
+    Aggregation when a runner timeout occurs'') rather than as a
+    hardcoded configuration.
+    The \texttt{text-to-cypher} skill translates this into the
+    appropriate Cypher traversal pattern at invocation time.
+\end{enumerate}
+
+\Cref{tab:skills} summarises the twelve skills, their inputs, outputs,
+and role in the pipeline.
+
+\begin{table}[htb]
+\centering
+\caption{Agent skills composing the reconstruction pipeline.}
+\label{tab:skills}
+\small
+{\renewcommand{\arraystretch}{1.6}
+\begin{tabularx}{\textwidth}{@{} >{\ttfamily}p{0.25\textwidth} p{0.20\textwidth} p{0.25\textwidth} >{\raggedright\arraybackslash}X @{}}
+\toprule
+\textbf{Skill} & \textbf{Input} & \textbf{Output} & \textbf{Role} \\
+\midrule
+\texttt{get-neo4j-schema}
+  & Neo4j connection
+  & \texttt{graph\_schema.txt}
+  & Schema introspection \\
+\texttt{text-to-cypher}
+  & Schema + NL query
+  & Cypher query
+  & Query generation \\
+\texttt{cypher-to-output}
+  & Cypher query
+  & Human-readable answer
+  & Query execution + explanation \\
+\texttt{get-interface-dependency-table}
+  & Neo4j graph
+  & Interface CSV
+  & Structural extraction \\
+\texttt{get-sequence-dependency-table}
+  & Trace log
+  & Sequence CSV
+  & Temporal extraction \\
+\texttt{add-runtime-instrumentation}
+  & Source files + patterns
+  & Instrumented source
+  & Probe injection via csp\_matcher \\
+\texttt{get-runtime-traces}
+  & Neo4j + test binary
+  & \texttt{runtime\_traces.txt}
+  & Trace collection \\
+\texttt{draw-sysml-sequence}
+  & Sequence CSV
+  & \texttt{.sysml} file
+  & Sequence diagram generation \\
+\texttt{draw-sysml-structural}
+  & Interface CSV
+  & \texttt{.sysml} file
+  & Structural diagram generation \\
+\texttt{draw-sequential-mermaid}
+  & Trace CSV
+  & \texttt{.mmd} file
+  & Mermaid sequence visualisation \\
+\texttt{draw-structural-mermaid}
+  & Interface CSV
+  & \texttt{.mmd} file
+  & Mermaid dependency visualisation \\
+\texttt{get-cypher}
+  & NL query
+  & Cypher (no execution)
+  & Standalone query authoring \\
+\bottomrule
+\end{tabularx}}
+\end{table}
+
+\section{Pattern-Based Instrumentation (csp\_matcher)}\label{sec:csp-matcher}
+
+Automated insertion of trace probes into an existing \Cpp\ codebase is
+a prerequisite for runtime trace collection.
+Manual instrumentation is error-prone, non-reproducible, and does not
+scale to large codebases.
+The \texttt{csp\_matcher} tool, developed as part of this thesis,
+addresses this by providing AST-level pattern matching and code
+transformation.
+
+\subsection{Design}
+
+\texttt{csp\_matcher} is a Clang LibTooling-based tool that:
+\begin{enumerate}
+  \item Parses a user-provided pattern (written as near-normal \Cpp\
+    with hole variables) into a Clang \ac{AST}.
+  \item Translates the pattern AST into ASTMatcher DSL expressions.
+  \item Runs the generated matchers against target source files.
+  \item Optionally rewrites matched code using a template that
+    back-references captured holes.
+\end{enumerate}
+
+Patterns use two kinds of hole variables:
+\begin{description}
+  \item[\texttt{\$name}] Matches any single expression or identifier.
+  \item[\texttt{\$\$name}] Matches a statement list or parameter list.
+\end{description}
+
+Two context variables are automatically injected for every match:
+\texttt{\$callerFunc} (the enclosing function name) and
+\texttt{\$callerClass} (the enclosing class name, empty at file scope).
+
+Example: wrap every \texttt{getAll} call with a trace statement:
+
+\begin{minted}{text}
+find:    $agg.getAll<$T>()
+replace: (std::fprintf(stderr, "[TRACE] %s %s::%s\n",
+           cspTraceTimestamp().c_str(),
+           "$callerClass", "$callerFunc"),
+          $agg.getAll<$T>())
+\end{minted}
+
+This approach has several advantages over manual macro insertion:
+\begin{itemize}
+  \item The transformation is specified declaratively, not imperatively.
+  \item It is reproducible: re-running the same rules file produces the
+    same edits.
+  \item It is reversible: a corresponding \texttt{remove:} rule
+    strips the trace wrapper without leaving artefacts.
+  \item Filter functions (compiled at runtime from plain \Cpp) allow
+    selective matching, \eg excluding test-internal call sites.
+\end{itemize}
+
+\subsection{Integration with the Pipeline}
+
+The \texttt{add-runtime-instrumentation} skill invokes \texttt{csp\_matcher}
+with a rules file (\texttt{add\_tracing.txt}) and a filter definitions file
+(\texttt{tracing\_filters.cpp}).
+The rules file specifies find/replace pairs for each call site of interest.
+The filter file provides C++ predicate functions that accept or reject
+matches based on captured hole values.
+
+The instrumentation follows a two-pronged approach:
+\begin{enumerate}
+  \item \textbf{Call-site wrapping} (via \texttt{csp\_matcher}):
+    target call expressions are wrapped with a comma-operator trace
+    emission.
+    This covers explicit call sites such as \texttt{Aggregator::getAll},
+    \texttt{CPSLogger::flush}, and \texttt{EnumMap::convert}.
+  \item \textbf{CPSLOG macro patching}:
+    the \texttt{CPSLOG(level)} macro in \texttt{CPSLogger.h} is patched
+    to emit a \texttt{[TRACE]} line on every logging call, covering all
+    \texttt{RAIILogStream::stream} call sites regardless of which
+    translation unit they appear in.
+\end{enumerate}
+
+The ordering of these two steps matters: \texttt{csp\_matcher} parses
+target files using a pattern preamble that includes \texttt{CPSLogger.h},
+so the header must be in its clean (unpatched) state when the matcher
+runs.
+The CPSLOG macro patch is applied only \emph{after} all call-site
+wrapping is complete.
+
+\subsection{Reversibility via Filter Functions}
+
+Instrumentation removal is handled by a single generic rule:
+
+\begin{minted}[fontsize=\footnotesize]{text}
+find:    ($any, $orig)
+filter:  is_trace_remove
+replace: $orig
+\end{minted}
+
+This matches every comma expression in the codebase, but the
+\texttt{is\_trace\_remove} filter (compiled at runtime from
+\texttt{tracing\_filters.cpp}) rejects any match whose left operand
+does not contain the \texttt{[TRACE]} marker string:
+
+\begin{minted}[fontsize=\footnotesize]{cpp}
+bool is_trace_remove(int n, const char* const* ns,
+                     const char* const* vs) {
+    const char* text = get_hole(n, ns, vs, "any");
+    return text != NULL && strstr(text, "[TRACE]") != NULL;
+}
+\end{minted}
+
+The filter guarantees that only trace-injected comma expressions are
+stripped. Pre-existing comma expressions in the codebase are left
+untouched.
+This makes instrumentation fully reversible: applying
+\texttt{remove\_tracing.txt} restores the source tree to its
+pre-instrumentation state byte-for-byte.
+
+\subsection{Tool Validation}
+
+\texttt{csp\_matcher} was validated by a test suite of 130 cases across
+seven suites (pattern parse, find, replacement, generated replacement,
+compilation database, rules file, and filter), exercised by an automated
+PowerShell harness that generates a Markdown report and case artefacts.
+
+\section{Macro Resolution for Publish-Subscribe Systems}\label{sec:macro-resolution}
+
+The CPSCore IDC layer (\cref{sec:idc}) implements publish-subscribe via
+\texttt{boost::signals2} callbacks registered through
+\texttt{subscribeOnPacket}.
+From a static call-graph perspective, the subscription relationship is
+indirect: the static graph contains an edge from the subscribing
+component into the IDC layer, but not from the publishing component to
+the subscriber's handler.
+
+The macro resolution strategy recovers this topology by matching
+publisher and subscriber declarations by channel identifier:
+\begin{enumerate}
+  \item All \texttt{subscribeOnPacket(id, slot)} call sites are
+    identified in the static graph (\texttt{CppCalls} edges targeting
+    \texttt{IDC::subscribeOnPacket} or \newline
+    \texttt{RedisNetworkLayer::subscribeOnPacket}).
+  \item All \texttt{sendPacket(id, payload)} call sites are identified
+    analogously.
+  \item Publisher-subscriber pairs sharing the same \texttt{id}
+    argument are linked by a synthetic \texttt{PubSubRoute} edge in the
+    graph.
+\end{enumerate}
+
+This step is what allows the sequence dependency table to contain
+cross-component interactions that are invisible to na\"ive static
+call-graph extraction.
+The same strategy generalises to any publish-subscribe system where
+subscriptions are registered by a shared identifier (topic name,
+channel ID, or signal slot) rather than by direct function call.
+
+\section{Graph Fusion and Scenario Slicing}\label{sec:fusion-slicing}
+
+\subsection{Fusion}
+
+Graph fusion is the union of static and trace-derived edges in the
+property graph.
+Because both edge types target the same \texttt{CppFunctionDefinition}
+nodes (anchored by qualified name), fusion is a set union over edges
+with provenance tagging:
+
+\begin{minted}{cypher}
+// Static edges (already present)
+MATCH (caller:CppFunctionDefinition)-[r:CppCalls]->(callee)
+  WHERE caller.source_file CONTAINS $component
+RETURN caller, callee, 'static' AS provenance
+
+UNION
+
+// Trace edges (ingested from runtime_traces.txt)
+MATCH (caller:CppFunctionDefinition)-[r:TRACE_CALLS]->(callee)
+  WHERE r.scenario_id = $scenario
+RETURN caller, callee, 'dynamic' AS provenance
+\end{minted}
+
+The merged result set is what conditions C4 and C5 operate over in the
+H1 experiment.
+C4 uses this union directly. C5 additionally applies the slicing
+criterion below.
+
+\subsection{Slicing by Scope Constraint}\label{sec:slicing-impl}
+
+Rather than implementing a traditional \ac{PDG}-based forward slice,
+the pipeline performs scenario slicing as a scope-constrained Cypher
+traversal.
+The slicing criterion is expressed as a conjunction of:
+\begin{itemize}
+  \item A \emph{primary component} constraint: only edges whose source
+    (caller) belongs to the scenario's primary component are retained.
+  \item A \emph{target component set}: only edges whose target (callee)
+    belongs to one of the scenario's declared participant components are
+    retained.
+  \item Optionally, a \emph{client function filter}: only edges
+    originating from specific entry-point functions within the primary
+    component.
+\end{itemize}
+
+Concretely, for scenario S1:
+\begin{minted}{text}
+ClientComponent == Synchronization
+ServerComponent in {Aggregation, Logging}
+\end{minted}
+
+This scope-based slicing is what the \texttt{text-to-cypher} skill
+generates when given a natural-language scenario description: the user
+says ``show me Synchronization calling into Aggregation and Logging,''
+and the skill generates the corresponding \texttt{WHERE} clause.
+
+The critical property of this approach is that it operates identically
+over static and trace-derived edges (both carry
+\texttt{ClientComponent} and \texttt{ServerComponent} metadata), so
+slicing applies uniformly to the fused graph without distinguishing
+provenance.
+This is what makes guided instrumentation (\cref{sec:guided-vs-full})
+work: the slice definition is computed \emph{before} instrumentation
+and used to decide where to place probes, rather than applied as a
+post-hoc filter.
+
+\subsection{Formal Properties}
+
+Let $G_\text{static} = (V_s, E_s)$ and $G_\text{trace} = (V_t, E_t)$
+denote the static and trace sub-graphs respectively. Let
+$\sigma = (\text{primary}, \text{targets}, \text{functions})$ denote
+the slicing criterion.
+The fused-and-sliced graph is defined as:
+\[
+  G_\sigma = \text{slice}(G_\text{static} \cup G_\text{trace}, \sigma)
+  = \{ e \in E_s \cup E_t \mid \text{src}(e) \in \sigma.\text{primary}
+       \land \text{tgt}(e) \in \sigma.\text{targets} \}
+\]
+
+In this formula:
+\begin{itemize}
+  \item $G_\text{static}$ is the graph derived from static call-graph analysis,
+    with node set $V_s$ and edge set $E_s$.
+  \item $G_\text{trace}$ is the graph derived from runtime trace events,
+    with node set $V_t$ and edge set $E_t$.
+  \item $\sigma$ is the slicing criterion, a triple consisting of the primary
+    component, the set of target components, and optionally a set of entry-point
+    functions.
+  \item $\text{src}(e)$ denotes the source node (caller) of edge $e$.
+  \item $\text{tgt}(e)$ denotes the target node (callee) of edge $e$.
+  \item The result $G_\sigma$ contains only those edges whose source belongs to
+    the primary component and whose target belongs to one of the declared
+    participant components.
+\end{itemize}
+
+This formulation follows the general principle of graph-based program
+slicing \cite{weiser:slicing, ferrante:pdg} adapted to a property graph
+rather than a traditional program dependence graph.
+
+This is a simple edge filter, not a transitive reachability closure.
+Its advantage is computational cheapness (linear in $|E|$) and
+determinism. Its limitation is that it does not capture indirect
+dependencies (A$\to$B$\to$C where A is the primary but the B$\to$C
+edge is also scenario-relevant).
+For CPSCore's architecture, where cross-component calls are shallow
+(typically one hop through the IDC layer), this single-hop filter
+suffices.
+Extension to multi-hop reachability is straightforward via Cypher's
+variable-length path syntax.
+
+\section{SysML v2 Generation}\label{sec:sysml-generation}
+
+The final stage projects the sliced sequence table into \sysml
+textual notation.
+The \texttt{draw-sysml-sequence-model} skill reads the sequence
+dependency table CSV and generates a \texttt{.sysml} file following
+the SysML v2 Interaction Model constructs described in
+\cref{sec:sysml}:
+
+\begin{itemize}
+  \item Each unique component in the \texttt{ClientComponent} /
+    \texttt{ServerComponent} columns becomes a \texttt{part def}
+    (lifeline).
+  \item Each row in the CSV becomes an ordered message between
+    lifelines, typed as \texttt{SynchronousCall},
+    \texttt{ReturnMessage}, or \texttt{AsynchronousMessage} based on
+    the \texttt{RelationshipType} column.
+  \item Message labels are derived from the \texttt{EventName} column,
+    optionally annotated with \texttt{ClientFunction $\to$
+    ServerFunction} detail.
+  \item The sequence number preserves the temporal ordering from the
+    trace (for dynamic edges) or the synthetic timestamp ordering (for
+    static edges).
+\end{itemize}
+
+Component names are derived algorithmically from file paths (no
+hardcoded mapping table) using a path-to-component resolution function
+that handles \texttt{/src/}, \texttt{/include/}, \texttt{/extern/},
+and \texttt{/tests/} path prefixes as well as CamelCase normalisation
+and \texttt{Impl} suffix stripping.
+This makes the generator codebase-agnostic: the same script produces
+meaningful lifeline names on CPSCore or any other source tree that
+follows standard C++ project layout conventions.

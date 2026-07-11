@@ -1,0 +1,6 @@
+find:    $agg.getAll<$T>()
+replace: (std::fprintf(stderr, "[TRACE] %s, $callerFunc, %s, Aggregator.getAll, Aggregation, $callerClass, %s\n", cspTraceTimestamp().c_str(), cspTraceCallerComponent(__FILE__).c_str(), cspTraceLocation(__FILE__, __LINE__).c_str()), $agg.getAll<$T>())
+find:    CPSLogger::instance()->flush()
+replace: (std::fprintf(stderr, "[TRACE] %s, $callerFunc, %s, CPSLogger.flush, Logging, $callerClass, %s\n", cspTraceTimestamp().c_str(), cspTraceCallerComponent(__FILE__).c_str(), cspTraceLocation(__FILE__, __LINE__).c_str()), CPSLogger::instance()->flush())
+find:    EnumMap<RunStage>::convert($stage)
+replace: (std::fprintf(stderr, "[TRACE] %s, $callerFunc, %s, EnumMap.convert, Utilities, $callerClass, %s\n", cspTraceTimestamp().c_str(), cspTraceCallerComponent(__FILE__).c_str(), cspTraceLocation(__FILE__, __LINE__).c_str()), EnumMap<RunStage>::convert($stage))

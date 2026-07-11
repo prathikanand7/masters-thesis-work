@@ -1,0 +1,9 @@
+{
+  "contributes": {
+    "chatSkills": [
+      {
+        "path": "./skills/draw-sequential-mermaid-general/SKILL.md"
+      }
+    ]
+  }
+}

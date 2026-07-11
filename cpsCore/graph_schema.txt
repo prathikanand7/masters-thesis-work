@@ -1,0 +1,86 @@
+Node properties:
+  `CppDeclaration` {labelV: STRING, lineNumber: STRING, name: STRING, symbol: STRING, type: STRING}
+  `CppForwardDeclaration` {labelV: STRING, lineNumber: STRING, name: STRING, symbol: STRING, type: STRING}
+  `CppFunctionDeclaration` {labelV: STRING, lineNumber: STRING, name: STRING, symbol: STRING, type: STRING}
+  `CppFunctionDefinition` {labelV: STRING, lineNumber: STRING, name: STRING, symbol: STRING, type: STRING}
+  `CppMacroDefinition` {labelV: STRING, lineNumber: STRING, name: STRING, symbol: STRING, type: STRING}
+  `DynamicLinkLibrary` {labelV: STRING, name: STRING, type: STRING}
+  `Executable` {labelV: STRING, name: STRING, type: STRING}
+  `Folder` {labelV: STRING, name: STRING, type: STRING}
+  `HeaderFile` {labelV: STRING, name: STRING, type: STRING}
+  `OtherFile` {labelV: STRING, name: STRING, type: STRING}
+  `ProjectCOrCpp` {labelV: STRING, name: STRING, type: STRING}
+  `ProjectPropertySheet` {labelV: STRING, name: STRING, type: STRING}
+  `Solution` {labelV: STRING, name: STRING, type: STRING}
+  `SourceFile` {labelV: STRING, name: STRING, type: STRING}
+  `Symbol` {labelV: STRING, name: STRING, type: STRING}
+Relationship properties:
+  :`CppAlias` {labelE: STRING, type: STRING}
+  :`CppCalls` {labelE: STRING, sourceLineNumber: STRING, type: STRING}
+  :`CppContains` {labelE: STRING, type: STRING}
+  :`CppImplements` {labelE: STRING, type: STRING}
+  :`CppInherits` {labelE: STRING, type: STRING}
+  :`CppUses` {labelE: STRING, type: STRING}
+  :`Include` {labelE: STRING, type: STRING}
+  :`Name` {labelE: STRING, type: STRING}
+  :`ParentFolder` {labelE: STRING, type: STRING}
+  :`ProjectCompilesNested` {labelE: STRING, type: STRING}
+  :`Source` {labelE: STRING, type: STRING}
+The relationships:
+  (:CppDeclaration)-[:CppAlias]->(:CppDeclaration)
+  (:CppDeclaration)-[:CppContains]->(:CppDeclaration)
+  (:CppDeclaration)-[:CppContains]->(:CppFunctionDeclaration)
+  (:CppDeclaration)-[:CppContains]->(:CppFunctionDefinition)
+  (:CppDeclaration)-[:CppInherits]->(:CppDeclaration)
+  (:CppDeclaration)-[:CppInherits]->(:CppForwardDeclaration)
+  (:CppDeclaration)-[:Name]->(:Symbol)
+  (:CppDeclaration)-[:Source]->(:HeaderFile)
+  (:CppDeclaration)-[:Source]->(:SourceFile)
+  (:CppForwardDeclaration)-[:Name]->(:Symbol)
+  (:CppForwardDeclaration)-[:Source]->(:HeaderFile)
+  (:CppForwardDeclaration)-[:Source]->(:SourceFile)
+  (:CppFunctionDeclaration)-[:Name]->(:Symbol)
+  (:CppFunctionDeclaration)-[:Source]->(:HeaderFile)
+  (:CppFunctionDeclaration)-[:Source]->(:SourceFile)
+  (:CppFunctionDefinition)-[:CppCalls]->(:CppFunctionDeclaration)
+  (:CppFunctionDefinition)-[:CppCalls]->(:CppFunctionDefinition)
+  (:CppFunctionDefinition)-[:CppImplements]->(:CppFunctionDeclaration)
+  (:CppFunctionDefinition)-[:CppImplements]->(:CppFunctionDefinition)
+  (:CppFunctionDefinition)-[:Name]->(:Symbol)
+  (:CppFunctionDefinition)-[:Source]->(:HeaderFile)
+  (:CppFunctionDefinition)-[:Source]->(:OtherFile)
+  (:CppFunctionDefinition)-[:Source]->(:SourceFile)
+  (:CppMacroDefinition)-[:Name]->(:Symbol)
+  (:CppMacroDefinition)-[:Source]->(:HeaderFile)
+  (:CppMacroDefinition)-[:Source]->(:OtherFile)
+  (:CppMacroDefinition)-[:Source]->(:SourceFile)
+  (:DynamicLinkLibrary)-[:ParentFolder]->(:Folder)
+  (:Executable)-[:ParentFolder]->(:Folder)
+  (:Folder)-[:ParentFolder]->(:Folder)
+  (:HeaderFile)-[:CppUses]->(:CppDeclaration)
+  (:HeaderFile)-[:CppUses]->(:CppForwardDeclaration)
+  (:HeaderFile)-[:CppUses]->(:CppFunctionDeclaration)
+  (:HeaderFile)-[:CppUses]->(:CppFunctionDefinition)
+  (:HeaderFile)-[:CppUses]->(:CppMacroDefinition)
+  (:HeaderFile)-[:Include]->(:HeaderFile)
+  (:HeaderFile)-[:Include]->(:OtherFile)
+  (:HeaderFile)-[:ParentFolder]->(:Folder)
+  (:OtherFile)-[:CppUses]->(:CppDeclaration)
+  (:OtherFile)-[:CppUses]->(:CppFunctionDeclaration)
+  (:OtherFile)-[:Include]->(:HeaderFile)
+  (:OtherFile)-[:Include]->(:OtherFile)
+  (:OtherFile)-[:ParentFolder]->(:Folder)
+  (:ProjectCOrCpp)-[:ParentFolder]->(:Folder)
+  (:ProjectCOrCpp)-[:ProjectCompilesNested]->(:HeaderFile)
+  (:ProjectCOrCpp)-[:ProjectCompilesNested]->(:OtherFile)
+  (:ProjectCOrCpp)-[:ProjectCompilesNested]->(:SourceFile)
+  (:ProjectPropertySheet)-[:ParentFolder]->(:Folder)
+  (:Solution)-[:ParentFolder]->(:Folder)
+  (:SourceFile)-[:CppUses]->(:CppDeclaration)
+  (:SourceFile)-[:CppUses]->(:CppForwardDeclaration)
+  (:SourceFile)-[:CppUses]->(:CppFunctionDeclaration)
+  (:SourceFile)-[:CppUses]->(:CppFunctionDefinition)
+  (:SourceFile)-[:CppUses]->(:CppMacroDefinition)
+  (:SourceFile)-[:Include]->(:HeaderFile)
+  (:SourceFile)-[:Include]->(:OtherFile)
+  (:SourceFile)-[:ParentFolder]->(:Folder)

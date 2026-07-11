@@ -1,0 +1,9 @@
+{
+  "contributes": {
+    "chatSkills": [
+      {
+        "path": "./skills/draw-sysml-structural-model/SKILL.md"
+      }
+    ]
+  }
+}

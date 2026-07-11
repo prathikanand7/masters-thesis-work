@@ -1,0 +1,45 @@
+Software systems in safety-critical domains such as medical imaging and
+industrial automation evolve rapidly, and their runtime behaviour quickly
+outgrows manual documentation.
+\sysml Interaction Models capture scenario-specific component interactions,
+but existing reconstruction techniques are each incomplete: static analysis
+is scenario-agnostic, while execution traces are inherently partial.
+
+This thesis presents a hybrid pipeline that synthesises scenario-specific
+Interaction Models for event-driven \Cpp\ systems by fusing a static call
+graph with timestamped runtime traces in a unified \neo property graph and
+applying dependence-based slicing to isolate scenario-relevant interactions.
+Implemented as twelve composable, natural-language-invocable agent skills,
+the pipeline is evaluated on \emph{CPSCore}, an open-source event-driven
+framework, across four scenarios (three happy-path, one constructed)
+reconstructed under five conditions ranging from an \ac{LLM}-only baseline
+to the full pipeline.
+
+Three hypotheses are confirmed.
+\textbf{H1:} The full pipeline achieves the highest reconstruction accuracy
+of any condition tested (macro-F1~$=$~0.964, with perfect recall on every
+scenario). Fusion is strictly additive precisely where static and dynamic
+analysis each miss a different interaction, and redundant where the static
+call graph is already complete.
+\textbf{H2:} Code-graph-guided instrumentation eliminates all measured noise
+(50\% fewer nodes, 70\% fewer edges) without losing scenario coverage, confirmed
+by a blinded six-rater expert panel rating guided output higher in 47 of 54
+comparisons.
+\textbf{H3:} The reconstructed diagram alone achieves perfect component
+recall, interaction recall, and rated completeness on every scenario,
+matching or exceeding all other evidence combinations.
+Together, the three findings converge on one pattern: additional evidence
+improves reconstruction or comprehension specifically when the primary
+evidence source is missing something, and is otherwise redundant.
+As an exploratory complement, a practitioner session on a second, larger
+industrial codebase found the underlying static-extraction and query
+approach transferred well: structural and dependency diagrams were rated
+consistently useful, and sequence-diagram message labelling was identified
+as the clearest area for improvement.
+
+The main contributions are: (i)~a provenance-preserving property-graph
+schema unifying static and trace artefacts; (ii)~a scope-based slicing
+algorithm for heterogeneous graphs; (iii)~a reversible, AST-level
+instrumentation tool (\texttt{csp\_matcher}) for reproducible trace
+collection; and (iv)~an empirical account of when hybrid synthesis is worth
+its added complexity and when it is not.

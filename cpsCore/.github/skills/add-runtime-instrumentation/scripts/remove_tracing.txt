@@ -1,0 +1,3 @@
+find:    ($any, $orig)
+filter:  is_trace_remove
+replace: $orig

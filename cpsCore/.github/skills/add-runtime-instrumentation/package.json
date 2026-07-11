@@ -1,0 +1,20 @@
+{
+  "name": "add-runtime-instrumentation",
+  "version": "1.0.0",
+  "description": "Apply runtime instrumentation and tracing to cpsCore using the renaissance_clang DSL tool",
+  "main": "scripts/apply_tracing.ps1",
+  "scripts": {
+    "apply": "powershell -NoProfile -Command '.\\scripts\\apply_tracing.ps1'",
+    "remove": "powershell -NoProfile -Command '.\\scripts\\remove_tracing.ps1'"
+  },
+  "keywords": [
+    "instrumentation",
+    "tracing",
+    "renaissance",
+    "cpsCore",
+    "pattern-matching",
+    "code-transformation"
+  ],
+  "author": "cpsCore Team",
+  "license": "PROPRIETARY"
+}

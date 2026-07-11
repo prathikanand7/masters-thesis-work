@@ -1,0 +1,9 @@
+=== apply_tracing 2026-07-02 16:11:15 [ExcludeTests] ===
+file=C:/Users/prathikak/Documents/cpsCore/src/Synchronization/AggregatableRunner.cpp replacements=1
+file=C:/Users/prathikak/Documents/cpsCore/src/Synchronization/SimpleRunner.cpp replacements=4
+file=C:/Users/prathikak/Documents/cpsCore/src/Synchronization/SynchronizedRunner.cpp replacements=1
+file=C:/Users/prathikak/Documents/cpsCore/src/Utilities/SignalHandler/SignalHandler.cpp replacements=1
+file=C:/Users/prathikak/Documents/cpsCore/src/Utilities/IPC/IPC.cpp replacements=1
+file=C:/Users/prathikak/Documents/cpsCore/src/Utilities/IDC/NetworkLayer/Serial/SerialHandler.cpp replacements=1
+Total replacements: 9
+file=C:\Users\prathikak\Documents\cpsCore\include\cpsCore\Logging\CPSLogger.h patched=CPSLOG

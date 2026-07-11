@@ -1,0 +1,194 @@
+[TRACE] 16:18:01.670, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.670, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.670, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.670, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.670, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.670, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+0.000 s:      Then: TestA Correctly aggregated
+0.001 s:      When: Aggregation is invoked
+0.001 s:     Given: Items to be aggregated
+0.002 s: Scenario: Checking objects can be Aggregated
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+0.000 s:      Then: TestB Correctly aggregated
+0.000 s:      When: Aggregation is invoked
+0.000 s:     Given: Items to be aggregated
+0.000 s: Scenario: Checking objects can be Aggregated
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+0.000 s:      Then: TestC Correctly aggregated
+0.000 s:      When: Aggregation is invoked
+0.000 s:     Given: Items to be aggregated
+0.000 s: Scenario: Checking objects can be Aggregated
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+0.000 s:      Then: Values correctly set
+0.000 s:      When: Aggregation is invoked
+0.000 s:     Given: Items to be aggregated
+0.000 s: Scenario: Checking objects can be Aggregated
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, checkIsSetImpl, Aggregation, RAIILogStream.stream, Logging, AggregatableObject<Objects>, AggregatableObject.hpp:116
+[TRACE] 16:18:01.671, checkIsSetImpl, Aggregation, RAIILogStream.stream, Logging, AggregatableObject<Objects>, AggregatableObject.hpp:116
+[TRACE] 16:18:01.671, checkIsSetImpl, Aggregation, RAIILogStream.stream, Logging, AggregatableObject<Objects>, AggregatableObject.hpp:116
+0.000 s:      Then: TestA Correctly aggregated
+0.000 s:      When: Aggregation is invoked
+0.000 s:     Given: Items to be aggregated
+0.000 s: Scenario: Checking missing object in agg
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, checkIsSetImpl, Aggregation, RAIILogStream.stream, Logging, AggregatableObject<Objects>, AggregatableObject.hpp:116
+[TRACE] 16:18:01.671, checkIsSetImpl, Aggregation, RAIILogStream.stream, Logging, AggregatableObject<Objects>, AggregatableObject.hpp:116
+[TRACE] 16:18:01.671, checkIsSetImpl, Aggregation, RAIILogStream.stream, Logging, AggregatableObject<Objects>, AggregatableObject.hpp:116
+0.000 s:      Then: TestB Correctly aggregated
+0.000 s:      When: Aggregation is invoked
+0.000 s:     Given: Items to be aggregated
+0.000 s: Scenario: Checking missing object in agg
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+0.000 s:      Then: Values correctly set
+0.000 s:      When: Aggregation is invoked
+0.000 s:     Given: Items to be aggregated
+0.000 s: Scenario: Checking missing object in agg
+[TRACE] 16:18:01.671, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.671, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.671, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.671, stop, Utilities, RAIILogStream.stream, Logging, MicroSimulator, MicroSimulator.cpp:63
+[TRACE] 16:18:01.672, ~MultiThreadingScheduler, Utilities, RAIILogStream.stream, Logging, MultiThreadingScheduler, MultiThreadingScheduler.cpp:21
+0.000 s: Aggregator tuple add
+[TRACE] 16:18:01.672, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.672, stop, Utilities, RAIILogStream.stream, Logging, MicroSimulator, MicroSimulator.cpp:63
+[TRACE] 16:18:01.672, ~MultiThreadingScheduler, Utilities, RAIILogStream.stream, Logging, MultiThreadingScheduler, MultiThreadingScheduler.cpp:21
+0.000 s: Aggregator vector add
+[TRACE] 16:18:01.672, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.672, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.672, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.672, stop, Utilities, RAIILogStream.stream, Logging, MicroSimulator, MicroSimulator.cpp:63
+[TRACE] 16:18:01.672, ~MultiThreadingScheduler, Utilities, RAIILogStream.stream, Logging, MultiThreadingScheduler, MultiThreadingScheduler.cpp:21
+0.000 s: Aggregator vector add templated
+[TRACE] 16:18:01.672, addIfNotInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:174
+[TRACE] 16:18:01.672, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.672, getOne, Aggregation, RAIILogStream.stream, Logging, DynamicObjectContainer, DynamicObjectContainer.h:74
+[TRACE] 16:18:01.672, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:165
+[TRACE] 16:18:01.672, getOne, Aggregation, RAIILogStream.stream, Logging, DynamicObjectContainer, DynamicObjectContainer.h:74
+[TRACE] 16:18:01.672, getOne, Aggregation, RAIILogStream.stream, Logging, DynamicObjectContainer, DynamicObjectContainer.h:74
+0.000 s: Incomplete Type handling
+0.000 s: TypeId handling
+[TRACE] 16:18:01.672, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+[TRACE] 16:18:01.672, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+[TRACE] 16:18:01.672, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.cpp:26
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+0.000 s: Test1
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.cpp:26
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.cpp:26
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+0.000 s: Test2 Member Config
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.cpp:26
+[TRACE] 16:18:01.673, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+0.000 s: Test3 Optional Config
+0.001 s: Json Populator Test 1
+0.000 s: Json Populator Test 2
+0.000 s: Json Populator Test 3
+0.000 s: Json Populator Test 4
+0.028 s: Vector of Doubles
+0.005 s: Vector Test 2
+0.005 s: Map test
+0.005 s: Unordered map test
+0.005 s: Enum Map test
+[TRACE] 16:18:01.725, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+0.005 s: Optional test
+0.005 s: Eigen Matrix test
+0.000 s: locking
+[TRACE] 16:18:01.767, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:160
+[TRACE] 16:18:01.767, create, Framework, RAIILogStream.stream, Logging, StaticFactory<SuperClass, SUPPORT_MULTI, Objects>, StaticFactory.h:46
+[TRACE] 16:18:01.767, createSpecific, Framework, RAIILogStream.stream, Logging, StaticFactory<SuperClass, SUPPORT_MULTI, Objects>, StaticFactory.h:130
+[TRACE] 16:18:01.767, createSpecific, Framework, RAIILogStream.stream, Logging, StaticFactory<SuperClass, SUPPORT_MULTI, Objects>, StaticFactory.h:134
+[TRACE] 16:18:01.767, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:160
+[TRACE] 16:18:01.802, create, Framework, RAIILogStream.stream, Logging, StaticFactory<SuperClass, SUPPORT_MULTI, Objects>, StaticFactory.h:46
+[TRACE] 16:18:01.802, createSpecific, Framework, RAIILogStream.stream, Logging, StaticFactory<SuperClass, SUPPORT_MULTI, Objects>, StaticFactory.h:111
+[TRACE] 16:18:01.802, createSpecific, Framework, RAIILogStream.stream, Logging, StaticFactory<SuperClass, SUPPORT_MULTI, Objects>, StaticFactory.h:115
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+0.070 s: Aggregation Merge
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:160
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:165
+[TRACE] 16:18:01.802, stop, Utilities, RAIILogStream.stream, Logging, MicroSimulator, MicroSimulator.cpp:63
+ [DEBUG] [/mnt/c/Users/prathikak/Documents/cpsCore/src/Utilities/Scheduler/MicroSimulator.cpp:63] Stop MicroSim called
+0.000 s: Single Type Static Handler
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:160
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:165
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:165
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:160
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:160
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:160
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, stop, Utilities, RAIILogStream.stream, Logging, MicroSimulator, MicroSimulator.cpp:63
+ [DEBUG] [/mnt/c/Users/prathikak/Documents/cpsCore/src/Utilities/Scheduler/MicroSimulator.cpp:63] Stop MicroSim called
+[TRACE] 16:18:01.802, stop, Utilities, RAIILogStream.stream, Logging, MicroSimulator, MicroSimulator.cpp:63
+ [DEBUG] [/mnt/c/Users/prathikak/Documents/cpsCore/src/Utilities/Scheduler/MicroSimulator.cpp:63] Stop MicroSim called
+0.000 s: Multi Type Static Handler
+[TRACE] 16:18:01.802, addIfNotInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:174
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, addIfNotInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:174
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:165
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:165
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:165
+[TRACE] 16:18:01.802, addIfNotInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:174
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, addIfNotInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:174
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:165
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:165
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:160
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.802, addIfNotInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:174
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, addIfNotInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:179
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:165
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:160
+[TRACE] 16:18:01.802, createSpecific, Framework, RAIILogStream.stream, Logging, StaticFactory<SuperClass, SUPPORT_MULTI, Objects>, StaticFactory.h:130
+[TRACE] 16:18:01.802, createSpecific, Framework, RAIILogStream.stream, Logging, StaticFactory<SuperClass, SUPPORT_MULTI, Objects>, StaticFactory.h:134
+[TRACE] 16:18:01.802, add, Configuration, RAIILogStream.stream, Logging, PropertyMapper, PropertyMapper.hpp:68
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.802, addIfInConfig, Framework, RAIILogStream.stream, Logging, StaticHelper< <template-parameter-1-1> >, StaticHelper.h:160
+[TRACE] 16:18:01.802, add, Aggregation, RAIILogStream.stream, Logging, Aggregator, Aggregator.h:100
+[TRACE] 16:18:01.802, setFromAggregationIfNotSet, Aggregation, RAIILogStream.stream, Logging, ObjectHandleContainer<Object, Others ...>, ObjectHandleContainer.hpp:195
+[TRACE] 16:18:01.802, ~MultiThreadingScheduler, Utilities, RAIILogStream.stream, Logging, MultiThreadingScheduler, MultiThreadingScheduler.cpp:21
+[TRACE] 16:18:01.802, ~MultiThreadingScheduler, Utilities, RAIILogStream.stream, Logging, MultiThreadingScheduler, MultiThreadingScheduler.cpp:21
+[TRACE] 16:18:01.802, ~MultiThreadingScheduler, Utilities, RAIILogStream.stream, Logging, MultiThreadingScheduler, MultiThreadingScheduler.cpp:21
+0.000 s: Default static helper
+[TRACE] 16:18:01.802, createSpecific, Framework, RAIILogStream.stream, Logging, StaticFactory<T, S, C>, StaticFactory.h:111
+[TRACE] 16:18:01.802, createSpecific, Framework, RAIILogStream.stream, Logging, StaticFactory<T, S, C>, StaticFactory.h:115
+[TRACE] 16:18:01.802, createSpecific, Framework, RAIILogStream.stream, Logging, StaticFactory<T, S, C>, StaticFactory.h:90
+[TRACE] 16:18:01.802, stop, Utilities, RAIILogStream.stream, Logging, MicroSimulator, MicroSimulator.cpp:63
+ [DEBUG] [/mnt/c/Users/prathikak/Documents/cpsCore/src/Utilities/Scheduler/MicroSimulator.cpp:63] Stop MicroSim called
+[TRACE] 16:18:01.802, stop, Utilities, RAIILogStream.stream, Logging, MicroSimulator, MicroSimulator.cpp:63
+ [DEBUG] [/mnt/c/Users/prathikak/Documents/cpsCore

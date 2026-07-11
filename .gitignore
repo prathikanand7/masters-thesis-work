@@ -1,0 +1,18 @@
+# Build outputs
+**/bld/
+**/build/
+**/build_mingw/
+**/CMakeFiles/
+**/CMakeCache.txt
+
+# Python / venv
+**/.venv/
+**/__pycache__/
+
+# Env / secrets
+**/.env
+
+# OS junk
+**/%LOCALAPPDATA%/
+.DS_Store
+Thumbs.db

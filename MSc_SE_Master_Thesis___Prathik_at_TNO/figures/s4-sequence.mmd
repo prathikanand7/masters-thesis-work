@@ -1,0 +1,17 @@
+```mermaid.radar
+sequenceDiagram
+    participant SEB as StageEventBridge
+    participant SEL as StageEventListener
+    participant Log as RAIILogStream
+
+    Note over SEB,Log: Fault path suppressed by LogLevel::NONE
+    rect rgb(80, 20, 20)
+        Note right of SEB: Seen by static analysis, absent from traces
+        SEB->>Log: RAIILogStream.stream (CPSLOG_ERROR)
+    end
+
+    Note over SEB,SEL: Normal path via boost::signals2
+    SEB->>SEL: StageEventListener.onStageEvent
+    Note right of SEL: Runtime-only, invisible to static call graph
+
+```

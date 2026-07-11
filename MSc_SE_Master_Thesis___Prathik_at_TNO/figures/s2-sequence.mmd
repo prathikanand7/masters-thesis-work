@@ -1,0 +1,11 @@
+sequenceDiagram
+    participant PM as PropertyMapper
+    participant Log as RAIILogStream
+
+    PM->>Log: stream (add - string key)
+    PM->>Log: stream (add - overload)
+    PM->>Log: stream (addEigen)
+    PM->>Log: stream (addEnum)
+    PM->>Log: stream (addVector)
+    PM->>Log: stream (getChild)
+    PM->>Log: stream (mandatoryCheck)

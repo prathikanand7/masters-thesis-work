@@ -1,0 +1,6 @@
+-- Neo4j queries executed in this session
+
+CALL db.schema.nodeTypeProperties() YIELD nodeType, propertyName, propertyTypes RETURN nodeType, propertyName, propertyTypes
+CALL db.schema.relTypeProperties() YIELD relType, propertyName, propertyTypes RETURN relType, propertyName, propertyTypes
+MATCH (s)-[r]->(t) RETURN DISTINCT labels(s) AS fromLabels, type(r) AS relType, labels(t) AS toLabels
+MATCH (n)-[r]-(m) RETURN n,r,m LIMIT 25

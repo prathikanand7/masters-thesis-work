@@ -1,0 +1,37 @@
+flowchart TD
+  subgraph AggregationDir["src/Aggregation"]
+    direction TB
+    AggregatorCleanUp["Aggregator::cleanUp()\n(line 62)"]
+  end
+
+  subgraph SynchronizationDir["src/Synchronization"]
+    direction TB
+    RunSynchronized["SynchronizedRunner::runSynchronized()\n(line 78)"]
+    Stop70["MultiThreadingScheduler::stop()\n(line 70)"]
+    Stop73["MultiThreadingScheduler::stop()\n(line 73)"]
+    Stop81["MultiThreadingScheduler::stop()\n(line 81)"]
+    Stop84["MultiThreadingScheduler::stop()\n(line 84)"]
+  end
+
+  subgraph UtilitiesDir["src/Utilities"]
+    direction TB
+    SerialHandlerCtor["SerialHandler::SerialHandler()\n(line 38)"]
+    IPCSigintHandler["IPC::sigintHandler()\n(line 152)"]
+    SigIntHandler["sigIntHandler()\n(line 14)"]
+  end
+
+  subgraph UtilitiesAPI["src/Utilities API"]
+    direction TB
+    SHGetInstance["SignalHandlerSingleton::getInstance()"]
+    CPSLoggerInstance["CPSLogger::instance()"]
+  end
+
+  AggregatorCleanUp --> SHGetInstance
+  RunSynchronized --> CPSLoggerInstance
+  SerialHandlerCtor --> CPSLoggerInstance
+  IPCSigintHandler --> CPSLoggerInstance
+  Stop70 --> CPSLoggerInstance
+  Stop73 --> CPSLoggerInstance
+  Stop81 --> CPSLoggerInstance
+  Stop84 --> CPSLoggerInstance
+  SigIntHandler --> CPSLoggerInstance

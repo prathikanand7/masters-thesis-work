@@ -1,0 +1,22 @@
+graph LR
+    subgraph Synchronization
+        SimR[SimpleRunner]
+        SM[SyncRunnerMaster]
+    end
+
+    subgraph Aggregation
+        Agg[Aggregator]
+    end
+
+    subgraph Utilities
+        EM[EnumMap]
+    end
+
+    subgraph Logging
+        Log[RAIILogStream]
+    end
+
+    SimR -->|getAll| Agg
+    SimR -->|convert| EM
+    SimR -->|stream| Log
+    SM -->|stream| Log

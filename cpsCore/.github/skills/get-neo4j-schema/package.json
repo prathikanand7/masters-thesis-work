@@ -1,0 +1,9 @@
+{
+  "contributes": {
+    "chatSkills": [
+      {
+        "path": "./skills/get-neo4j-schema/SKILL.md"
+      }
+    ]
+  }
+}

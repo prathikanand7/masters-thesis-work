@@ -1,0 +1,9 @@
+{
+  "contributes": {
+    "chatSkills": [
+      {
+        "path": "./skills/cypher-to-output/SKILL.md"
+      }
+    ]
+  }
+}

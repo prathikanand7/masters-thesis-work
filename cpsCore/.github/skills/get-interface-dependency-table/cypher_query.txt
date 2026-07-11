@@ -1,0 +1,9 @@
+1. CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType ORDER BY relationshipType
+
+MATCH (client)-[r]->(server)
+    WITH
+        type(r) AS InterfaceName,
+        collect(DISTINCT coalesce(server.labelV, head(labels(server)), server.name, toString(id(server)))) AS Servers,
+        collect(DISTINCT coalesce(client.labelV, head(labels(client)), client.name, toString(id(client)))) AS Clients
+    RETURN InterfaceName, Servers, Clients
+    ORDER BY InterfaceName

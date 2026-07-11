@@ -1,0 +1,18 @@
+```mermaid.radar
+graph LR
+    subgraph Synchronization
+        SEB[StageEventBridge]
+    end
+
+    subgraph Aggregation
+        SEL[StageEventListener]
+    end
+
+    subgraph Logging
+        Log[RAIILogStream]
+    end
+
+    SEB -->|"stream (fault-path, static-visible\nsuppressed at runtime)"| Log
+    SEB -->|"onStageEvent (runtime-only\ninvisible to static analysis)"| SEL
+
+```

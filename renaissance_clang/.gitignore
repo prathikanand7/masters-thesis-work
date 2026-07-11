@@ -1,0 +1,46 @@
+# Build output directories
+build/
+build_mingw/
+
+# Generated test artifacts
+tests/generated/
+
+# Compiled binaries and intermediate files
+*.exe
+*.dll
+*.obj
+*.o
+*.a
+*.lib
+*.pdb
+*.ilk
+*.exp
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+*.sln
+*.vcxproj
+*.vcxproj.filters
+
+# Ninja
+build.ninja
+rules.ninja
+.ninja_deps
+.ninja_log
+
+# VS Code local settings
+.vscode/
+
+# Temporary filter DLL sources (created at runtime by csp_matcher)
+csp_flt_*.cpp
+csp_flt_*.log
+
+# Runtime output / log files
+examples/cpscore_tracing/apply_log.txt
+examples/cpscore_tracing/trace_output.txt
+tests/test_out.txt
+
+# Backup files
+*.bak

@@ -1,0 +1,7 @@
+bld
+.idea
+*build*
+.venv
+InstallationLog.txt
+__pycache__/
+%LOCALAPPDATA%/

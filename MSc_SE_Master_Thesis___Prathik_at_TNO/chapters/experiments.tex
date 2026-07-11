@@ -40,10 +40,11 @@ statically deterministic, the static call graph is
 In a codebase with cross-module virtual dispatch or dynamic plugin loading,
 the trace could observe call targets that static analysis cannot resolve.
 This would make dynamic evidence genuinely additive.
-In CPSCore, that situation does not arise. Every edge the trace discovers
-is already present in the static graph. Formally, C3~$\subseteq$~C2 and
-therefore C4~$=$~C2~$\cup$~C3~$=$~C2.
-This is a structural property of the codebase, not a flaw in the pipeline.
+In CPSCore, that situation does not arise: every edge the trace discovers
+is already present in the static graph (formally, C3~$\subseteq$~C2). This
+is a structural property of the codebase, not a flaw in the pipeline, and
+its consequence for fusion (C4~$=$~C2 on these scenarios) is analysed in
+\cref{sec:h1-c4c2}.
 
 \subsection{CPSCore Architecture}
 
@@ -510,7 +511,7 @@ Instrumentation targets (functions)          & 9 \\
 Source files instrumented                    & 5 \\
 Runtime trace events (live)                  & 27 \\
 Unique client$\to$server pairs (live)        & 26 \\
-SysML v2 scenarios generated                 & 2 \\
+SysML v2 scenarios generated                 & 14 \\
 Test assertions passing post-instrumentation & 1,425 / 1,425 \\
 \bottomrule
 \end{tabular}

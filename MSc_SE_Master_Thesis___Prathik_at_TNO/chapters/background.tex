@@ -21,36 +21,56 @@ standardised textual syntax.
 Interaction Models in \sysml are expressed as \emph{occurrence specifications}
 that describe ordered sequences of message occurrences between \emph{parts}
 (\ie instances of blocks in the system structure).
-The relevant constructs are:
+The constructs used by the generator in this thesis (\cref{sec:sysml-impl}) are:
 \begin{description}
-  \item[\texttt{interaction}] A named container for a scenario-specific interaction
-    model, analogous to a \ac{UML} interaction.
-  \item[\texttt{send} / \texttt{receive}] Action semantics that model
-    message transmission and reception between lifelines.
-  \item[\texttt{MessageOccurrenceSpecification}] A timed event on a lifeline
-    representing the sending or reception of a message.
-  \item[\texttt{CombinedFragment}] Control structures such as \texttt{alt},
-    \texttt{loop}, and \texttt{opt} that express conditional or iterative
-    behaviour.
+  \item[\texttt{part def}~$:>$~\texttt{InteractionScenario}] A named
+    container for a scenario-specific interaction model, analogous to a
+    \ac{UML} interaction.
+  \item[\texttt{Lifeline}] A participant in the interaction, \ie an
+    instance of a structural block along which message occurrences are
+    ordered.
+  \item[\texttt{SynchronousCall} / \texttt{ReturnMessage} /
+    \texttt{AsynchronousMessage}] Message stereotypes (specialising a
+    common \texttt{Message} definition) that model a call, its return, and
+    an asynchronous send between two lifelines.
+  \item[\texttt{from} / \texttt{to}] References on a message that bind it
+    to its sending and receiving lifelines, giving each message occurrence
+    its position in the ordered sequence.
 \end{description}
 
 An example in \sysml textual notation, corresponding to the S1
-scenario (Aggregator notification chain) used in this thesis:
+scenario (Aggregator notification chain) used in this thesis and following
+the same stereotype-based form the generator emits (\cref{sec:sysml-impl}):
 
 \begin{minted}[fontsize=\footnotesize]{text}
 package AggregatorNotification {
-    part def SynchronizedRunner;
-    part def Aggregator;
-    part def CPSLogger;
+    part def SynchronousCall :> Message { ... }
 
-    interaction S1_AggregatorChain {
-        part runner : SynchronizedRunner;
-        part agg    : Aggregator;
-        part log    : CPSLogger;
+    part def S1_AggregatorChain :> InteractionScenario {
+        part runner : Lifeline;
+        part agg    : Lifeline;
+        part log    : Lifeline;
 
-        message m1 from runner to agg { :>> name = "getAll"; }
-        message m2 from runner to log { :>> name = "stream"; }
-        message m3 from runner to log { :>> name = "flush"; }
+        part m1 : SynchronousCall {
+            ref from : Lifeline = runner;
+            ref to   : Lifeline = agg;
+            attribute :>> label = "1. getAll";
+        }
+        part m2 : SynchronousCall {
+            ref from : Lifeline = runner;
+            ref to   : Lifeline = log;
+            attribute :>> label = "2. stream";
+        }
+        part m3 : SynchronousCall {
+            ref from : Lifeline = runner;
+            ref to   : Lifeline = log;
+            attribute :>> label = "3. flush";
+        }
+        part m4 : SynchronousCall {
+            ref from : Lifeline = runner;
+            ref to   : Lifeline = log;
+            attribute :>> label = "4. instance";
+        }
     }
 }
 \end{minted}

@@ -65,7 +65,7 @@ Three hypotheses were tested to answer the research questions:
 
 As an exploratory complement to H1--H3, a practitioner hands-on session and
 interview study with four engineers on a second, much larger industrial
-codebase (\cref{sec:practitioner}) provides encouraging but convergent
+codebase (\cref{sec:practitioner}) provides encouraging and convergent
 evidence that the same pattern holds at industrial scale.
 The key scenario exercise involved a proxy-leak defect whose root cause is an
 implicit event-driven interaction invisible without reconstructing the
@@ -170,8 +170,9 @@ The practitioner session on an industrial-scale codebase
 (\cref{sec:practitioner}) provides encouraging qualitative evidence of
 transfer, but does not substitute for a controlled replication.
 
-The H3 experiment used the same LLM as both generator and evaluator,
-introducing a potential self-consistency bias.
+The H3 experiment used the same LLM family to both synthesise the C5
+diagram and perform the downstream comprehension task, introducing a
+potential generator--consumer circularity.
 The H2 six-rater panel preserved effect direction on every dimension,
 but a larger sample would strengthen confidence in magnitude.
 Ground-truth diagrams are inherently subjective, and the evaluation

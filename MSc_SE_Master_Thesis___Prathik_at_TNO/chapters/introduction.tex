@@ -43,18 +43,12 @@ maintainability and knowledge transfer in complex industrial systems.
 
 This project surfaced a concrete illustration of this class of problem: a
 real, previously-resolved defect on a large industrial \Cpp\ system
-(\cref{sec:scenario-exercise}).
-In this defect, a service exposed several internal interfaces to a client
-component via proxy objects created on connect.
-On disconnect, most proxies were correctly freed. However, one proxy was not
-freed due to a missing reset in the connection-handling code.
-After the service later restarted, the stale proxy silently stopped
-delivering change-notification events. As a result, a downstream component's
-output logic quietly stopped updating on a real state change.
-This defect was visible only by tracing an implicit event chain that no
-reconstructed interaction model existed to reveal.
-Diagnosing it required manually reconstructing exactly the kind of model
-this thesis automates.
+(\cref{sec:scenario-exercise}), in which a stale proxy object, left
+un-freed by a missing reset in connection-handling code, silently stopped
+delivering change-notification events after a service restart.
+The fault was visible only by tracing an implicit event chain that no
+existing interaction model revealed; diagnosing it required manually
+reconstructing exactly the kind of model this thesis automates.
 
 The \ac{GDI} project at \ac{TNO}-\ac{ESI} aims to address this problem by using
 graph-based program analysis to support the automatic extraction and maintenance of

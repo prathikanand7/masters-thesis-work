@@ -1,13 +1,13 @@
 {
 	"folders": [
 		{
-			"path": "../Documents/cpsCore"
+			"path": "cpsCore"
 		},
 		{
-			"path": "../Documents/renaissance_clang"
+			"path": "renaissance_clang"
 		},
 		{
-			"path": "MSc_SE_Master_Thesis___Prathik_at_TNO (1)"
+			"path": "MSc_SE_Master_Thesis___Prathik_at_TNO"
 		}
 	],
 	"settings": {}

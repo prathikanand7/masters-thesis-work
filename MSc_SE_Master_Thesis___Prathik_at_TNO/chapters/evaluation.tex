@@ -192,8 +192,8 @@ structural property of CPSCore described in
 \cref{sec:cpscore-scale}: the codebase contains no cross-module virtual
 dispatch, so every call target is statically deterministic.
 Consequently, every interaction edge the trace discovers was already present
-in the static call graph, making the dynamic evidence a strict subset of the
-static evidence, \emph{on S1--S3 specifically}:
+in the static call graph. On S1--S3, then, the dynamic evidence is fully
+contained in the static evidence (a strict subset):
 
 \[
   \text{C3} \subseteq \text{C2} \quad \text{(on S1--S3)}
@@ -204,10 +204,10 @@ static evidence, \emph{on S1--S3 specifically}:
 In a system with cross-module virtual dispatch, dynamic plugin loading, or
 reflection-based routing, traces could observe targets that static analysis
 cannot resolve. In such a system C4 would strictly exceed C2.
-CPSCore's existing, found-in-the-wild code does not exhibit this property on
-S1--S3, and the C4$=$C2 identity there is the expected mathematical
-consequence. \Cref{sec:h1-c4c3} shows what happens once a boundary with this
-property is deliberately constructed (S4).
+CPSCore's existing, found-in-the-wild code does not have this property on
+S1--S3, so C4$=$C2 there is exactly what the maths predicts, not a surprise.
+\Cref{sec:h1-c4c3} shows what happens once a boundary with this property is
+deliberately constructed (S4).
 
 \paragraph{C3 (dynamic-only) is the best happy-path condition, not a
 redundant subset of the static graph.}
@@ -261,36 +261,37 @@ condition is blind to a different edge:
 \end{itemize}
 
 \textbf{F1(C4)~$=$~1.000 strictly exceeds both F1(C2)~$=$~0.667 and
-F1(C3)~$=$~0.667 on S4.} This is the empirical confirmation of the
-hypothesis that motivated constructing S4: fusion can be strictly
-\emph{additive}, not merely protective, whenever static and dynamic
-analysis are blind to different edges rather than one being a subset of
-the other. All five S4 conditions were executed for real, not simulated
-(see \cref{sec:scenarios} for the provenance of each).
+F1(C3)~$=$~0.667 on S4.} This confirms the hypothesis that motivated
+building S4. When static and dynamic analysis each miss a \emph{different}
+edge (rather than one simply containing the other), fusion adds genuinely
+new information, instead of merely guarding against suppressed evidence.
+All five S4 conditions were executed for real, not simulated
+(see \cref{sec:scenarios} for how each was produced).
 
-\paragraph{C5 (provenance-aware) inherits this result.} C5 gives the
-agent C2 and C3 as separately labelled, provenance-tagged evidence
+\paragraph{C5 (source-aware) inherits this result.} C5 gives the
+agent C2 and C3 as separately labelled, source-tagged evidence
 (\cref{sec:h1-c5}), which lets it retain both \texttt{onStageEvent} and
 \texttt{stream} on S4, reaching F1~$=$~1.000, matching C4 exactly.
 \Cref{sec:h1-c5} reports this methodology and its results across the full
 four-scenario set.
 
-\subsection{Discussion: C5 Provenance-Aware Synthesis}\label{sec:h1-c5}
+\subsection{Discussion: C5 Source-Aware Synthesis}\label{sec:h1-c5}
 
 C5 gives the agent C2 and C3 as two \emph{separately labelled} evidence
-sources, each edge tagged with whether the other source also observed
-it, together with explicit guidance to reason about \emph{why} a
-single-source edge might be missing from the other (genuine runtime
-suppression, an indirect dispatch invisible to static analysis, or a
-genuine static over-approximation) rather than treating single-source
-status itself as weak evidence. The agent's response also includes a
-complete, ordered call sequence (the real dynamic trace order as backbone,
-with retained static-only edges inserted at the position implied by the
-scenario description), giving the reconstructed sequence diagram a
-temporal structure a flat, unordered element list would not carry.
+sources. Every edge is tagged with whether the other source also observed
+it. The agent is then asked to reason about \emph{why} an edge seen by only
+one source might be missing from the other. There are three possibilities:
+the call was genuinely suppressed at runtime, it was dispatched indirectly
+in a way static analysis cannot see, or it is a static over-approximation
+that never actually runs. The point is that an edge seen by a single source
+is not automatically weak evidence. The agent's response also includes a
+complete, ordered call sequence: it uses the real trace order as the
+backbone and inserts the retained static-only edges at the position implied
+by the scenario description. This gives the reconstructed diagram a temporal
+structure that a flat, unordered list of elements would not carry.
 
 \paragraph{Result: recall parity with C4, at a small, localised precision
-cost.} With provenance-tagged evidence, C5 retains
+cost.} With source-tagged evidence, C5 retains
 \texttt{CPSLogger::instance} on S1 and \texttt{stream} on
 S4, matching C4's recall (R~$=$~1.000) on every one of the four
 scenarios. The only imprecision appears on S3, where the same
@@ -299,7 +300,7 @@ correctly recovers S4's fault-path edge is applied, incorrectly, to
 \texttt{flush}: a real Synchronization$\to$Logging call, but one that
 originates from a different function entirely outside S3's defined scope.
 The agent has no way to distinguish this from a genuine fault-path
-suppression using only component-level provenance. C2's element list
+suppression using only a component-level source label. C2's element list
 records source, target, and interaction name, but not the calling
 function, so ``suppressed-but-in-scope'' and ``real-but-out-of-scope'' are
 indistinguishable inputs to the same reasoning step. On the full
@@ -312,15 +313,15 @@ its S4 recall miss).
 The full value chain, on the four-scenario set, is: fusion is
 redundant with static analysis on S1--S3 (\cref{sec:h1-c4c2}) and is
 strictly additive only on the constructed S4 case
-(C4~$>$~C2 \emph{and} C4~$>$~C3). Provenance-aware agent synthesis then
+(C4~$>$~C2 \emph{and} C4~$>$~C3). Source-aware agent synthesis then
 \emph{preserves} that recall (C5~R~$=$~C4~R~$=$~1.000 on every
 scenario) while also partially correcting C4's precision where static
 analysis over-approximates (S3), for the best overall reconstruction
 accuracy of any condition tested, though not the best precision, since C3
-has none at all in this set. Agent synthesis with provenance-aware
+has none at all in this set. Agent synthesis with source-aware
 prompting is therefore a net improvement over the raw fused union, not a
 trade against it. However, the disclosed S3 imprecision shows that a
-component-level (rather than function-level) provenance granularity still
+component-level (rather than function-level) source label still
 leaves one scope-disambiguation gap unresolved.
 
 \section{H2: Does Guided Instrumentation Improve Scenario Focus?}\label{sec:h2}
@@ -795,7 +796,7 @@ not exceeded, by adding source and traces on top of it) shows that the
 reconstructed model is not merely a supplement to source and traces but
 can substitute for both.
 
-This mirrors the H1 finding (\cref{sec:h1-c5}): provenance-aware agent
+This mirrors the H1 finding (\cref{sec:h1-c5}): source-aware agent
 synthesis (C5) is what allows the reconstructed model to retain the
 evidence that makes it useful downstream. The holistic result is a
 genuine, independent cross-validation, obtained from a second measurement
@@ -839,13 +840,14 @@ disclosing any partner-internal implementation specifics.
 
 Four engineers participated in a structured hands-on session, followed by a
 semi-structured interview.
-Each session had four parts: (i) tool installation and setup; (ii) an
-\emph{estimation game} in which the participant first guessed, then used
-the tool to check, several quantitative facts about the codebase;
-(iii) a \emph{scenario exercise} in which the participant used the tool to
-investigate a real, previously-resolved engineering issue; and (iv) a
-wrap-up discussion, including questions about the tool's various diagram
-outputs.
+Each session had four parts. The first was tool installation and setup.
+The second was an \emph{estimation game} in which the participant first
+guessed, then used the tool to check, several quantitative facts about the
+codebase.
+The third was a \emph{scenario exercise} in which the participant used the
+tool to investigate a real, previously-resolved engineering issue.
+The fourth was a wrap-up discussion, including questions about the tool's
+various diagram outputs.
 
 \Cref{tab:renaissance-scale} reports the six estimation-game answers,
 illustrating the scale of the second codebase relative to CPSCore
@@ -985,7 +987,7 @@ consistently positive reception of the dependency and structural diagrams
 diagram's message labelling (directly relevant to the \sysml generation
 stage, \cref{sec:sysml-generation}). The request for inline source/line
 detail on hover is a concrete, low-effort extension of the existing
-\texttt{sourceLineNumber} provenance already carried on \texttt{CppCalls}
+\texttt{sourceLineNumber} detail already carried on \texttt{CppCalls}
 edges (\cref{sec:utility}), and it is noted as future work
 (\cref{sec:future-work}).
 
@@ -1082,7 +1084,8 @@ reconstruction?}
 
 The 13-node, 13-relationship schema described in \cref{tab:node-types,tab:edge-types}
 demonstrates that a typed \ac{PG} can co-locate all artefacts
-required for hybrid reconstruction without loss of provenance.
+required for hybrid reconstruction without losing track of where each
+edge came from.
 Static structure is encoded in \texttt{CppCalls},
 \texttt{CppInherits}, and \texttt{CppContains} edges extracted by
 Renaissance.

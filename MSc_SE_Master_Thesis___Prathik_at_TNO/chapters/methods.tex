@@ -169,9 +169,9 @@ graph.
 \end{table}
 
 The last two labels (\texttt{TraceEvent}, \texttt{Scenario}) are not
-emitted by Renaissance but are added during trace ingestion and
-scenario slicing respectively, demonstrating the additive property of
-the graph representation.
+emitted by Renaissance. They are added later, during trace ingestion and
+scenario slicing, which shows that new information can be added to the graph
+without rebuilding it.
 
 \subsection{Relationship Types}\label{sec:edge-types}
 
@@ -181,7 +181,7 @@ dynamic types.
 \begin{table}[htb]
 \centering
 \caption{Property graph relationship types. Static types are populated
-  by Renaissance; dynamic types are added during trace ingestion.}
+  by Renaissance and dynamic types are added during trace ingestion.}
 \label{tab:edge-types}
 \small
 \begin{tabular}{@{} l l l p{5.5cm} @{}}
@@ -210,13 +210,14 @@ dynamic types.
 \end{tabular}
 \end{table}
 
-The critical distinction between \texttt{CppCalls} and
-\texttt{TRACE\_CALLS} is provenance. The former asserts that a call
-\emph{may} occur (static over-approximation). The latter asserts that
-a call \emph{did} occur during the trace recording (dynamic
-under-approximation).
-The fusion step (\cref{sec:fusion-slicing}) reasons over both types
-simultaneously.
+\texttt{CppCalls} and \texttt{TRACE\_CALLS} differ in \emph{where their
+evidence comes from}. A \texttt{CppCalls} edge says a call \emph{may}
+happen: it is read from the source code, which lists every call that could
+occur. A \texttt{TRACE\_CALLS} edge says a call \emph{did} happen: it is
+recorded from a real run. The static edges therefore tend to over-count
+(they include calls that never fire), and the trace edges tend to
+under-count (they miss calls a given run did not exercise). The fusion step
+(\cref{sec:fusion-slicing}) uses both together.
 
 \section{Agent Skill Architecture}\label{sec:skill-design}
 
@@ -473,8 +474,8 @@ channel ID, or signal slot) rather than by direct function call.
 Graph fusion is the union of static and trace-derived edges in the
 property graph.
 Because both edge types target the same \texttt{CppFunctionDefinition}
-nodes (anchored by qualified name), fusion is a set union over edges
-with provenance tagging:
+nodes (anchored by qualified name), fusion is a set union over edges,
+with each edge tagged by the source it came from (static or dynamic):
 
 \begin{minted}{cypher}
 // Static edges (already present)
@@ -526,8 +527,8 @@ and the skill generates the corresponding \texttt{WHERE} clause.
 The critical property of this approach is that it operates identically
 over static and trace-derived edges (both carry
 \texttt{ClientComponent} and \texttt{ServerComponent} metadata), so
-slicing applies uniformly to the fused graph without distinguishing
-provenance.
+slicing applies uniformly to the fused graph without needing to know
+which source each edge came from.
 This is what makes guided instrumentation (\cref{sec:guided-vs-full})
 work: the slice definition is computed \emph{before} instrumentation
 and used to decide where to place probes, rather than applied as a

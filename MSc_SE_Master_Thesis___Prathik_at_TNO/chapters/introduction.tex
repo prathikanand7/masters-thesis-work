@@ -43,11 +43,12 @@ maintainability and knowledge transfer in complex industrial systems.
 
 This project surfaced a concrete illustration of this class of problem: a
 real, previously-resolved defect on a large industrial \Cpp\ system
-(\cref{sec:scenario-exercise}), in which a stale proxy object, left
-un-freed by a missing reset in connection-handling code, silently stopped
-delivering change-notification events after a service restart.
-The fault was visible only by tracing an implicit event chain that no
-existing interaction model revealed; diagnosing it required manually
+(\cref{sec:scenario-exercise}). A stale proxy object was never freed,
+because a reset call was missing from the connection-handling code. As a
+result, the system silently stopped delivering change-notification events
+after a service restart.
+The fault was visible only by following an implicit chain of events that no
+existing interaction model showed. Diagnosing it meant manually
 reconstructing exactly the kind of model this thesis automates.
 
 The \ac{GDI} project at \ac{TNO}-\ac{ESI} aims to address this problem by using
@@ -78,10 +79,10 @@ Although hybrid static-dynamic approaches have been proposed \cite{labiche:hybri
 cornelissen:systematic}, existing methods primarily use static structure to
 \emph{organise} or contextualise an already-observed trace (\cref{ch:related}).
 They do not actively infer interactions that the trace never captured.
-No existing approach systematically \emph{combines} static structure and runtime
-traces to recover the interactions a trace missed while also using the trace to
-restrict an over-approximate static graph down to only what is relevant to the
-scenario at hand.
+No existing approach systematically \emph{combines} the two directions at once:
+using static structure to recover the interactions a trace missed, and using the
+trace to trim an over-approximate static graph down to only what is relevant to
+the scenario at hand.
 Closing that gap in both directions is the core problem this thesis addresses.
 
 A further complication arises from the publish-subscribe indirection common

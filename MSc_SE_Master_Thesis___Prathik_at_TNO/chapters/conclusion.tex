@@ -81,10 +81,9 @@ A single cross-cutting pattern unifies all four evidence sources
 (\cref{sec:discussion}): \textbf{additional evidence helps exactly when
 the primary evidence source is missing something, and is otherwise
 redundant.}
-Fusion helps on fault paths but not happy paths (H1); diagrams help
-comprehension when traces are incomplete but not when they are already
-sufficient (H3); guided instrumentation improves usability by removing
-what is irrelevant (H2); and practitioners solved a fault-path defect
+Fusion helps on fault paths but not happy paths (H1). Diagrams help comprehension when traces are incomplete but not when they are
+already sufficient (H3). Guided instrumentation improves usability by removing what is irrelevant (H2).
+And practitioners solved a fault-path defect
 using the exact evidence source (static graph) that H1 identifies as
 the recall-preserving complement to incomplete traces.
 This pattern also generates a concrete, falsifiable prediction for
@@ -119,41 +118,39 @@ contributions and three engineering artefacts:
 
 \paragraph{Research contributions.}
 \begin{enumerate}
-  \item \textbf{A provenance-preserving property graph schema} that
-    co-locates static call-graph and runtime trace artefacts in a single
-    \neo graph, tagging each edge by its evidential source (static,
-    dynamic, or both). This schema enables both fusion and slicing to
-    operate on a single data structure without losing traceability
-    (\cref{sec:pg-schema}).
+  \item \textbf{A single property graph} that holds the static call graph
+    and the runtime trace together, and remembers which evidence each
+    interaction came from (static, dynamic, or both). Keeping both in one
+    place lets fusion and slicing work over the same data without losing
+    track of where each edge originated (\cref{sec:pg-schema}).
 
-  \item \textbf{A scope-based graph slicing algorithm} adapted to
-    heterogeneous property graphs mixing static and dynamic edges,
-    enabling scenario-specific filtering without re-running the analysis
-    from scratch (\cref{sec:fusion-slicing}).
+  \item \textbf{A slicing method} that trims this combined graph down to
+    just the interactions relevant to one scenario, without re-running the
+    analysis from scratch (\cref{sec:fusion-slicing}).
 
-  \item \textbf{An empirical characterisation} of when hybrid synthesis
-    helps and when it does not: fusion is protective on fault paths and
-    additive under cross-source indirection boundaries (H1); guided
-    instrumentation eliminates noise without coverage loss (H2); and
-    reconstructed diagrams improve downstream comprehension specifically
-    when runtime evidence is suppressed (H3).
+  \item \textbf{A clear, evidence-based account} of when combining static
+    and dynamic analysis actually helps and when it does not. Fusion
+    protects fault paths and adds new interactions at indirection
+    boundaries (H1). Guided instrumentation removes noise without losing
+    coverage (H2). And reconstructed diagrams help comprehension
+    specifically when the trace is missing something (H3).
 \end{enumerate}
 
 \paragraph{Engineering artefacts.}
 \begin{enumerate}\setcounter{enumi}{3}
-  \item A \textbf{pattern-based AST instrumentation tool}
-    (\texttt{csp\_matcher}) enabling reproducible and reversible trace
-    probe injection via a declarative find/replace language
+  \item A \textbf{small, reversible instrumentation tool}
+    (\texttt{csp\_matcher}) that inserts and removes trace probes
+    automatically, driven by a simple find/replace specification
     (\cref{sec:csp-matcher}).
 
-  \item A \textbf{composable agent skill architecture} (twelve skills)
-    orchestrating the full pipeline from source to \sysml\ via
-    natural-language queries, requiring no code changes when switching
-    target codebases (\cref{sec:skill-design}).
+  \item A \textbf{set of twelve natural-language agent skills} that run the
+    whole pipeline, from source code to \sysml\ diagram, on any codebase
+    without code changes (\cref{sec:skill-design}).
 
-  \item A \textbf{publish-subscribe topology recovery strategy} resolving
-    implicit callback routing by matching subscription and publication
-    call sites by channel identifier (\cref{sec:macro-resolution}).
+  \item A \textbf{way to recover publish-subscribe wiring} that ordinary
+    call-graph analysis cannot see, by matching subscription and
+    publication call sites that share the same channel identifier
+    (\cref{sec:macro-resolution}).
 \end{enumerate}
 
 \section{Limitations \& Threats to Validity}
@@ -170,16 +167,18 @@ The practitioner session on an industrial-scale codebase
 (\cref{sec:practitioner}) provides encouraging qualitative evidence of
 transfer, but does not substitute for a controlled replication.
 
-The H3 experiment used the same LLM family to both synthesise the C5
-diagram and perform the downstream comprehension task, introducing a
-potential generator--consumer circularity.
+The H3 experiment used the same LLM family both to generate the C5 diagram
+and to carry out the comprehension task that judged it. Because the same
+model plays both roles, the two are not fully independent (a
+generator--consumer circularity).
 The H2 six-rater panel preserved effect direction on every dimension,
 but a larger sample would strengthen confidence in magnitude.
 Ground-truth diagrams are inherently subjective, and the evaluation
 metric does not capture temporal ordering accuracy.
 
-A complete discussion of threats to validity, including researcher degrees
-of freedom identified and corrected during H1/H2, is given in
+A complete discussion of threats to validity, including the researcher
+degrees of freedom (the analysis choices that could have biased the result)
+identified and corrected during H1/H2, is given in
 \cref{ch:analysis}.
 
 \section{Future Work}\label{sec:future-work}
@@ -200,12 +199,12 @@ Several directions are open for future investigation:
 
   \item[Diagram labelling and interactivity.]
     The practitioner interviews (\cref{sec:interview-findings})
-    independently converged on two concrete requests: (i) richer, less
-    abstract event/message labels on sequence diagrams (\eg inline
-    source class and line number on hover); and (ii) interactive
-    exploration (search, filter, collapse/expand) rather than static,
-    one-shot diagrams. Both are natural extensions of provenance data the
-    pipeline already carries (\cref{sec:utility}).
+    independently converged on two concrete requests. The first was
+    richer, less abstract event/message labels on sequence diagrams
+    (\eg inline source class and line number on hover). The second was
+    interactive exploration (search, filter, collapse/expand) rather than
+    static, one-shot diagrams. Both are natural extensions of the
+    source-location data the pipeline already carries (\cref{sec:utility}).
 
   \item[Temporal ordering accuracy.]
     The current evaluation abstracts over message ordering.

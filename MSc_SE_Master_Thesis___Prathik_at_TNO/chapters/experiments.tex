@@ -432,10 +432,10 @@ boundary where static analysis and runtime tracing each miss a
     \emph{Reference interactions:} 2 (stream, onStageEvent).
 \end{description}
 
-S4 is marked as constructed rather than found-in-the-wild: its ground
-truth was authored from the new source files directly; its dynamic trace
+S4 is marked as constructed rather than found-in-the-wild. Its ground
+truth was authored from the new source files directly. Its dynamic trace
 was captured by actually running the accompanying Catch2 test in the same
-instrumented environment as S1--S3; and its C1/C5 conditions are genuine,
+instrumented environment as S1--S3. And its C1/C5 conditions are genuine,
 unedited Azure OpenAI responses. It is reported and stratified separately
 from S1--S3 throughout \cref{sec:h1}, never folded silently into the
 happy-path numbers, for exactly this reason.

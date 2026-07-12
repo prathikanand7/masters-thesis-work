@@ -37,9 +37,18 @@ approach transferred well: structural and dependency diagrams were rated
 consistently useful, and sequence-diagram message labelling was identified
 as the clearest area for improvement.
 
-The main contributions are: (i)~a provenance-preserving property-graph
-schema unifying static and trace artefacts; (ii)~a scope-based slicing
-algorithm for heterogeneous graphs; (iii)~a reversible, AST-level
-instrumentation tool (\texttt{csp\_matcher}) for reproducible trace
-collection; and (iv)~an empirical account of when hybrid synthesis is worth
-its added complexity and when it is not.
+The main contributions are as follows.
+(i)~A single property graph that holds the static call graph and the
+runtime trace together, remembering which evidence each interaction came
+from.
+(ii)~A slicing method that trims this combined graph down to just the
+interactions relevant to one scenario.
+(iii)~A way to recover publish-subscribe wiring that ordinary call-graph
+analysis cannot see.
+(iv)~A small, reversible tool (\texttt{csp\_matcher}) that inserts and
+removes trace probes automatically.
+(v)~A set of twelve natural-language agent skills that run the whole
+pipeline, from source code to \sysml diagram, on any codebase without code
+changes.
+(vi)~A clear, evidence-based account of when combining static and dynamic
+analysis actually helps and when it does not.

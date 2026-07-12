@@ -1,0 +1,18 @@
+sequenceDiagram
+  %% C5 full-pipeline reconstruction — S2
+  participant Configuration
+  participant Logging
+  Configuration->>Logging: stream
+  Note right of Logging: from PropertyMapper.add; corroborated by static and dynamic
+  Configuration->>Logging: stream
+  Note right of Logging: from PropertyMapper.add; corroborated by static and dynamic
+  Configuration->>Logging: stream
+  Note right of Logging: from PropertyMapper.addEigen; corroborated by static and dynamic
+  Configuration->>Logging: stream
+  Note right of Logging: from PropertyMapper.addEnum; corroborated by static and dynamic
+  Configuration->>Logging: stream
+  Note right of Logging: from PropertyMapper.addVector; corroborated by static and dynamic
+  Configuration->>Logging: stream
+  Note right of Logging: from PropertyMapper.getChild; corroborated by static and dynamic
+  Configuration->>Logging: stream
+  Note right of Logging: from PropertyMapper.mandatoryCheck; corroborated by static and dynamic

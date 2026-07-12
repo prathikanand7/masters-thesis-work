@@ -1,0 +1,42 @@
+flowchart TD
+  subgraph AggregationDir["src/Aggregation"]
+    direction TB
+    AggregatorCleanUp["Aggregator::cleanUp() - (line 62)"]
+  end
+
+  subgraph SynchronizationDir["src/Synchronization"]
+    direction TB
+    RunSynchronized["SynchronizedRunner::runSynchronized() - (line 78)"]
+    Stop70["MultiThreadingScheduler::stop() - (line 70)"]
+    Stop73["MultiThreadingScheduler::stop() - (line 73)"]
+    Stop81["MultiThreadingScheduler::stop() - (line 81)"]
+    Stop84["MultiThreadingScheduler::stop() - (line 84)"]
+  end
+
+  subgraph UtilitiesDir["src/Utilities"]
+    direction TB
+    SerialHandlerCtor["SerialHandler::SerialHandler() - (line 38)"]
+    IPCSigintHandler["IPC::sigintHandler() - (line 152)"]
+    SigIntHandler["sigIntHandler() - (line 14)"]
+  end
+
+  subgraph UtilitiesAPI["src/Utilities API"]
+    direction TB
+    SHGetInstance["SignalHandlerSingleton::getInstance()"]
+    CPSLoggerInstance["CPSLogger::instance()"]
+  end
+
+  AggregatorCleanUp --> SHGetInstance
+  RunSynchronized --> CPSLoggerInstance
+  SerialHandlerCtor --> CPSLoggerInstance
+  IPCSigintHandler --> CPSLoggerInstance
+  Stop70 --> CPSLoggerInstance
+  Stop73 --> CPSLoggerInstance
+  Stop81 --> CPSLoggerInstance
+  Stop84 --> CPSLoggerInstance
+  SigIntHandler --> CPSLoggerInstance
+
+  classDef caller fill:#34495e,stroke:#7f8c8d,stroke-width:1px,color:#ecf0f1
+  classDef callee fill:#27ae60,stroke:#229954,stroke-width:2px,color:#fff
+  class AggregatorCleanUp,RunSynchronized,Stop70,Stop73,Stop81,Stop84,SerialHandlerCtor,IPCSigintHandler,SigIntHandler caller
+  class SHGetInstance,CPSLoggerInstance callee

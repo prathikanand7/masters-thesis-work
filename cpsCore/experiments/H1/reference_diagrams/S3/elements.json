@@ -1,0 +1,5 @@
+[
+  {"source": "Synchronization", "target": "Aggregation", "interaction": "Aggregator.getAll"},
+  {"source": "Synchronization", "target": "Logging",     "interaction": "RAIILogStream.stream"},
+  {"source": "Synchronization", "target": "Utilities",  "interaction": "EnumMap.convert"}
+]

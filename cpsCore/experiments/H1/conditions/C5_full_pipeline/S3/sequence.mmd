@@ -1,0 +1,14 @@
+sequenceDiagram
+  %% C5 full-pipeline reconstruction — S3
+  participant Synchronization
+  participant Aggregation
+  participant Logging
+  participant Utilities
+  Synchronization->>Aggregation: getAll
+  Synchronization->>Logging: stream
+  Synchronization->>Utilities: convert
+  Synchronization->>Logging: stream
+  Synchronization->>Utilities: convert
+  Synchronization->>Logging: stream
+  Synchronization->>Logging: flush
+  Note right of Logging: static-only; likely suppressed at runtime (e.g., flush occurs on shutdown or specific log policy/log level)

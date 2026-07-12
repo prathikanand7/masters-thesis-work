@@ -1,0 +1,4 @@
+[
+  {"source": "Synchronization", "target": "Logging",     "interaction": "RAIILogStream.stream"},
+  {"source": "Synchronization", "target": "Aggregation", "interaction": "StageEventListener.onStageEvent"}
+]

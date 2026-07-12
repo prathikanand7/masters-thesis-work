@@ -1,0 +1,12 @@
+1. Components involved
+- Configuration
+- Logging
+
+2. Interactions
+- Configuration → Logging : CPSLOG_TRACE
+- Configuration → Logging : CPSLOG_ERROR
+- Configuration → Logging : CPSLogger::instance
+- Configuration → Logging : RAIILogStream::stream
+
+3. Execution flow
+- PropertyMapper methods in the Configuration component access properties and, on each operation, emit log messages via the Logging component. When add or addEnum finds a value, it assigns it and logs a trace using CPSLOG_TRACE, which internally creates a RAIILogStream tied to CPSLogger::instance() and writes via its stream. If a mandatory value is missing, getChild and mandatoryCheck log an error using CPSLOG_ERROR (also via RAIILogStream::stream on the CPSLogger singleton). Thus, every path that reads or validates properties results in a corresponding Logging interaction.

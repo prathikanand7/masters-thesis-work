@@ -1,0 +1,7 @@
+EventTimestamp|EventName|ClientComponent|ClientFunction|ServerComponent|ServerFunction|RelationshipType|InterfaceNames
+2026-06-18T10:07:15.688645Z|Aggregator.getAll|Synchronization|SimpleRunner.runStage|Aggregation|Aggregator.getAll|Command|Aggregator
+2026-06-18T10:07:15.689645Z|RAIILogStream.stream|Synchronization|SimpleRunner.runStage|Logging|RAIILogStream.stream|Command|RAIILogStream
+2026-06-18T10:07:15.690645Z|EnumMap.convert|Synchronization|SimpleRunner.runStage|Utilities|EnumMap.convert|Command|EnumMap
+2026-06-18T10:07:15.691645Z|RAIILogStream.stream|Synchronization|SimpleRunner.runStages|Logging|RAIILogStream.stream|Command|RAIILogStream
+2026-06-18T10:07:15.692645Z|EnumMap.convert|Synchronization|SimpleRunner.runStages|Utilities|EnumMap.convert|Command|EnumMap
+2026-06-18T10:07:15.697645Z|RAIILogStream.stream|Synchronization|SynchronizedRunnerMaster.runAllStages|Logging|RAIILogStream.stream|Command|RAIILogStream

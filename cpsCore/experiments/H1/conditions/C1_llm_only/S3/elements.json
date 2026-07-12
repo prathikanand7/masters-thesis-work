@@ -1,0 +1,22 @@
+[
+  {
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "RetrieveRunnableObjects"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "LogError"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "LogStageProgress"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Utilities",
+    "interaction": "RunStageToString"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "requestAggregatableRunnables"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "requestSynchronizedRunnables"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "triggerAggregationUpdate"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "logEvent"
+  }
+]

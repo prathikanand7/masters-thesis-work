@@ -1,0 +1,14 @@
+{
+  "components": [
+    "Configuration",
+    "Logging"
+  ],
+  "interactions": [
+    {
+      "source": "Configuration",
+      "target": "Logging",
+      "interaction": "RAIILogStream.stream"
+    }
+  ],
+  "reference_explanation": "PropertyMapper (Configuration component) validates and maps configuration properties at startup. Every property-mapping method \u2014 add, addEnum, addEigen, addVector, getChild, and mandatoryCheck \u2014 emits a diagnostic via CPSLOG_TRACE or CPSLOG_ERROR, which expands to a RAIILogStream.stream call in the Logging component. The sole cross-component interaction is Configuration \u2192 Logging via RAIILogStream.stream; no other components are involved in this scenario."
+}

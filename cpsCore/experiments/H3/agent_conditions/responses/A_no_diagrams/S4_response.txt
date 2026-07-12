@@ -1,0 +1,12 @@
+1. Components:
+- Synchronization
+- Aggregation
+
+2. Interactions:
+- Aggregation → Synchronization : subscribeStage
+- Synchronization → Aggregation : onStageEvent
+
+3. Execution flow:
+- The Aggregation-side StageEventListener attaches to the Synchronization-side StageEventBridge by calling subscribeStage, registering its onStageEvent as a slot. 
+- Later, StageEventBridge.publishStage is invoked; because a listener is connected, the bridge emits its boost::signals2 signal. 
+- This runtime signal dispatch invokes StageEventListener.onStageEvent in the Aggregation component, as confirmed by the trace showing Synchronization → Aggregation : onStageEvent.

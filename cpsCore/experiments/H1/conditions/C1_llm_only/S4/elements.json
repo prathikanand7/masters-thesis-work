@@ -1,0 +1,17 @@
+[
+  {
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "FetchRunnableObjects"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "Flush"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "LogTimeoutError"
+  }
+]

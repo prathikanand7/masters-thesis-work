@@ -1,0 +1,13 @@
+1) Components
+- Synchronization
+- Aggregation
+- Logging
+
+2) Interactions
+- Synchronization → Aggregation : getAll
+- Synchronization → Logging : flush
+- Synchronization → Logging : instance
+- Synchronization → Logging : stream
+
+3) Execution flow explanation
+Synchronization is the active component and initiates all interactions in this scenario. It calls Aggregation.getAll, indicating it retrieves aggregated data. Synchronization also interacts with Logging via instance and stream (to obtain and use logging facilities) and calls flush to commit the logged output. No interactions originate from Aggregation or Logging, and no calls are shown between Aggregation and Logging; the diagram does not specify the exact invocation order beyond these edges.

@@ -1,0 +1,16 @@
+[
+  {
+    "step": 1,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "onStageEvent",
+    "note": "indirect dispatch via boost::signals2 from StageEventBridge.publishStage; dynamic-only, no static call site"
+  },
+  {
+    "step": 2,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": "fault path: error log when no listener attached; static-only, suppressed at runtime by LogLevel::NONE"
+  }
+]

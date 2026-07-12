@@ -1,0 +1,12 @@
+1. Components
+- Configuration
+- Logging
+
+2. Interactions
+- Configuration → Logging : stream
+
+3. Execution flow
+- The flow begins in the Configuration component.
+- Configuration invokes the stream method on the Logging component.
+- This results in the Logging component executing its stream method.
+- No additional interactions are shown; the flow is a single, unidirectional call from Configuration to Logging.

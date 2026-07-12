@@ -1,0 +1,17 @@
+1) Components
+- Synchronization
+- Aggregation
+- Logging
+- Utilities
+
+2) Interactions
+- Synchronization → Aggregation : getAll
+- Synchronization → Logging : stream
+- Synchronization → Utilities : convert
+- Synchronization → Logging : flush
+
+3) Execution flow
+- The Synchronization module orchestrates the run, first invoking Aggregation.getAll to retrieve aggregated data. 
+- It then emits log output via Logging.stream and performs a type/enum transformation via Utilities.convert during SimpleRunner.runStage. 
+- As control progresses through higher-level orchestration (SimpleRunner.runStages and SynchronizedRunnerMaster.runAllStages), Synchronization makes additional calls to Logging.stream and Utilities.convert. 
+- The component analysis also shows that Synchronization can call Logging.flush, a statically visible interaction not exercised in this particular runtime slice.

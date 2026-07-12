@@ -1,0 +1,12 @@
+1. Components:
+- Synchronization
+- Aggregation
+- Logging
+
+2. Interactions:
+- Synchronization → Aggregation : Aggregator.getAll
+- Synchronization → Logging : CPSLogger.instance
+- Synchronization → Logging : CPSLogger.flush
+
+3. Execution flow:
+The Synchronization component, via SynchronizedRunner.runSynchronized, initiates a command to the Aggregation component to execute Aggregator.getAll. Following that, still within the synchronized run, Synchronization commands the Logging component to obtain a CPSLogger instance. Finally, Synchronization commands Logging to flush via CPSLogger.flush. The events occur sequentially as shown by the timestamps.

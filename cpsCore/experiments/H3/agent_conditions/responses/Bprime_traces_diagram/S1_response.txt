@@ -1,0 +1,13 @@
+1. Components:
+- Synchronization
+- Aggregation
+- Logging
+
+2. Interactions:
+- Synchronization → Aggregation : getAll
+- Synchronization → Logging : stream
+- Synchronization → Logging : flush
+- Synchronization → Logging : instance
+
+3. Execution flow:
+The Synchronization component orchestrates runner execution and issues Aggregation.getAll to retrieve aggregated data during update notifications and stage runs. Throughout these runs, Synchronization performs logging via Logging.stream across various runner methods (e.g., SimpleRunner and SynchronizedRunnerMaster). During SynchronizedRunner.runSynchronized, Synchronization again calls Aggregation.getAll, then interacts with the logging subsystem by invoking Logging.flush and obtaining the logger via Logging.instance. Additional Logging.stream calls accompany constructor and stage-level operations in the master runner.

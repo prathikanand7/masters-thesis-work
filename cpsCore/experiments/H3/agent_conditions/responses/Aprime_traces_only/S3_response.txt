@@ -1,0 +1,16 @@
+1) Components
+- Synchronization
+- Aggregation
+- Logging
+- Utilities
+
+2) Interactions
+- Synchronization → Aggregation : Aggregator.getAll
+- Synchronization → Logging : RAIILogStream.stream
+- Synchronization → Utilities : EnumMap.convert
+- Synchronization → Logging : RAIILogStream.stream
+- Synchronization → Utilities : EnumMap.convert
+- Synchronization → Logging : RAIILogStream.stream
+
+3) Execution flow
+The Synchronization component’s SimpleRunner.runStage first issues Aggregation.Aggregator.getAll, then performs Logging.RAIILogStream.stream and Utilities.EnumMap.convert. Next, within SimpleRunner.runStages, Synchronization performs another log via Logging.RAIILogStream.stream followed by another Utilities.EnumMap.convert. Finally, during SynchronizedRunnerMaster.runAllStages, Synchronization emits an additional log through Logging.RAIILogStream.stream. This sequence shows a stage execution that fetches aggregation data, logs progress, converts enums, then repeats logging and conversion at a higher orchestration level, with a final log at the master orchestration level.

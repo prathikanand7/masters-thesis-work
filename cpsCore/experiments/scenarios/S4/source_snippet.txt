@@ -1,0 +1,88 @@
+```plaintext
+// === StageEventBridge.h / .cpp (include/cpsCore/Synchronization/, src/Synchronization/) ===
+// Component: Synchronization
+// NEW production code, added specifically to construct scenario S4.
+
+class StageEventBridge
+{
+public:
+    using OnStageComplete = boost::signals2::signal<void(RunStage)>;
+
+    void publishStage(RunStage stage)
+    {
+        if (stageComplete_.num_slots() == 0)
+        {
+            CPSLOG_ERROR << "StageEventBridge: no listener connected for stage "
+                         << EnumMap<RunStage>::convert(stage);
+            // ^^^--- Logging: RAIILogStream.stream
+            // Source-visible (static analysis sees this call unconditionally).
+            // Suppressed at runtime by CPSLogger::LogLevelScope(LogLevel::NONE)
+            // in the test's fault-path branch.
+            return;
+        }
+
+        stageComplete_(stage);
+        // ^^^--- boost::signals2 signal invocation.
+        // Static call graph sees ONLY this signal-object call, never a direct
+        // edge to any connected slot (e.g. StageEventListener::onStageEvent).
+        // The Aggregation-side handler is only observable by RUNTIME trace.
+    }
+
+    boost::signals2::connection
+    subscribeStage(const OnStageComplete::slot_type& slot)
+    {
+        return stageComplete_.connect(slot);
+    }
+
+private:
+    OnStageComplete stageComplete_;
+};
+
+// === StageEventListener.h / .cpp (include/cpsCore/Aggregation/, src/Aggregation/) ===
+// Component: Aggregation
+// NEW production code, added specifically to construct scenario S4.
+
+class StageEventListener
+{
+public:
+    void attachTo(StageEventBridge& bridge)
+    {
+        connection_ = bridge.subscribeStage(
+                std::bind(&StageEventListener::onStageEvent, this, std::placeholders::_1));
+        // ^^^--- static edge: Aggregation -> Synchronization : subscribeStage
+        // (this direction IS statically visible; it's the REVERSE direction,
+        //  Synchronization -> Aggregation : onStageEvent, that is not)
+    }
+
+    void onStageEvent(RunStage stage)
+    {
+        lastStage_ = stage;
+        CPSLOG_DEBUG << "StageEventListener received stage " << EnumMap<RunStage>::convert(stage);
+        // Only ever invoked via the signals2 slot mechanism at runtime.
+        // No static caller of this function exists anywhere in the codebase.
+    }
+
+private:
+    RunStage lastStage_ = RunStage::SYNCHRONIZE;
+    boost::signals2::connection connection_;
+};
+
+// === StageEventBridgeTest.cpp (tests/Synchronization/) ===
+// Runtime driver: exercises both gaps in a single test case.
+
+TEST_CASE("Stage Event Bridge Pub-Sub Routing")
+{
+    StageEventBridge bridge;
+
+    {
+        CPSLogger::LogLevelScope log(LogLevel::NONE);
+        bridge.publishStage(RunStage::INIT);   // fault path: stream suppressed
+    }
+
+    StageEventListener listener;
+    listener.attachTo(bridge);
+    bridge.publishStage(RunStage::NORMAL);      // dynamic-only path: onStageEvent fires
+
+    CHECK(listener.getLastStage() == RunStage::NORMAL);
+}
+```

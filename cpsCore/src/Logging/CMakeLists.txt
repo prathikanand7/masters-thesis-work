@@ -1,0 +1,4 @@
+set(CORE_SRCS 	${CORE_SRCS}
+				${CMAKE_CURRENT_SOURCE_DIR}/CPSLogger.cpp
+				PARENT_SCOPE)
+

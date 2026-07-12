@@ -1,0 +1,9 @@
+scenario,variant,nodes,edges,interactions,TP,FP,FN,coverage,noise
+S1,full,6,7,9,4,5,0,1.0,0.556
+S1,guided,3,2,4,4,0,0,1.0,0.0
+S2,full,6,7,9,1,8,0,1.0,0.889
+S2,guided,2,1,1,1,0,0,1.0,0.0
+S3,full,6,7,9,3,6,0,1.0,0.667
+S3,guided,4,3,3,3,0,0,1.0,0.0
+S4,full,6,7,10,2,8,0,1.0,0.8
+S4,guided,2,1,1,1,0,1,0.5,0.0

@@ -1,0 +1,14 @@
+1) Components
+- Synchronization
+- Aggregation
+- Logging
+- Utilities
+
+2) Interactions
+- Synchronization → Aggregation : getAll
+- Synchronization → Logging : flush
+- Synchronization → Logging : stream
+- Synchronization → Utilities : convert
+
+3) Execution flow
+Synchronization is the sole initiator, invoking operations on other modules. It retrieves aggregated information from Aggregation via getAll, performs data transformation via Utilities.convert, and emits log output using Logging.stream, finalizing logging with Logging.flush. The diagram does not specify the temporal order or data dependencies among these calls. No components other than Synchronization initiate interactions in this scenario.

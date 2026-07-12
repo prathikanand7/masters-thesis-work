@@ -1,0 +1,18 @@
+1) Components
+- Configuration
+- Logging
+
+2) Interactions
+- Configuration → Logging : RAIILogStream.stream
+- Configuration → Logging : RAIILogStream.stream
+- Configuration → Logging : RAIILogStream.stream
+- Configuration → Logging : RAIILogStream.stream
+- Configuration → Logging : RAIILogStream.stream
+- Configuration → Logging : RAIILogStream.stream
+- Configuration → Logging : RAIILogStream.stream
+
+3) Execution flow
+- Methods in Configuration::PropertyMapper (add, addEnum, addEigen, addVector, getChild, mandatoryCheck) are invoked in sequence. 
+- Each of these methods emits a log via the CPSLOG_* macros, which construct a RAIILogStream and call its stream method in the Logging component.
+- The runtime trace records seven consecutive invocations of Logging::RAIILogStream.stream originating from those PropertyMapper methods. 
+- When keys are present, add/addEnum log trace messages; when mandatory keys are missing, getChild/mandatoryCheck log errors, all via the same RAIILogStream.stream interface.

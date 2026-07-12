@@ -1,0 +1,12 @@
+[
+  {
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "onStageEvent"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream"
+  }
+]

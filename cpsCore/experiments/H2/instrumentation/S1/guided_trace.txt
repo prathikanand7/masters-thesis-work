@@ -1,0 +1,12 @@
+EventTimestamp|EventName|ClientComponent|ClientFunction|ServerComponent|ServerFunction|RelationshipType|InterfaceNames
+2026-06-18T10:07:15.686645Z|Aggregator.getAll|Synchronization|AggregatableRunner.notifyAggregationOnUpdate|Aggregation|Aggregator.getAll|Command|Aggregator
+2026-06-18T10:07:15.687645Z|RAIILogStream.stream|Synchronization|SimpleRunner.runAllStages|Logging|RAIILogStream.stream|Command|RAIILogStream
+2026-06-18T10:07:15.688645Z|Aggregator.getAll|Synchronization|SimpleRunner.runStage|Aggregation|Aggregator.getAll|Command|Aggregator
+2026-06-18T10:07:15.689645Z|RAIILogStream.stream|Synchronization|SimpleRunner.runStage|Logging|RAIILogStream.stream|Command|RAIILogStream
+2026-06-18T10:07:15.691645Z|RAIILogStream.stream|Synchronization|SimpleRunner.runStages|Logging|RAIILogStream.stream|Command|RAIILogStream
+2026-06-18T10:07:15.693645Z|Aggregator.getAll|Synchronization|SynchronizedRunner.runSynchronized|Aggregation|Aggregator.getAll|Command|Aggregator
+2026-06-18T10:07:15.694645Z|CPSLogger.flush|Synchronization|SynchronizedRunner.runSynchronized|Logging|CPSLogger.flush|Command|CPSLogger
+2026-06-18T10:07:15.695645Z|CPSLogger.instance|Synchronization|SynchronizedRunner.runSynchronized|Logging|CPSLogger.instance|Command|CPSLogger
+2026-06-18T10:07:15.696645Z|RAIILogStream.stream|Synchronization|SynchronizedRunnerMaster.SynchronizedRunnerMaster|Logging|RAIILogStream.stream|Command|RAIILogStream
+2026-06-18T10:07:15.697645Z|RAIILogStream.stream|Synchronization|SynchronizedRunnerMaster.runAllStages|Logging|RAIILogStream.stream|Command|RAIILogStream
+2026-06-18T10:07:15.698645Z|RAIILogStream.stream|Synchronization|SynchronizedRunnerMaster.runStage|Logging|RAIILogStream.stream|Command|RAIILogStream

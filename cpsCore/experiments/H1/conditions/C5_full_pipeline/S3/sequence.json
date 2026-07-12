@@ -1,0 +1,51 @@
+[
+  {
+    "step": 1,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll",
+    "note": ""
+  },
+  {
+    "step": 2,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": ""
+  },
+  {
+    "step": 3,
+    "source": "Synchronization",
+    "target": "Utilities",
+    "interaction": "convert",
+    "note": ""
+  },
+  {
+    "step": 4,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": ""
+  },
+  {
+    "step": 5,
+    "source": "Synchronization",
+    "target": "Utilities",
+    "interaction": "convert",
+    "note": ""
+  },
+  {
+    "step": 6,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": ""
+  },
+  {
+    "step": 7,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush",
+    "note": "static-only; likely suppressed at runtime (e.g., flush occurs on shutdown or specific log policy/log level)"
+  }
+]

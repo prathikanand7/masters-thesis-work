@@ -1,0 +1,13 @@
+1. Components:
+- Synchronization
+- Aggregation
+- Logging
+- Utilities
+
+2. Interactions:
+- Synchronization → Aggregation : getAll
+- Synchronization → Logging : stream
+- Synchronization → Utilities : convert
+
+3. Execution flow:
+SimpleRunner::runStages (Synchronization) iterates through the provided stages, logging each via Logging::RAIILogStream.stream and converting the stage enum to a string with Utilities::EnumMap.convert. For each stage, it calls SimpleRunner::runStage. In runStage, it again logs and converts the stage, then queries Aggregation::Aggregator.getAll to retrieve IRunnableObject instances and executes them, aggregating any error state. The trace also shows SynchronizedRunnerMaster.runAllStages (Synchronization) emitting a Logging::RAIILogStream.stream call at a higher orchestration level. According to the code, if runStage reports an error, runStages logs an error and aborts; otherwise it completes successfully.

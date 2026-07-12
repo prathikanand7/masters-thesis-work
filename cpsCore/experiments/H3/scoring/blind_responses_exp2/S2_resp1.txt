@@ -1,0 +1,12 @@
+1. Components
+- Configuration
+- Logging
+
+2. Interactions
+- Configuration → Logging : RAIILogStream.stream
+
+3. Execution flow
+- The Configuration component, through its PropertyMapper functions (add, addEigen, addEnum, addVector, getChild, and mandatoryCheck), issues a series of commands to the Logging component.
+- Each step invokes Logging’s RAIILogStream.stream via the RAIILogStream interface, as shown by the runtime trace for each PropertyMapper action.
+- The component interaction diagram corroborates this single cross-component interaction (Configuration → Logging : RAIILogStream.stream), and no other components participate.
+- The sequence proceeds in timestamp order from add through mandatoryCheck, with a logging stream operation occurring at each stage.

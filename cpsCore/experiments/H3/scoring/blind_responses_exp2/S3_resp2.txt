@@ -1,0 +1,13 @@
+1) Components
+- Synchronization
+- Aggregation
+- Logging
+- Utilities
+
+2) Interactions
+- Synchronization → Aggregation : getAll
+- Synchronization → Logging : stream
+- Synchronization → Utilities : convert
+
+3) Execution flow
+During Synchronization’s SimpleRunner.runStage, it invokes Aggregation’s getAll, then issues a log via Logging.stream and performs a conversion via Utilities.convert. In the subsequent SimpleRunner.runStages phase, Synchronization again calls Logging.stream and Utilities.convert. Finally, during SynchronizedRunnerMaster.runAllStages, Synchronization performs another Logging.stream. These three interaction types (getAll, stream, convert) are exactly those shown in the component interaction diagram, matching the runtime trace.

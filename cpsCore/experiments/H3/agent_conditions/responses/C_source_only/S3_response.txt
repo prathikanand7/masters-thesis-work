@@ -1,0 +1,15 @@
+1) Components involved
+- Synchronization
+- Logging
+- Aggregation
+- Utilities
+
+2) Interactions
+- Synchronization → Logging : stream
+- Synchronization → Utilities : convert
+- Synchronization → Aggregation : getAll
+
+3) Execution flow
+- runStages iterates over the given stages, logging a debug message for each by streaming to the Logging component and converting the stage enum to a string via Utilities. It calls runStage for each stage and, if runStage returns true, logs an error and returns true (indicating failure). 
+- runStage logs the stage, retrieves all IRunnableObject instances from the Aggregation component via getAll, and invokes run(stage) on each. If any object’s run returns true, runStage marks an error and finally returns true; otherwise it returns false. 
+- Thus, Logging is used for debug/error messages, Utilities for enum-to-string conversion, and Aggregation for obtaining the runnable objects to execute.

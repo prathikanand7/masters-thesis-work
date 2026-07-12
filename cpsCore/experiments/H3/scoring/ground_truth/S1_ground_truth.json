@@ -1,0 +1,30 @@
+{
+  "components": [
+    "Aggregation",
+    "Logging",
+    "Synchronization"
+  ],
+  "interactions": [
+    {
+      "source": "Synchronization",
+      "target": "Aggregation",
+      "interaction": "Aggregator.getAll"
+    },
+    {
+      "source": "Synchronization",
+      "target": "Logging",
+      "interaction": "RAIILogStream.stream"
+    },
+    {
+      "source": "Synchronization",
+      "target": "Logging",
+      "interaction": "CPSLogger.flush"
+    },
+    {
+      "source": "Synchronization",
+      "target": "Logging",
+      "interaction": "CPSLogger.instance"
+    }
+  ],
+  "reference_explanation": "SynchronizedRunner.runSynchronized (Synchronization) first fetches all runnable objects from the Aggregator via Aggregator.getAll (Aggregation). After executing each run stage it synchronises stdout by calling CPSLogger::instance() to obtain the logger singleton and then calling CPSLogger::flush() to flush buffered output (both in Logging). Progress is additionally logged via RAIILogStream.stream (Logging) through CPSLOG_DEBUG/CPSLOG_ERROR macros in the surrounding runner chain. The primary driver is Synchronization; Aggregation provides the object list; Logging receives all diagnostic output."
+}

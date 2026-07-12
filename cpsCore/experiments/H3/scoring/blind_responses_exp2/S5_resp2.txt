@@ -1,0 +1,9 @@
+1) Components
+- Framework
+- Logging
+
+2) Interactions
+- Framework → Logging : stream
+
+3) Execution flow
+- The provided runtime trace contains no events, so observable runtime interactions are absent in this slice. However, the component interaction diagram shows that the Framework component invokes the stream method on the Logging component. This indicates that Framework emits log output via Logging.stream during execution. No other components or interactions are evidenced by the available data.

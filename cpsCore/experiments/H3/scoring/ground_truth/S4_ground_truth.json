@@ -1,0 +1,20 @@
+{
+  "components": [
+    "Aggregation",
+    "Logging",
+    "Synchronization"
+  ],
+  "interactions": [
+    {
+      "source": "Synchronization",
+      "target": "Logging",
+      "interaction": "RAIILogStream.stream"
+    },
+    {
+      "source": "Synchronization",
+      "target": "Aggregation",
+      "interaction": "StageEventListener.onStageEvent"
+    }
+  ],
+  "reference_explanation": "StageEventBridge::publishStage (Synchronization) is new, purpose-built production code that publishes a stage-completion event over a boost::signals2::signal. If no listener is connected, it emits CPSLOG_ERROR, calling RAIILogStream.stream (Logging) \u2014 a call that is source-visible but suppressed at runtime by CPSLogger::LogLevelScope(LogLevel::NONE). When a listener IS connected, publishStage instead invokes the signal directly, which StageEventListener::onStageEvent (Aggregation) receives as a connected slot \u2014 this dispatch has no static call site anywhere in the codebase and is only observable via runtime trace. S4 is therefore the one scenario where static analysis and runtime tracing are each blind to a different interaction (stream vs. onStageEvent respectively), rather than one being a strict subset of the other. Primary driver: Synchronization."
+}

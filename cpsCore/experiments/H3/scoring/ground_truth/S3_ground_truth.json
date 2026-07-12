@@ -1,0 +1,26 @@
+{
+  "components": [
+    "Aggregation",
+    "Logging",
+    "Synchronization",
+    "Utilities"
+  ],
+  "interactions": [
+    {
+      "source": "Synchronization",
+      "target": "Aggregation",
+      "interaction": "Aggregator.getAll"
+    },
+    {
+      "source": "Synchronization",
+      "target": "Logging",
+      "interaction": "RAIILogStream.stream"
+    },
+    {
+      "source": "Synchronization",
+      "target": "Utilities",
+      "interaction": "EnumMap.convert"
+    }
+  ],
+  "reference_explanation": "SimpleRunner.runStage (Synchronization) orchestrates a single run stage by fetching all runnable objects via Aggregator.getAll (Aggregation), converting the RunStage enum value to a display string via EnumMap.convert (Utilities), and logging stage entry/exit via CPSLOG_DEBUG which calls RAIILogStream.stream (Logging). All three interactions occur in a tight per-stage loop; SimpleRunner.runStages wraps repeated calls and adds error-path logging on failure. The primary driver is Synchronization."
+}

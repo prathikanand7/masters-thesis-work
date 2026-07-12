@@ -1,0 +1,25 @@
+// === SynchronizedRunner.cpp ===
+// Component: Synchronization
+
+bool SynchronizedRunner::runSynchronized(Aggregator& agg)
+{
+    auto runnableObjects = agg.getAll<IRunnableObject>();  // → Aggregation
+
+    RunStage lastRunStage = RunStage::SYNCHRONIZE;
+    while (lastRunStage != RunStage::FINAL)
+    {
+        // ... wait for stage signal from master ...
+        for (auto it : runnableObjects)
+            if (it->run(stage)) return true;
+
+        lastRunStage = stage;
+        CPSLogger::instance()->flush();  // → Logging: instance(), flush()
+        synchronizer->finishedStage.post();
+    }
+    return false;
+}
+
+// === CPSLogger.h (Logging macros) ===
+// CPSLOG_DEBUG / CPSLOG_ERROR expands to:
+//   RAIILogStream(CPSLogger::instance(), ...).stream << ...
+// i.e., every CPSLOG_* call uses RAIILogStream.stream → Logging

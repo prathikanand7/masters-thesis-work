@@ -1,0 +1,11 @@
+# H2 Instrumentation Variant Assignment (DECODE KEY)
+# Keep this file confidential from raters until all ratings are collected.
+#
+# Randomisation: to prevent raters learning "A is always the better one",
+# the guided/full assignment alternates across scenarios.
+#
+# S1: Diagram A = GUIDED  |  Diagram B = FULL
+# S2: Diagram A = FULL    |  Diagram B = GUIDED
+# S3: Diagram A = GUIDED  |  Diagram B = FULL
+#
+# Reveal after all rating_responses have been collected.

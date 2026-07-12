@@ -1,0 +1,13 @@
+1) Components
+- Synchronization
+- Aggregation
+- Logging
+
+2) Interactions
+- Synchronization → Aggregation : Aggregator.getAll
+- Synchronization → Logging : CPSLogger.instance
+- Synchronization → Logging : CPSLogger.flush
+- Synchronization → Logging : RAIILogStream.stream
+
+3) Execution flow
+SynchronizedRunner::runSynchronized (Synchronization) starts by calling Aggregator.getAll on the Aggregation component to retrieve all IRunnableObject instances. It then iterates stages, invoking each runnable (not traced), and after each stage it accesses the logger via CPSLogger.instance and flushes logs with CPSLogger.flush (Logging). In the master path, SynchronizedRunnerMaster::runStage (Synchronization) would log a timeout fault using Logging via RAIILogStream.stream (constructed through CPSLogger.instance), but in the referenced test this logging is suppressed and does not appear in the runtime trace. The runtime trace therefore shows the Aggregation fetch and the two Logging calls (instance and flush) from the synchronized runner.

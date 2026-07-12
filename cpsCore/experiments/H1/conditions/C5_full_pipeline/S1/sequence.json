@@ -1,0 +1,79 @@
+[
+  {
+    "step": 1,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll",
+    "note": ""
+  },
+  {
+    "step": 2,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": ""
+  },
+  {
+    "step": 3,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll",
+    "note": ""
+  },
+  {
+    "step": 4,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": ""
+  },
+  {
+    "step": 5,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": ""
+  },
+  {
+    "step": 6,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll",
+    "note": ""
+  },
+  {
+    "step": 7,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush",
+    "note": ""
+  },
+  {
+    "step": 8,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "instance",
+    "note": ""
+  },
+  {
+    "step": 9,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": ""
+  },
+  {
+    "step": 10,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": ""
+  },
+  {
+    "step": 11,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": ""
+  }
+]

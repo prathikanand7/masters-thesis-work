@@ -1,0 +1,14 @@
+1. Components:
+- Synchronization
+- Aggregation
+- Logging
+
+2. Interactions:
+- Synchronization → Aggregation : StageEventListener.onStageEvent
+- Synchronization → Logging : stream
+
+3. Execution flow:
+- A stage event is published from the Synchronization component via StageEventBridge.publishStage, invoking the StageEventListener interface on the Aggregation component. 
+- Aggregation receives and handles the command in StageEventListener.onStageEvent. 
+- Independently of the primary call, the component interaction diagram shows that Synchronization also interacts with Logging via a stream operation, indicating logging/telemetry along this path. 
+- Thus, the main runtime path is Synchronization → Aggregation (onStageEvent), with an additional Synchronization → Logging (stream) interaction identified by static analysis.

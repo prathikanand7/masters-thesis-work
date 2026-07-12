@@ -1,0 +1,15 @@
+1) Components
+- Synchronization
+- Aggregation
+- Logging
+
+2) Interactions
+- Synchronization → Aggregation : getAll
+- Synchronization → Logging : instance
+- Synchronization → Logging : flush
+- Synchronization → Logging : stream
+
+3) Execution flow
+- Within SynchronizedRunner.runSynchronized, the Synchronization component issues a command to the Aggregation component to execute getAll (via the Aggregator interface). 
+- After that, Synchronization interacts with the Logging component by obtaining a CPSLogger instance and then calling flush. 
+- The component interaction diagram also shows a possible Synchronization → Logging : stream interaction that is statically visible but not observed in this runtime trace slice.

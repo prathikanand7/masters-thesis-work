@@ -1,0 +1,3 @@
+[
+  {"source": "Configuration", "target": "Logging", "interaction": "RAIILogStream.stream"}
+]

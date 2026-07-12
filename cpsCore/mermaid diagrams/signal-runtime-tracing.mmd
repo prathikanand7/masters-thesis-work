@@ -1,0 +1,82 @@
+flowchart TD
+    %% Directory structure and function call dependencies from Neo4j codegraph
+
+    subgraph SignalDir["src/Utilities/SignalHandler"]
+        direction TB
+        SH_cpp["SignalHandler.cpp"]
+
+        subgraph SignalHandlerImpl["Implementation Functions"]
+            sh_exit["subscribeOnExit()"]
+            sh_sigint["subscribeOnSigint()"]
+            sh_handler["sigIntHandler()"]
+        end
+
+        SH_cpp --> SignalHandlerImpl
+    end
+
+    subgraph SignalAPI["include/cpsCore/Utilities/SignalHandler"]
+        direction TB
+        SH_h["SignalHandler.h<br/>- SignalHandlerSingleton"]
+
+        subgraph SingletonMethods["Singleton Methods"]
+            shsp_get["getInstance()"]
+            shsp_exit["subscribeOnExit()"]
+            shsp_sigint["subscribeOnSigint()"]
+            shsp_calls["callSigHandlers()"]
+        end
+
+        SH_h --> SingletonMethods
+    end
+
+    subgraph LoggingAPI["include/cpsCore/Logging"]
+        direction TB
+        CPSLog["CPSLogger.h"]
+
+        subgraph LogFuncs["Logger Functions"]
+            raii_stream["RAIILogStream.stream()"]
+        end
+
+        CPSLog --> LogFuncs
+    end
+
+    subgraph IPCDir["src/Utilities/IPC"]
+        IPC_cpp["IPC.cpp<br/>(runtime subscriber)"]
+    end
+
+    subgraph SchedulerDir["src/Utilities/Scheduler"]
+        Sched_cpp["MultiThreadingScheduler.cpp<br/>(runtime subscriber)"]
+    end
+
+    subgraph SerialDir["src/Utilities/IDC/NetworkLayer/Serial"]
+        Serial_cpp["SerialNetworkLayer.cpp<br/>(runtime subscriber)"]
+    end
+
+    %% Call edges from implementation
+    sh_exit --> shsp_get
+    sh_exit --> shsp_exit
+    sh_exit --> raii_stream
+
+    sh_sigint --> shsp_get
+    sh_sigint --> shsp_sigint
+    sh_sigint --> raii_stream
+
+    sh_handler --> shsp_get
+    sh_handler --> shsp_calls
+
+    %% Runtime trace edges - dashed
+    IPC_cpp -.->|signal subscription| SignalDir
+    Sched_cpp -.->|signal subscription| SignalDir
+    Serial_cpp -.->|signal subscription| SignalDir
+
+    %% Styling
+    classDef dir fill:#2c3e50,stroke:#34495e,stroke-width:2px,color:#ecf0f1
+    classDef file fill:#34495e,stroke:#7f8c8d,stroke-width:2px,color:#ecf0f1
+    classDef func fill:#3498db,stroke:#2980b9,stroke-width:1px,color:#fff
+    classDef api fill:#27ae60,stroke:#229954,stroke-width:2px,color:#fff
+    classDef subscriber fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#fff
+
+    class SignalDir,SignalAPI,LoggingAPI,IPCDir,SchedulerDir,SerialDir dir
+    class SH_cpp,SH_h,CPSLog,IPC_cpp,Sched_cpp,Serial_cpp file
+    class sh_exit,sh_sigint,sh_handler,shsp_get,shsp_exit,shsp_sigint,shsp_calls,raii_stream func
+    class CPSLog api
+    class IPC_cpp,Sched_cpp,Serial_cpp subscriber

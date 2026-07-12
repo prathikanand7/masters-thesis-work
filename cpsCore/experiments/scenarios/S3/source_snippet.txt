@@ -1,0 +1,40 @@
+// === SimpleRunner.cpp ===
+// Component: Synchronization
+
+#include "cpsCore/Logging/CPSLogger.h"       // Logging
+#include "cpsCore/Aggregation/Aggregator.h"  // Aggregation
+#include "cpsCore/Utilities/EnumMap.hpp"     // Utilities
+
+bool SimpleRunner::runStage(RunStage stage)
+{
+    CPSLOG_DEBUG << "Running stage " << EnumMap<RunStage>::convert(stage);
+    //                                    ^^^--- Utilities: EnumMap.convert
+    //                ^^^--- Logging: RAIILogStream.stream (via CPSLOG_DEBUG)
+
+    auto runnableObjects = agg_.getAll<IRunnableObject>();
+    //                          ^^^--- Aggregation: Aggregator.getAll
+
+    bool error = false;
+    for (auto it : runnableObjects)
+        if (it->run(stage)) error = true;
+    return error;
+}
+
+bool SimpleRunner::runStages(const std::vector<RunStage>& stages)
+{
+    for (auto stage : stages)
+    {
+        CPSLOG_DEBUG << "Run stage " << EnumMap<RunStage>::convert(stage);
+        //                               ^^^--- Utilities: EnumMap.convert
+        //            ^^^--- Logging: RAIILogStream.stream
+        if (runStage(stage))
+        {
+            CPSLOG_ERROR << "Run stage " << EnumMap<RunStage>::convert(stage) << " failed";
+            return true;
+        }
+    }
+    return false;
+}
+
+// All CPSLOG_* macros create RAIILogStream(CPSLogger::instance(), ...).stream
+// → Logging component: RAIILogStream.stream

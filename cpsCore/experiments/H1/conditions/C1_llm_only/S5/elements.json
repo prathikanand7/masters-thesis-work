@@ -1,0 +1,7 @@
+[
+  {
+    "source": "Framework",
+    "target": "Logging",
+    "interaction": "LogError"
+  }
+]

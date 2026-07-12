@@ -1,0 +1,20 @@
+1. Components involved
+- Synchronization
+- Aggregation
+- Logging
+
+2. Interactions
+- Synchronization → Aggregation : Aggregator.getAll
+- Synchronization → Logging : RAIILogStream.stream
+- Synchronization → Aggregation : Aggregator.getAll
+- Synchronization → Logging : RAIILogStream.stream
+- Synchronization → Logging : RAIILogStream.stream
+- Synchronization → Aggregation : Aggregator.getAll
+- Synchronization → Logging : CPSLogger.flush
+- Synchronization → Logging : CPSLogger.instance
+- Synchronization → Logging : RAIILogStream.stream
+- Synchronization → Logging : RAIILogStream.stream
+- Synchronization → Logging : RAIILogStream.stream
+
+3. Execution flow
+The Synchronization component initiates aggregation by calling Aggregation’s Aggregator.getAll from AggregatableRunner.notifyAggregationOnUpdate, and again during SimpleRunner.runStage and SynchronizedRunner.runSynchronized. In parallel, Synchronization emits log messages to the Logging component via RAIILogStream.stream during SimpleRunner.runAllStages, runStage, and runStages. During SynchronizedRunner.runSynchronized, Synchronization also interacts with Logging’s CPSLogger to flush logs and obtain the logger instance. Finally, as SynchronizedRunnerMaster is constructed and executes stages, additional RAIILogStream.stream calls are made from its constructor, runAllStages, and runStage.

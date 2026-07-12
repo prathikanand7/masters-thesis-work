@@ -1,0 +1,9 @@
+condition,scenario,comp_correct,comp_total,intr_correct,intr_total,completeness
+A',S1,3,3,4,4,5
+A',S2,2,2,1,1,4
+A',S3,4,4,3,3,5
+A',S4,2,3,1,2,3
+B',S1,3,3,4,4,4
+B',S2,2,2,1,1,5
+B',S3,4,4,3,3,4
+B',S4,3,3,2,2,5

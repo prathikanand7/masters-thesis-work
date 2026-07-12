@@ -1,0 +1,9 @@
+1. Components
+- Synchronization
+- Aggregation
+
+2. Interactions
+- Synchronization → Aggregation : StageEventListener.onStageEvent
+
+3. Execution flow
+- At 2026-07-10T12:44:01.663865Z, the Synchronization component invoked StageEventBridge.publishStage. This issued a Command to the Aggregation component through the StageEventListener interface. As a result, Aggregation executed StageEventListener.onStageEvent. Only this single inter-component interaction is evidenced in the provided trace slice.

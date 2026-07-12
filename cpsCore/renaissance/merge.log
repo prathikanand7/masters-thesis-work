@@ -1,0 +1,18 @@
+Skipping input XML file: C:\Users\prathikak\Downloads\cpsCore\renaissance\output-cpp.xml
+Writing C:\Users\prathikak\Downloads\cpsCore\renaissance\all.graphml
+
+Nodes:
+  DynamicLinkLibrary      10
+  Executable             107
+  Folder                7012
+  HeaderFile           15230
+  OtherFile            29880
+  ProjectCOrCpp            9
+  ProjectPropertySheet     3
+  Solution                 4
+  SourceFile            5945
+
+Edges:
+  ParentFolder 58199
+
+Unresolved nodes: 0

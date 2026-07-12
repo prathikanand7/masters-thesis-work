@@ -1,0 +1,9 @@
+1) Components
+- Configuration
+- Logging
+
+2) Interactions
+- Configuration → Logging : RAIILogStream.stream
+
+3) Execution flow
+- During property mapping, the Configuration component’s PropertyMapper issues Command-type calls to the Logging component’s RAIILogStream.stream at multiple steps (add, addEigen, addEnum, addVector, getChild, mandatoryCheck). Each of these PropertyMapper phases triggers a stream operation via the RAIILogStream interface to emit log output. The runtime timestamps show these stream calls occurring sequentially as the mapping progresses. The C5 diagram corroborates a single interaction path: Configuration streams to Logging.

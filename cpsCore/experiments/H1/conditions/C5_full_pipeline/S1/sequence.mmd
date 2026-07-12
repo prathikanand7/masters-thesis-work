@@ -1,0 +1,16 @@
+sequenceDiagram
+  %% C5 full-pipeline reconstruction — S1
+  participant Synchronization
+  participant Aggregation
+  participant Logging
+  Synchronization->>Aggregation: getAll
+  Synchronization->>Logging: stream
+  Synchronization->>Aggregation: getAll
+  Synchronization->>Logging: stream
+  Synchronization->>Logging: stream
+  Synchronization->>Aggregation: getAll
+  Synchronization->>Logging: flush
+  Synchronization->>Logging: instance
+  Synchronization->>Logging: stream
+  Synchronization->>Logging: stream
+  Synchronization->>Logging: stream

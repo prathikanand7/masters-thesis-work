@@ -1,0 +1,9 @@
+1. Components:
+- Configuration
+- Logging
+
+2. Interactions:
+- Configuration → Logging : RAIILogStream.stream
+
+3. Execution flow:
+The Configuration component’s PropertyMapper methods execute a series of property operations (add, addEigen, addEnum, addVector, getChild, mandatoryCheck). Each of these operations emits a log via CPSLOG_* macros, which create a RAIILogStream and invoke RAIILogStream.stream on the Logging component. The trace shows consecutive RAIILogStream.stream calls originating from these PropertyMapper functions. For getChild and mandatoryCheck, the presence of RAIILogStream.stream indicates that their logging paths were exercised, consistent with mandatory checks triggering error logs when required entries are missing. Overall, the scenario is a sequence of property handling steps that log through Logging on each operation.

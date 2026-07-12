@@ -1,0 +1,49 @@
+// === PropertyMapper.hpp (include/cpsCore/Configuration/PropertyMapper.hpp) ===
+// Component: Configuration
+// PropertyMapper uses RAIILogStream (Logging) on every property operation.
+
+#include "cpsCore/Logging/CPSLogger.h"   // → pulls in RAIILogStream
+
+template <typename PODType>
+bool PropertyMapper::add(const std::string& key, PODType& val, bool mandatory)
+{
+    if (auto it = p_.find(key); it != p_.end() && !it->is_null())
+    {
+        val = it->template get<PODType>();
+        CPSLOG_TRACE << "Property " << key << " = " << val;  // → Logging:stream
+        return true;
+    }
+    mandatoryCheck(key, mandatory);
+    return false;
+}
+
+template <typename Enum>
+bool PropertyMapper::addEnum(const std::string& key, Enum& e, bool mandatory)
+{
+    if (auto it = p_.find(key); it != p_.end() && it->is_string())
+    {
+        CPSLOG_TRACE << "Property " << key << " = " << str; // → Logging:stream
+        e = EnumMap<Enum>::convert(str);
+        return true;
+    }
+    mandatoryCheck(key, mandatory);
+    return false;
+}
+
+PropertyMapper PropertyMapper::getChild(const std::string& key, bool mandatory)
+{
+    if (auto value = p_.find(key); value != p_.end() && value->is_object())
+        return PropertyMapper(*value);
+    if (mandatory)
+        CPSLOG_ERROR << "PM: mandatory " << key << " missing"; // → Logging:stream
+    return PropertyMapper(empty_);
+}
+
+void PropertyMapper::mandatoryCheck(const std::string& key, bool mandatory)
+{
+    if (mandatory)
+        CPSLOG_ERROR << "PM: mandatory " << key << " missing"; // → Logging:stream
+}
+
+// All CPSLOG_* macros create RAIILogStream(CPSLogger::instance(), ...).stream
+// → every PropertyMapper method logs via Logging component: RAIILogStream.stream

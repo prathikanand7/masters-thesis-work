@@ -1,0 +1,51 @@
+[
+  {
+    "step": 1,
+    "source": "Configuration",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": "from PropertyMapper.add; corroborated by static and dynamic"
+  },
+  {
+    "step": 2,
+    "source": "Configuration",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": "from PropertyMapper.add; corroborated by static and dynamic"
+  },
+  {
+    "step": 3,
+    "source": "Configuration",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": "from PropertyMapper.addEigen; corroborated by static and dynamic"
+  },
+  {
+    "step": 4,
+    "source": "Configuration",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": "from PropertyMapper.addEnum; corroborated by static and dynamic"
+  },
+  {
+    "step": 5,
+    "source": "Configuration",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": "from PropertyMapper.addVector; corroborated by static and dynamic"
+  },
+  {
+    "step": 6,
+    "source": "Configuration",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": "from PropertyMapper.getChild; corroborated by static and dynamic"
+  },
+  {
+    "step": 7,
+    "source": "Configuration",
+    "target": "Logging",
+    "interaction": "stream",
+    "note": "from PropertyMapper.mandatoryCheck; corroborated by static and dynamic"
+  }
+]

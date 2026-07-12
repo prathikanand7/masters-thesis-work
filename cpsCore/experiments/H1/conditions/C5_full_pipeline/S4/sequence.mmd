@@ -1,0 +1,9 @@
+sequenceDiagram
+  %% C5 full-pipeline reconstruction — S4
+  participant Synchronization
+  participant Aggregation
+  participant Logging
+  Synchronization->>Aggregation: onStageEvent
+  Note right of Aggregation: indirect dispatch via boost::signals2 from StageEventBridge.publishStage; dynamic-only, no static call site
+  Synchronization->>Logging: stream
+  Note right of Logging: fault path: error log when no listener attached; static-only, suppressed at runtime by LogLevel::NONE

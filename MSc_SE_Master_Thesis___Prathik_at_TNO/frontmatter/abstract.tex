@@ -18,23 +18,23 @@ to the full pipeline.
 Three hypotheses are confirmed.
 \textbf{H1:} The full pipeline achieves the highest reconstruction accuracy
 of any condition tested (macro-F1~$=$~0.964, with perfect recall on every
-scenario). Fusion is strictly additive precisely where static and dynamic
-analysis each miss a different interaction, and redundant where the static
+scenario). Fusion is strictly additive where static and dynamic
+analysis each miss a different interaction and redundant where the static
 call graph is already complete.
 \textbf{H2:} Code-graph-guided instrumentation eliminates all measured noise
-(50\% fewer nodes, 70\% fewer edges) without losing scenario coverage, confirmed
-by a blinded six-rater expert panel rating guided output higher in 47 of 54
+(50\% fewer nodes, 70\% fewer edges) without losing scenario coverage. It is also
+confirmed by a blinded six-rater expert panel rating guided output higher in 47 of 54
 comparisons.
 \textbf{H3:} The reconstructed diagram alone achieves perfect component
-recall, interaction recall, and rated completeness on every scenario,
+recall, interaction recall and completeness on every scenario, either
 matching or exceeding all other evidence combinations.
 Together, the three findings converge on one pattern: additional evidence
 improves reconstruction or comprehension specifically when the primary
-evidence source is missing something, and is otherwise redundant.
+evidence source is missing something.
 As an exploratory complement, a practitioner session on a second, larger
 industrial codebase found the underlying static-extraction and query
-approach transferred well: structural and dependency diagrams were rated
-consistently useful, and sequence-diagram message labelling was identified
+approach transferred well. Structural and dependency diagrams were rated
+consistently useful and sequence-diagram message labelling was identified
 as the clearest area for improvement.
 
 The main contributions are as follows.
@@ -48,7 +48,6 @@ analysis cannot see.
 (iv)~A small, reversible tool (\texttt{csp\_matcher}) that inserts and
 removes trace probes automatically.
 (v)~A set of twelve natural-language agent skills that run the whole
-pipeline, from source code to \sysml diagram, on any codebase without code
-changes.
+pipeline, from source code to \sysml diagram. Its designed to be codebase agnostic.
 (vi)~A clear, evidence-based account of when combining static and dynamic
-analysis actually helps and when it does not.
+analysis actually helps and when it is redundant.

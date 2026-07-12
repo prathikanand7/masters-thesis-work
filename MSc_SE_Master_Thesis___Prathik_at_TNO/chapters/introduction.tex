@@ -3,14 +3,14 @@
 \section{Context}
 
 Large-scale software-intensive systems developed and maintained by industrial
-research organisations are often mission-critical, long-lived, and subject to
+research organisations are often mission-critical, long-lived and subject to
 continuous evolution \cite{systa:reverse}.
-These systems frequently operate in safety-critical, high-reliability, or
+These systems frequently operate in safety-critical, high-reliability or
 performance-sensitive domains such as medical imaging and industrial automation.
 In these domains, an incorrect change or a poorly informed architectural decision
 can have significant technical and economic consequences.
 Consequently, a deep and accurate understanding of system behaviour is essential
-before performing refactoring, modernisation, or architectural restructuring.
+before performing refactoring, modernisation or architectural restructuring.
 
 This understanding is supposed to be captured by the \emph{Interaction Model}: a
 formal, scenario-specific description of the message exchanges between components.
@@ -19,26 +19,26 @@ Interaction Models are most commonly expressed as sequence diagrams in \ac{UML} 
 In practice, Interaction Models are rarely kept up to date with the source code
 they describe.
 Over time, such systems accumulate complexity due to evolving requirements,
-heterogeneous technologies, and extensive use of concurrency and asynchrony
+heterogeneous technologies and extensive use of concurrency and asynchrony
 \cite{systa:reverse}.
-Design documentation drifts out of sync with the codebase, and diagrams that were
+Design documentation drifts out of sync with the codebase and diagrams that were
 accurate when originally drawn diverge from reality as the system changes.
 As a result, engineers are required to reconstruct system behaviour directly from
 source code and limited runtime observations. This process is time-consuming,
-error-prone, and highly dependent on individual expertise \cite{systa:reverse}.
+error-prone and highly dependent on individual expertise \cite{systa:reverse}.
 
 This challenge is particularly pronounced in event-driven systems.
-Asynchronous message passing, callbacks, and indirect control flow obscure
+Asynchronous message passing, callbacks and indirect control flow obscure
 the relationships between interacting components \cite{cornelissen:systematic}.
 Understanding which components interact, in what order, and under which conditions
 is non-trivial. Yet it is crucial for identifying architectural bottlenecks,
-isolating faulty behaviour, and assessing the impact of proposed changes.
+isolating faulty behaviour and assessing the impact of proposed changes.
 From industry's perspective, there is a strong need for accurate and
 scenario-specific interaction models that reflect how systems behave under
 concrete execution scenarios \cite{egyed:scenario}.
 Such models can assist engineers in taking informed architectural and refactoring
 decisions, isolating relevant subsystems for targeted improvement, increasing
-test coverage for critical interaction paths, and improving long-term
+test coverage for critical interaction paths and improving long-term
 maintainability and knowledge transfer in complex industrial systems.
 
 This project surfaced a concrete illustration of this class of problem: a
@@ -72,7 +72,7 @@ and those that occur in every other scenario.
 scenario-specific by construction. However, it is inherently incomplete
 \cite{cornelissen:systematic}.
 In industrial systems, traces are often sparse or noisy due to limited logging,
-performance constraints on instrumentation, or execution paths that were not
+performance constraints on instrumentation or execution paths that were not
 exercised during recording.
 
 Although hybrid static-dynamic approaches have been proposed \cite{labiche:hybrid,
@@ -80,7 +80,7 @@ cornelissen:systematic}, existing methods primarily use static structure to
 \emph{organise} or contextualise an already-observed trace (\cref{ch:related}).
 They do not actively infer interactions that the trace never captured.
 No existing approach systematically \emph{combines} the two directions at once:
-using static structure to recover the interactions a trace missed, and using the
+using static structure to recover the interactions a trace missed and using the
 trace to trim an over-approximate static graph down to only what is relevant to
 the scenario at hand.
 Closing that gap in both directions is the core problem this thesis addresses.
@@ -144,7 +144,7 @@ The proposed approach consists of four stages:
   \item \textbf{Static extraction.} A call graph is extracted from the \Cpp\
     source code of the target system and stored in a \neo \acl{GDB} using the
     schema described in \cref{sec:pg-schema}.
-    For publish-subscribe systems that route messages through callback
+    For pub-sub systems that route messages through callback
     registration (such as CPSCore's IDC layer), this stage additionally
     applies topology resolution to recover the implicit routing structure
     (\cref{sec:macro-resolution}).
@@ -157,13 +157,13 @@ The proposed approach consists of four stages:
   \item \textbf{Graph fusion and slicing.} The static and trace graphs are merged
     into a unified \acl{PG}. Dependence-based slicing is applied to the merged
     graph to retain only those nodes and edges that are reachable from the
-    scenario entry point, filtering both statically-derived and trace-derived
-    interactions that are not causally connected to the scenario under analysis.
+    scenario entry point. As a result, only those interactions are retained that 
+    are causally connected to the scenario under analysis.
 
   \item \textbf{SysML v2 generation.} The sliced graph is projected into
     \sysml sequence diagrams using a template-driven generator.
-    The generated diagrams are written to a text file following the
-    \sysml textual notation.
+    The generated diagrams are written to a .sysml file following the
+    \sysml textual syntax.
 \end{enumerate}
 
 The approach is developed and validated on \emph{CPSCore}, an open-source
@@ -176,16 +176,16 @@ happy-path and constructed indirection-boundary behaviour
 The remainder of this thesis is structured as follows.
 \Cref{ch:background} introduces the technical concepts underpinning the approach:
 \sysml Interaction Models, property graphs, static call-graph analysis, execution
-tracing, and dependence-based slicing.
+tracing and dependence-based slicing.
 \Cref{ch:related} surveys existing work on program comprehension, architecture
-recovery, and trace-based diagram synthesis. It positions this thesis within
+recovery and trace-based diagram synthesis. It positions this thesis within
 that landscape.
-\Cref{ch:methods} describes the design of the approach in detail, including the
-property graph schema, the fusion algorithm, and the slicing procedure.
+\Cref{ch:methods} describes the design approach in detail, including the
+property graph schema, the fusion algorithm and the slicing procedure.
 \Cref{ch:experiments} presents the implementation and the results of applying
 the approach to the CPSCore case study.
 \Cref{ch:analysis} analyses those results with respect to the three research
 questions and the three hypotheses. It discusses threats to validity and
 reflects on the limitations of the approach.
-\Cref{ch:conclusion} summarises the contributions, discusses future work, and
+\Cref{ch:conclusion} summarises the contributions, discusses future work and
 concludes the thesis.

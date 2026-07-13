@@ -31,7 +31,7 @@ The constructs used by the generator in this thesis (\cref{sec:sysml-impl}) are:
     ordered.
   \item[\texttt{SynchronousCall} / \texttt{ReturnMessage} /
     \texttt{AsynchronousMessage}] Message stereotypes (specialising a
-    common \texttt{Message} definition) that model a call, its return, and
+    common \texttt{Message} definition) that model a call, its return and
     an asynchronous send between two lifelines.
   \item[\texttt{from} / \texttt{to}] References on a message that bind it
     to its sending and receiving lifelines, giving each message occurrence
@@ -96,7 +96,7 @@ Formally, a \ac{PG} is defined as $G = (V, E, \lambda, \mu)$ where:
 \neo is the most widely deployed \ac{GDB} that implements the \ac{PG} model.
 It is queried using the Cypher declarative query language \cite{neo4j:cypher}.
 The choice of a \ac{PG} over a relational or document store is motivated by the
-need to traverse heterogeneous analysis artefacts (functions, files, modules,
+need to traverse heterogeneous analysis artefacts (functions, files, modules
 and trace events) efficiently along typed relationships.
 
 \section{Static Call-Graph Analysis}\label{sec:static-analysis}
@@ -178,7 +178,7 @@ out interactions that belong to other scenarios running concurrently in the
 system.
 
 The adaptation used in this thesis (\cref{sec:fusion-slicing}) replaces the
-traditional \ac{PDG} traversal with a scope-constrained graph query.
+traditional \ac{PDG} traversal with a scope-constrained Cypher query.
 It operates over the property graph rather than over a source-level program
 representation.
 

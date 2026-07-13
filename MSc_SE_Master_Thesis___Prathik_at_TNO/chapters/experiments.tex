@@ -67,10 +67,10 @@ pluggable \texttt{INetworkLayer} implementation. The default
 \texttt{RedisNetworkLayer} maps logical channel identifiers to
 \texttt{RedisSubscriber}/\texttt{RedisPublisher} objects backed by
 \texttt{cpp\_redis}, and subscriptions are wired through a
-\texttt{boost::signals2} slot (\texttt{onPacket\_.connect(slot)}) that
+\texttt{boost::signals2} slot \newline (\texttt{onPacket\_.connect(slot)}) that
 fires when a Redis message arrives on the channel.
 The mechanism and the reason it defeats naive static call-graph
-extraction were introduced in \cref{sec:static-analysis}; the
+extraction were introduced in \cref{sec:static-analysis}. The
 macro-resolution strategy that recovers the subscription topology is
 detailed in \cref{sec:macro-resolution}.
 
@@ -82,17 +82,17 @@ meaningful sequence diagram reconstruction.
 
 \section{Stage 1: Static Analysis and Graph Population}\label{sec:static-impl}
 
-\subsection{Renaissance → Neo4j}
+\subsection{Renaissance to Neo4j}
 
 The \Cpp\ source tree of CPSCore was analysed by the Renaissance
 semantic extraction tool, which resolves the full \ac{AST} (including
-template instantiations, overload candidates, and macro expansions)
+template instantiations, overload candidates and macro expansions)
 and emits the property graph schema described in \cref{tab:node-types,tab:edge-types}.
 The Renaissance-populated graph contains 11 static node labels and 11
-static relationship types; the \texttt{TraceEvent} and \texttt{Scenario}
-node labels and the two dynamic relationship types are added later, during
-trace ingestion and slicing, for 13 of each overall
-(\cref{tab:node-types,tab:edge-types}).
+static relationship types. Trace ingestion and slicing later add two
+dynamic node labels (\texttt{TraceEvent} and \texttt{Scenario}) and also
+two dynamic relationship types. This brings the total to 13 node labels
+and 13 relationship types (\cref{tab:node-types,tab:edge-types}).
 
 \subsection{Schema Introspection Skill}
 
@@ -121,13 +121,13 @@ RETURN DISTINCT labels(s) AS fromLabels,
 \subsection{Interface Dependency Table}\label{sec:idt}
 
 The \texttt{get-interface-dependency-table} skill aggregates the
-11 relationship types into a compact interface dependency table that
+11 static relationship types into a compact interface dependency table that
 characterises the structural connectivity of the codebase.
 \Cref{tab:idt} reproduces the full table for CPSCore.
 
 \begin{table}[htb]
 \centering
-\caption{Interface dependency table for CPSCore: all 11 relationship
+\caption{Interface dependency table for CPSCore: all 11 static relationship
   types with their permitted source and target node labels.}
 \label{tab:idt}
 \small
@@ -194,7 +194,7 @@ the five top-level architectural modules introduced in
 to many distinct components, one per source sub-path, which is why the
 component count (121) is far larger than the module count (5).
 The extraction yielded \textbf{2,574 ordered interactions} covering
-\textbf{2,169 unique client→server function pairs} across
+\textbf{2,169 unique client to server function pairs} across
 \textbf{121 distinct components} in the CPSCore codebase.
 This forms the \emph{static-only} baseline in the three-way evaluation
 (\cref{ch:analysis}).
@@ -233,7 +233,7 @@ ORDER BY callerComponent, callerFunctionQualified
 
 The query constrains traversal to the six architectural modules of
 CPSCore, requires that caller and callee reside in \emph{different}
-components (cross-component edges only), and excludes test files.
+components (cross-component edges only) and excludes test files.
 This produced nine instrumentation targets across five source files,
 written to a mapping CSV:
 
@@ -283,7 +283,7 @@ EventTimestamp | EventName | ClientComponent | ClientFunction
 
 Running the CPSCore test suite after instrumentation produced
 \textbf{27 runtime trace events} covering \textbf{26 unique
-client→server interaction pairs}. Example events:
+client to server interaction pairs}. Example events:
 
 \begin{minted}{text}
 2026-06-18T10:07:15.686645Z | Aggregator.getAll |
@@ -340,7 +340,7 @@ package CPScoreInteractionModels {
 
 A separate \texttt{RedisConnectionScenario} was generated covering
 the Redis subscriber/publisher initialisation interactions, including
-\texttt{connect}, \texttt{auth}, \texttt{subscribe}, and
+\texttt{connect}, \texttt{auth}, \texttt{subscribe} and
 \texttt{onConnectionEvent} messages. These messages span the
 \texttt{RedisPublisher}, \texttt{RedisSubscriber},
 \texttt{CppRedisClient}, and \texttt{Logger} lifelines.
@@ -374,7 +374,7 @@ a concrete experimental design rather than a single pipeline run.
 
 Four scenarios were defined on CPSCore for hypothesis testing.
 The first three (S1--S3) cover happy-path behaviour across the Aggregation,
-Synchronization, and Redis/IDC subsystems, occurring naturally in CPSCore's
+Synchronization and Redis/IDC subsystems, occurring naturally in CPSCore's
 existing code.
 A fourth scenario (S4) was purpose-built production code (not a test
 fixture), added for a specific, narrow reason: none of S1--S3 could, even
@@ -418,25 +418,24 @@ boundary where static analysis and runtime tracing each miss a
     Unlike S1--S3, S4 is not an existing CPSCore code path but two new
     production files added specifically for this experiment:
     \texttt{StageEventBridge} publishes a stage-completion event over a
-    \texttt{boost::signals2::signal}. \texttt{StageEventListener} connects
+    \texttt{boost::signals2::signal}. \newline \texttt{StageEventListener} connects
     \texttt{onStageEvent} as a slot with no static call site anywhere in the
     codebase. If no listener is connected, \texttt{StageEventBridge} logs a
     \texttt{CPSLOG\_ERROR} to \texttt{stream}, suppressed at runtime by a
     \texttt{CPSLogger::LogLevelScope(LogLevel::NONE)} idiom.
     The signal/slot dispatch is invisible to static analysis (no resolvable
-    call expression), so C2 sees \texttt{stream} but not
+    call expression). So, C2 sees \texttt{stream} but not
     \texttt{onStageEvent}, while C3 sees \texttt{onStageEvent} but not
     \texttt{stream}. This is the one construction in the suite where C2 and C3 each
     miss a \emph{different} edge rather than one being a subset of the other.
-    Designed so that C4~$>$~C2 \emph{and} C4~$>$~C3 simultaneously.
     \emph{Reference interactions:} 2 (stream, onStageEvent).
 \end{description}
 
 S4 is marked as constructed rather than found-in-the-wild. Its ground
 truth was authored from the new source files directly. Its dynamic trace
 was captured by actually running the accompanying Catch2 test in the same
-instrumented environment as S1--S3. And its C1/C5 conditions are genuine,
-unedited Azure OpenAI responses. It is reported and stratified separately
+instrumented environment as S1--S3. And its results are genuine and
+unedited. It is reported and stratified separately
 from S1--S3 throughout \cref{sec:h1}, never folded silently into the
 happy-path numbers, for exactly this reason.
 The full \sysml reference diagrams (structural and sequence) for S1--S3

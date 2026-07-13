@@ -53,9 +53,9 @@ Three hypotheses were tested to answer the research questions:
     usability (\cref{sec:h2-results,sec:h2-qual}).
 
   \item[H3 (confirmed).]
-    In a holistic five-condition experiment, the reconstructed diagram
-    alone achieves perfect component recall, interaction recall, and rated
-    completeness on every scenario, matching or exceeding all combinations
+    In a holistic five-condition experiment: the reconstructed diagram
+    alone achieves perfect component recall, interaction recall and rated
+    completeness on every scenario. It matches or exceedes all combinations
     that include source code and traces.
     Conditions without the diagram consistently miss a suppressed-but-source-visible
     interaction that the diagram states explicitly.
@@ -79,15 +79,15 @@ where H1 predicts C4$>$C2 would materialise
 
 A single cross-cutting pattern unifies all four evidence sources
 (\cref{sec:discussion}): \textbf{additional evidence helps exactly when
-the primary evidence source is missing something, and is otherwise
+the primary evidence source is missing something and is otherwise
 redundant.}
-Fusion helps on fault paths but not happy paths (H1). Diagrams help comprehension when traces are incomplete but not when they are
-already sufficient (H3). Guided instrumentation improves usability by removing what is irrelevant (H2).
-And practitioners solved a fault-path defect
-using the exact evidence source (static graph) that H1 identifies as
-the recall-preserving complement to incomplete traces.
-This pattern also generates a concrete, falsifiable prediction for
-future work: on systems with cross-module virtual dispatch, fusion
+Fusion helps on fault paths but not happy paths (H1). Diagrams help comprehension 
+when traces are incomplete but not when they are already sufficient (H3). Guided 
+instrumentation improves usability by removing what is irrelevant (H2).
+Furthermore, practitioners solved a fault-path defectusing the exact evidence 
+source (static graph) that H1 identifies asthe recall-preserving complement 
+to incomplete traces. This pattern also generates a concrete, falsifiable 
+prediction for future work: on systems with cross-module virtual dispatch, fusion
 should show C4$>$C2 on \emph{all} scenario types, not just fault
 paths (\cref{sec:future-work}).
 
@@ -97,7 +97,8 @@ The pipeline enables an engineer working on an event-driven \Cpp\ system to
 obtain a scenario-specific \sysml\ interaction diagram by issuing
 natural-language queries against the property graph, rather than spending
 several working days manually tracing call chains, cross-referencing header
-files, and correlating log output.
+files and correlating log output.
+
 On CPSCore, the static extraction skill populated 2,574 ordered interactions
 across 121 components in a single Cypher query execution. The instrumentation
 skill required editing only nine function bodies across five files, guided
@@ -107,7 +108,7 @@ hardcoded labels), switching to a new target requires only re-running the
 static extractor and re-invoking the same skills.
 The practitioner session confirmed this transfer cost is low in practice:
 four engineers on a much larger industrial codebase used the tool
-productively within a single session, and the structural and dependency
+productively within a single session and the structural and dependency
 diagrams were rated consistently useful for architectural comprehension
 and defect localisation.
 
@@ -119,7 +120,7 @@ contributions and three engineering artefacts:
 \paragraph{Research contributions.}
 \begin{enumerate}
   \item \textbf{A single property graph} that holds the static call graph
-    and the runtime trace together, and remembers which evidence each
+    and the runtime trace together and remembers which evidence each
     interaction came from (static, dynamic, or both). Keeping both in one
     place lets fusion and slicing work over the same data without losing
     track of where each edge originated (\cref{sec:pg-schema}).
@@ -132,8 +133,8 @@ contributions and three engineering artefacts:
     and dynamic analysis actually helps and when it does not. Fusion
     protects fault paths and adds new interactions at indirection
     boundaries (H1). Guided instrumentation removes noise without losing
-    coverage (H2). And reconstructed diagrams help comprehension
-    specifically when the trace is missing something (H3).
+    coverage (H2). Finally, the reconstructed diagrams help comprehension
+    specifically when the trace is incomplete (H3).
 \end{enumerate}
 
 \paragraph{Engineering artefacts.}
@@ -144,7 +145,7 @@ contributions and three engineering artefacts:
     (\cref{sec:csp-matcher}).
 
   \item A \textbf{set of twelve natural-language agent skills} that run the
-    whole pipeline, from source code to \sysml\ diagram, on any codebase
+    whole pipeline, from source code to \sysml\ diagram on any codebase
     without code changes (\cref{sec:skill-design}).
 
   \item A \textbf{way to recover publish-subscribe wiring} that ordinary
@@ -192,7 +193,7 @@ Several directions are open for future investigation:
     qualitatively. Extending the fault-path/dual-gap scenario set beyond
     the single constructed scenario (S4) currently reported would be a
     natural first step. Applying the full, pre-registered
-    H1/H2/H3 hypothesis tests to that codebase, or to other event-driven
+    H1/H2/H3 hypothesis tests to that codebase or to other event-driven
     \Cpp\ systems (for example, using different publish-subscribe frameworks such as
     ROS~2 or MQTT), would turn this encouraging signal into a controlled
     generalisability result.
@@ -214,7 +215,7 @@ Several directions are open for future investigation:
   \item[Incremental updates.]
     As the codebase evolves, the \ac{PG} should be updatable incrementally
     rather than re-built from scratch.
-    Neo4j's support for live graph updates makes this tractable, but the
+    Neo4j's support for live graph updates makes this tractable. But, the
     slicing invalidation logic would need to be designed carefully.
 
   \item[LLM-assisted diagram naming.]

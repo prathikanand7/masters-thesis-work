@@ -4,7 +4,7 @@ This chapter surveys existing work relevant to this thesis. It is organised them
 (i) trace-based interaction model extraction, (ii) scenario-driven and
 functionality-centric analysis, (iii) behavioural pattern mining, (iv) static
 analysis for architecture recovery (including the specific problem of
-publish-subscribe dispatch), (v) hybrid static-dynamic approaches, and (vi) trace
+publish-subscribe dispatch), (v) hybrid static-dynamic approaches and (vi) trace
 visualisation for program comprehension.
 For each area, the key techniques are described and their limitations with
 respect to the problem addressed in this thesis are identified.
@@ -41,7 +41,7 @@ models. However, this comes at the cost of coarse granularity.
 
 All trace-based approaches share the same structural limitation: they can only
 reconstruct interactions that were actually observed.
-Missing events, low logging verbosity, and execution paths that were never
+Missing events, low logging verbosity and execution paths that were never
 exercised during recording all show up as gaps in the reconstructed diagram.
 In an industrial system with partial instrumentation, that is the common
 case rather than the exception.
@@ -53,7 +53,7 @@ abstraction rather than the raw trace.
 \textcite{egyed:scenario} introduces a scenario-driven approach to trace
 dependency analysis. This approach explicitly links scenarios to execution footprints
 and source-code artefacts. It demonstrates that scenarios can act as a unifying
-concept across requirements, traces, and code.
+concept across requirements, traces and code.
 Briand \etal \cite{briand:seqdiag}, already noted above, formalise the
 mapping between runtime
 events and interaction diagrams around execution scenarios in distributed
@@ -98,7 +98,7 @@ This line of work targets comprehension at the class level rather than
 component-level interaction recovery and does not target \Cpp\ or
 scenario-specific analysis.
 Component-level dependency recovery is instead the focus of tools such as
-Understand and Structure101, which produce rich static dependency graphs but
+\emph{Understand and Structure101}, which produce rich static dependency graphs but
 do not generate scenario-specific sequence diagrams.
 
 \subsection{Handling Event-Driven Dispatch}

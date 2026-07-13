@@ -4,7 +4,7 @@ This chapter describes the design of the hybrid reconstruction pipeline.
 It covers the property graph schema that integrates static and dynamic artefacts,
 the agent skill architecture that orchestrates the extraction and
 generation stages, the pattern-based instrumentation tool used for trace
-collection, and the fusion and slicing algorithms that produce
+collection and lastly, the fusion and slicing algorithms that produce
 scenario-specific interaction models.
 
 \section{Pipeline Overview}\label{sec:pipeline-overview}
@@ -215,7 +215,7 @@ evidence comes from}. A \texttt{CppCalls} edge says a call \emph{may}
 happen: it is read from the source code, which lists every call that could
 occur. A \texttt{TRACE\_CALLS} edge says a call \emph{did} happen: it is
 recorded from a real run. The static edges therefore tend to over-count
-(they include calls that never fire), and the trace edges tend to
+(they include calls that never fire) and the trace edges tend to
 under-count (they miss calls a given run did not exercise). The fusion step
 (\cref{sec:fusion-slicing}) uses both together.
 
@@ -320,11 +320,15 @@ and role in the pipeline.
 
 Automated insertion of trace probes into an existing \Cpp\ codebase is
 a prerequisite for runtime trace collection.
-Manual instrumentation is error-prone, non-reproducible, and does not
-scale to large codebases.
-The \texttt{csp\_matcher} tool, developed as part of this thesis,
-addresses this by providing AST-level pattern matching and code
-transformation.
+Manual instrumentation is error-prone, non-reproducible and does not
+scale to large codebases. Additionally, using an LLM alone to generate instrumentation code
+proved brittle in a preliminary experiment: the model could not
+reliably identify all call sites of interest, and the generated code
+was often over-instrumented, lacking the granular control needed to
+target only scenario-specific interactions.
+The \texttt{csp\_matcher} tool, developed alongside Dr.~Rosilde Corvino
+as part of this thesis, addresses this by providing AST-level pattern
+matching and code transformation.
 
 \subsection{Design}
 
@@ -363,7 +367,7 @@ This approach has several advantages over manual macro insertion:
   \item The transformation is specified declaratively, not imperatively.
   \item It is reproducible: re-running the same rules file produces the
     same edits.
-  \item It is reversible: a corresponding \texttt{remove:} rule
+  \item It is reversible. A corresponding \texttt{remove:} rule
     strips the trace wrapper without leaving artefacts.
   \item Filter functions (compiled at runtime from plain \Cpp) allow
     selective matching, \eg excluding test-internal call sites.
@@ -386,7 +390,7 @@ The instrumentation follows a two-pronged approach:
     This covers explicit call sites such as \texttt{Aggregator::getAll},
     \texttt{CPSLogger::flush}, and \texttt{EnumMap::convert}.
   \item \textbf{CPSLOG macro patching}:
-    the \texttt{CPSLOG(level)} macro in \texttt{CPSLogger.h} is patched
+    the \texttt{CPSLOG(level)} macro in \texttt{CPSLogger.h}  is patched
     to emit a \texttt{[TRACE]} line on every logging call, covering all
     \texttt{RAIILogStream::stream} call sites regardless of which
     translation unit they appear in.
@@ -433,7 +437,7 @@ pre-instrumentation state byte-for-byte.
 
 \texttt{csp\_matcher} was validated by a test suite of 130 cases across
 seven suites (pattern parse, find, replacement, generated replacement,
-compilation database, rules file, and filter), exercised by an automated
+compilation database, rules file and filter), exercised by an automated
 PowerShell harness that generates a Markdown report and case artefacts.
 
 \section{Macro Resolution for Publish-Subscribe Systems}\label{sec:macro-resolution}
@@ -461,11 +465,11 @@ publisher and subscriber declarations by channel identifier:
 \end{enumerate}
 
 This step is what allows the sequence dependency table to contain
-cross-component interactions that are invisible to na\"ive static
+cross-component interactions that are invisible to naive static
 call-graph extraction.
 The same strategy generalises to any publish-subscribe system where
 subscriptions are registered by a shared identifier (topic name,
-channel ID, or signal slot) rather than by direct function call.
+channel ID or signal slot) rather than by direct function call.
 
 \section{Graph Fusion and Scenario Slicing}\label{sec:fusion-slicing}
 
@@ -474,7 +478,7 @@ channel ID, or signal slot) rather than by direct function call.
 Graph fusion is the union of static and trace-derived edges in the
 property graph.
 Because both edge types target the same \texttt{CppFunctionDefinition}
-nodes (anchored by qualified name), fusion is a set union over edges,
+nodes (anchored by qualified name). Fusion is a set union over edges,
 with each edge tagged by the source it came from (static or dynamic):
 
 \begin{minted}{cypher}
@@ -521,8 +525,10 @@ ServerComponent in {Aggregation, Logging}
 
 This scope-based slicing is what the \texttt{text-to-cypher} skill
 generates when given a natural-language scenario description: the user
-says ``show me Synchronization calling into Aggregation and Logging,''
-and the skill generates the corresponding \texttt{WHERE} clause.
+says ``Using agent skills, show me Synchronization calling into Aggregation and Logging''.
+The explicit \emph{Using agent skills} prefix anchors the model to the skill invocation, 
+preventing it from hallucinating an ad-hoc inspection of the codebase instead of 
+generating a Cypher query. From this prompt, the skill generates the corresponding \texttt{WHERE} clause.
 
 The critical property of this approach is that it operates identically
 over static and trace-derived edges (both carry
@@ -530,7 +536,7 @@ over static and trace-derived edges (both carry
 slicing applies uniformly to the fused graph without needing to know
 which source each edge came from.
 This is what makes guided instrumentation (\cref{sec:guided-vs-full})
-work: the slice definition is computed \emph{before} instrumentation
+work. The slice definition is computed \emph{before} instrumentation
 and used to decide where to place probes, rather than applied as a
 post-hoc filter.
 
@@ -539,8 +545,9 @@ post-hoc filter.
 Let $G_\text{static} = (V_s, E_s)$ and $G_\text{trace} = (V_t, E_t)$
 denote the static and trace sub-graphs respectively. Let
 $\sigma = (\text{primary}, \text{targets}, \text{functions})$ denote
-the slicing criterion.
-The fused-and-sliced graph is defined as:
+the slicing criterion: a primary component, a set of target
+components, and an optional set of entry-point functions. The
+fused-and-sliced graph is defined as:
 \[
   G_\sigma = \text{slice}(G_\text{static} \cup G_\text{trace}, \sigma)
   = \{ e \in E_s \cup E_t \mid \text{src}(e) \in \sigma.\text{primary}
@@ -554,29 +561,25 @@ In this formula:
   \item $G_\text{trace}$ is the graph derived from runtime trace events,
     with node set $V_t$ and edge set $E_t$.
   \item $\sigma$ is the slicing criterion, a triple consisting of the primary
-    component, the set of target components, and optionally a set of entry-point
+    component, the set of target components and optionally a set of entry-point
     functions.
   \item $\text{src}(e)$ denotes the source node (caller) of edge $e$.
   \item $\text{tgt}(e)$ denotes the target node (callee) of edge $e$.
-  \item The result $G_\sigma$ contains only those edges whose source belongs to
-    the primary component and whose target belongs to one of the declared
-    participant components.
+  \item The result $G_\sigma$ contains only those edges originating from
+    the primary component and terminating in a declared target component.
 \end{itemize}
 
 This formulation follows the general principle of graph-based program
 slicing \cite{weiser:slicing, ferrante:pdg} adapted to a property graph
 rather than a traditional program dependence graph.
 
-This is a simple edge filter, not a transitive reachability closure.
-Its advantage is computational cheapness (linear in $|E|$) and
-determinism. Its limitation is that it does not capture indirect
-dependencies (A$\to$B$\to$C where A is the primary but the B$\to$C
-edge is also scenario-relevant).
-For CPSCore's architecture, where cross-component calls are shallow
-(typically one hop through the IDC layer), this single-hop filter
-suffices.
-Extension to multi-hop reachability is straightforward via Cypher's
-variable-length path syntax.
+This is a single-hop edge filter, not a transitive reachability
+closure: it is linear in $|E|$ and deterministic, but does not
+capture indirect dependencies (A$\to$B$\to$C where A is primary but
+the B$\to$C edge is also scenario-relevant). For CPSCore, where
+cross-component calls are shallow (typically one hop through the IDC
+layer), this suffices; multi-hop reachability is a straightforward
+extension via Cypher's variable-length path syntax.
 
 \section{SysML v2 Generation}\label{sec:sysml-generation}
 

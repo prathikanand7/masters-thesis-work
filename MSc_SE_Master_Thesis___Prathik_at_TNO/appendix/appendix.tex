@@ -28,9 +28,6 @@ CREATE CONSTRAINT symbol_unique IF NOT EXISTS
 CREATE INDEX fn_source IF NOT EXISTS
   FOR (f:CppFunctionDefinition) ON (f.source_file, f.line);
 
-CREATE INDEX trace_scenario IF NOT EXISTS
-  FOR (e:TraceEvent) ON (e.scenario_id, e.timestamp);
-
 CREATE INDEX file_path IF NOT EXISTS
   FOR (f:SourceFile) ON (f.path);
 \end{minted}
@@ -314,9 +311,9 @@ package 'S3-Sequence' {
 \label{sec:appendix-generated}
 
 The following shows representative output from the full pipeline condition
-(C5: static + dynamic + slicing, \cref{sec:h1-results}).
+(C5: static + dynamic + scenario scoping, \cref{sec:h1-results}).
 Scenarios are represented as component-interaction edge lists
-(\texttt{elements.json}) extracted from the sliced \ac{PG}.
+(\texttt{elements.json}) extracted from the scenario-scoped edge set.
 
 \subsection{C5 Edge Lists by Scenario}
 

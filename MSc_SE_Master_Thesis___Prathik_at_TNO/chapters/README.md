@@ -18,9 +18,9 @@ prathik-thesis/
 ├── acknowledgement.tex ← Acknowledgements
 │
 ├── introduction.tex    ← Ch 1: Context, Problem, RQs, Approach, Outline
-├── background.tex      ← Ch 2: SysML v2, PGs, Static/Trace Analysis, Slicing, SSEF
+├── background.tex      ← Ch 2: SysML v2, PGs, Static/Trace Analysis, Scenario Scoping, SSEF
 ├── related_work.tex    ← Ch 3: Literature survey + positioning table
-├── methods.tex         ← Ch 4: Pipeline, PG schema, extraction, fusion, slicing
+├── methods.tex         ← Ch 4: Pipeline, PG schema, extraction, evidence combination, scenario scoping
 ├── experiments.tex     ← Ch 5: Case study, implementation, results tables
 ├── evaluation.tex      ← Ch 6: RQ answers, validation, threats to validity
 ├── conclusion.tex      ← Ch 7: Summary, contributions, future work

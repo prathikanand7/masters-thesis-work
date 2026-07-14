@@ -9,36 +9,40 @@ The core challenge is that static analysis alone produces over-approximate,
 scenario-agnostic graphs, while trace-based analysis alone produces
 under-complete models due to limited runtime instrumentation.
 No prior approach simultaneously addresses publish-subscribe topology
-recovery and scenario filtering via graph slicing, nor targets \sysml
+recovery and scenario-scoped querying of the call graph, nor targets \sysml
 as the output formalism.
 
-The proposed hybrid approach constructs a unified \ac{PG} in \neo by
-integrating a static call graph (including IDC pub-sub topology-resolved
-edges) with timestamped execution trace events.
-Dependence-based slicing is then applied to the fused graph to isolate the
-scenario-relevant subset.
-The sliced graph is projected into \sysml textual notation.
+The proposed hybrid approach builds a static call graph in \neo (including
+IDC pub-sub topology-resolved edges) and, separately, collects timestamped
+execution traces into runtime logs. The two evidence sources are kept
+separate: they are combined only as a set union of their interaction edge
+sets when the reconstructed models are compared during evaluation.
+Scenario-scoped Cypher queries then narrow the static call graph (and,
+equivalently, the trace-derived sequence table) to the interactions
+relevant to a single scenario.
+The scenario-scoped sequence table is projected into \sysml textual
+notation.
 
 The approach was developed and evaluated on \emph{CPSCore}, an open-source
 event-driven \Cpp\ framework, across four scenarios: three
 happy-path scenarios occurring naturally in CPSCore's existing code,
-plus one (S4) purpose-built to isolate a fusion precondition the other
+plus one (S4) purpose-built to isolate an evidence-combination precondition the other
 three cannot exercise.
 Three hypotheses were tested to answer the research questions:
 
 \begin{description}
   \item[H1 (confirmed).]
-    Fusion produces more accurate interaction models than any single
+    Combining static and dynamic evidence produces more accurate interaction models than any single
     evidence source.
     The full pipeline (C5) achieves the highest macro-F1 of any condition
     tested (0.964) with perfect recall on every scenario.
     On the three happy-path scenarios, the static graph is already
-    reachability-complete, so fusion is redundant with static analysis
+    reachability-complete, so combining is redundant with static analysis
     alone (C4$=$C2). On the constructed scenario~S4, where a
     publish-subscribe boundary and log suppression each hide a different
-    interaction, fusion is strictly additive: F1(C4)$=$1.000, versus
+    interaction, combining is strictly additive: F1(C4)$=$1.000, versus
     0.667 for either single source.
-    This confirms that fusion's value activates precisely when no single
+    This confirms that the combination's value activates precisely when no single
     source can see the full picture, and is otherwise safely redundant
     (\cref{sec:h1-results}).
 
@@ -65,29 +69,32 @@ Three hypotheses were tested to answer the research questions:
 
 As an exploratory complement to H1--H3, a practitioner hands-on session and
 interview study with four engineers on a second, much larger industrial
-codebase (\cref{sec:practitioner}) provides encouraging and convergent
-evidence that the same pattern holds at industrial scale.
+codebase (\cref{sec:practitioner}) provides encouraging evidence that the
+\emph{static half} of the approach holds at industrial scale. This session
+exercised only the static-extraction and graph-querying capability. It did not
+involve any runtime tracing or dynamic analysis.
 The key scenario exercise involved a proxy-leak defect whose root cause is an
-implicit event-driven interaction invisible without reconstructing the
-call chain. It was resolved using only the static graph. This mirrors H1's
+implicit event-driven interaction invisible without reconstructing the call
+chain. It was resolved using only the static graph. This mirrors H1's
 finding that static analysis preserves fault-path recall where traces
 cannot.
-Furthermore, the industrial system's architecture (proxy-based, virtual
-interfaces, dynamic service binding) is precisely the kind of system
-where H1 predicts C4$>$C2 would materialise
-(\cref{sec:cpscore-scale,sec:h1-c4c2}).
+The industrial system's architecture (proxy-based, virtual interfaces,
+dynamic service binding) is the kind of system where H1 predicts C4$>$C2
+would materialise (\cref{sec:cpscore-scale,sec:h1-c4c2}). Because the
+session collected no dynamic evidence, this remains a motivated prediction
+rather than a measured result, and is left to future work.
 
 A single cross-cutting pattern unifies all four evidence sources
 (\cref{sec:discussion}): \textbf{additional evidence helps exactly when
 the primary evidence source is missing something and is otherwise
 redundant.}
-Fusion helps on fault paths but not happy paths (H1). Diagrams help comprehension 
+Combining evidence helps on fault paths but not happy paths (H1). Diagrams help comprehension 
 when traces are incomplete but not when they are already sufficient (H3). Guided 
 instrumentation improves usability by removing what is irrelevant (H2).
-Furthermore, practitioners solved a fault-path defectusing the exact evidence 
-source (static graph) that H1 identifies asthe recall-preserving complement 
+Furthermore, practitioners solved a fault-path defect using the exact evidence 
+source (static graph) that H1 identifies as the recall-preserving complement 
 to incomplete traces. This pattern also generates a concrete, falsifiable 
-prediction for future work: on systems with cross-module virtual dispatch, fusion
+prediction for future work: on systems with cross-module virtual dispatch, combining
 should show C4$>$C2 on \emph{all} scenario types, not just fault
 paths (\cref{sec:future-work}).
 
@@ -100,17 +107,18 @@ several working days manually tracing call chains, cross-referencing header
 files and correlating log output.
 
 On CPSCore, the static extraction skill populated 2,574 ordered interactions
-across 121 components in a single Cypher query execution. The instrumentation
-skill required editing only nine function bodies across five files, guided
-entirely by a machine-generated mapping CSV.
+across 121 components in a single Cypher query execution. A further Cypher
+query identified the cross-component call boundaries to trace (nine caller
+functions across five files); the \texttt{add-runtime-instrumentation} skill
+then instrumented the corresponding call-site patterns with
+\texttt{csp\_matcher}, requiring no manual call-graph reading.
 Because the pipeline is codebase-agnostic (skills query the live schema, not
 hardcoded labels), switching to a new target requires only re-running the
 static extractor and re-invoking the same skills.
 The practitioner session confirmed this transfer cost is low in practice:
 four engineers on a much larger industrial codebase used the tool
 productively within a single session and the structural and dependency
-diagrams were rated consistently useful for architectural comprehension
-and defect localisation.
+diagrams were rated consistently useful for architectural comprehension.
 
 \section{Contributions}
 
@@ -119,18 +127,20 @@ contributions and three engineering artefacts:
 
 \paragraph{Research contributions.}
 \begin{enumerate}
-  \item \textbf{A single property graph} that holds the static call graph
-    and the runtime trace together and remembers which evidence each
-    interaction came from (static, dynamic, or both). Keeping both in one
-    place lets fusion and slicing work over the same data without losing
-    track of where each edge originated (\cref{sec:pg-schema}).
+  \item \textbf{A static property graph and a separate trace pipeline}
+    whose interaction edge sets are compared while remembering which
+    evidence each interaction came from (static, dynamic, or both).
+    Keeping the two sources separate but comparable is what lets the
+    evaluation report exactly where each edge originated
+    (\cref{sec:pg-schema}).
 
-  \item \textbf{A slicing method} that trims this combined graph down to
-    just the interactions relevant to one scenario, without re-running the
-    analysis from scratch (\cref{sec:fusion-slicing}).
+  \item \textbf{A scenario-scoping method} that trims the call graph down
+    to just the interactions relevant to one scenario using plain
+    scenario-scoped Cypher queries, without re-running the analysis from
+    scratch (\cref{sec:combine-scope}).
 
   \item \textbf{A clear, evidence-based account} of when combining static
-    and dynamic analysis actually helps and when it does not. Fusion
+    and dynamic analysis actually helps and when it does not. Combining
     protects fault paths and adds new interactions at indirection
     boundaries (H1). Guided instrumentation removes noise without losing
     coverage (H2). Finally, the reconstructed diagrams help comprehension
@@ -144,7 +154,7 @@ contributions and three engineering artefacts:
     automatically, driven by a simple find/replace specification
     (\cref{sec:csp-matcher}).
 
-  \item A \textbf{set of twelve natural-language agent skills} that run the
+  \item A \textbf{set of eleven natural-language agent skills} that run the
     whole pipeline, from source code to \sysml\ diagram on any codebase
     without code changes (\cref{sec:skill-design}).
 
@@ -160,9 +170,9 @@ The most significant limitation is scale: all three hypotheses were
 evaluated on a single open-source system (CPSCore, $\approx$13\,kLOC)
 across four scenarios.
 CPSCore's absence of cross-module virtual dispatch means the static call
-graph is already reachability-complete, explaining why fusion is
+graph is already reachability-complete, explaining why combining is
 redundant on happy-path scenarios. In larger systems with virtual dispatch
-or dynamic plugin loading, the fusion benefit would likely be more
+or dynamic plugin loading, the combination benefit would likely be more
 pronounced.
 The practitioner session on an industrial-scale codebase
 (\cref{sec:practitioner}) provides encouraging qualitative evidence of
@@ -189,7 +199,7 @@ Several directions are open for future investigation:
 \begin{description}
   \item[Controlled evaluation on a second system.]
     The practitioner session (\cref{sec:practitioner}) suggests the
-    approach transfers to larger, industrial codebases, but only
+    static approach transfers to larger, industrial codebases, but only
     qualitatively. Extending the fault-path/dual-gap scenario set beyond
     the single constructed scenario (S4) currently reported would be a
     natural first step. Applying the full, pre-registered
@@ -216,7 +226,7 @@ Several directions are open for future investigation:
     As the codebase evolves, the \ac{PG} should be updatable incrementally
     rather than re-built from scratch.
     Neo4j's support for live graph updates makes this tractable. But, the
-    slicing invalidation logic would need to be designed carefully.
+    scenario-scoping invalidation logic would need to be designed carefully.
 
   \item[LLM-assisted diagram naming.]
     Function names in the generated diagrams are currently taken verbatim

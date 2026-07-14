@@ -6,10 +6,13 @@ but existing reconstruction techniques are each incomplete: static analysis
 is scenario-agnostic, while execution traces are inherently partial.
 
 This thesis presents a hybrid pipeline that synthesises scenario-specific
-Interaction Models for event-driven \Cpp\ systems by fusing a static call
-graph with timestamped runtime traces in a unified \neo property graph and
-applying dependence-based slicing to isolate scenario-relevant interactions.
-Implemented as twelve composable, natural-language-invocable agent skills,
+Interaction Models for event-driven \Cpp\ systems by combining a static call
+graph, stored in a \neo property graph, with timestamped runtime traces
+collected by a separate pipeline. The two evidence sources are kept in
+separate artefacts and combined as a set union of their interaction edges;
+scenario-scoped Cypher queries then isolate the interactions relevant to a
+given scenario.
+Implemented as eleven composable, natural-language-invocable agent skills,
 the pipeline is evaluated on \emph{CPSCore}, an open-source event-driven
 framework, across four scenarios (three happy-path, one constructed)
 reconstructed under five conditions ranging from an \ac{LLM}-only baseline
@@ -18,9 +21,9 @@ to the full pipeline.
 Three hypotheses are confirmed.
 \textbf{H1:} The full pipeline achieves the highest reconstruction accuracy
 of any condition tested (macro-F1~$=$~0.964, with perfect recall on every
-scenario). Fusion is strictly additive where static and dynamic
-analysis each miss a different interaction and redundant where the static
-call graph is already complete.
+scenario). Combining the two sources is strictly additive where static and
+dynamic analysis each miss a different interaction and redundant where the
+static call graph is already complete.
 \textbf{H2:} Code-graph-guided instrumentation eliminates all measured noise
 (50\% fewer nodes, 70\% fewer edges) without losing scenario coverage. It is also
 confirmed by a blinded six-rater expert panel rating guided output higher in 47 of 54
@@ -38,16 +41,17 @@ consistently useful and sequence-diagram message labelling was identified
 as the clearest area for improvement.
 
 The main contributions are as follows.
-(i)~A single property graph that holds the static call graph and the
-runtime trace together, remembering which evidence each interaction came
-from.
-(ii)~A slicing method that trims this combined graph down to just the
-interactions relevant to one scenario.
+(i)~A static property graph plus a separate runtime-trace pipeline whose
+interaction edge sets are compared while remembering which evidence each
+interaction came from.
+(ii)~A scenario-scoping method, using plain scenario-scoped Cypher queries,
+that trims the call graph down to just the interactions relevant to one
+scenario.
 (iii)~A way to recover publish-subscribe wiring that ordinary call-graph
 analysis cannot see.
 (iv)~A small, reversible tool (\texttt{csp\_matcher}) that inserts and
 removes trace probes automatically.
-(v)~A set of twelve natural-language agent skills that run the whole
+(v)~A set of eleven natural-language agent skills that run the whole
 pipeline, from source code to \sysml diagram. Its designed to be codebase agnostic.
 (vi)~A clear, evidence-based account of when combining static and dynamic
 analysis actually helps and when it is redundant.

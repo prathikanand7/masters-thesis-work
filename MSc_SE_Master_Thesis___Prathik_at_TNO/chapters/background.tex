@@ -4,7 +4,7 @@ This chapter provides the technical foundation for the approach presented in
 \cref{ch:methods}.
 It introduces \sysml and its Interaction Model constructs. It explains the property
 graph data model. It describes the static and dynamic analysis techniques used.
-Finally, it summarises the dependence-based slicing methodology.
+Finally, it summarises how scenarios are scoped through graph queries.
 This chapter contains background knowledge rather than contributions.
 
 \section{SysML v2 and Interaction Models}\label{sec:sysml}
@@ -161,26 +161,25 @@ Practical execution traces are almost always \emph{incomplete}:
 These gaps motivate the hybrid approach. The static call graph provides
 structural completeness. The trace provides scenario specificity.
 
-\section{Dependence-Based Slicing}\label{sec:slicing}
+\section{Scenario Scoping through Graph Queries}\label{sec:scenario-scoping}
 
-Program slicing, introduced by Weiser \cite{weiser:slicing}, computes the
-subset of a program that affects the values of a set of \emph{criterion}
-variables at a given point.
-\emph{Dependence-based slicing} operates on the \ac{PDG}. The \ac{PDG}
-combines the \ac{CDG} and the \ac{DDG} into a single graph \cite{ferrante:pdg}.
+Reconstructing a diagram for a single scenario requires narrowing a large
+call graph down to the interactions that belong to that scenario. Rather
+than adopt a formal program-slicing procedure over a program dependence
+graph, this thesis performs scenario scoping directly as a declarative
+graph query.
 
-In the context of interaction model reconstruction, the slicing criterion is
-the entry point of the scenario of interest (for example, a
-\texttt{SynchronizedRunnerMaster::runStage} timeout event).
-The slice then contains only those functions and message exchanges that are
-reachable from the criterion node via dependence edges. This effectively filters
-out interactions that belong to other scenarios running concurrently in the
-system.
+The scope of a scenario is expressed as a set of participating components
+(for example, \texttt{Synchronization} calling into \texttt{Aggregation}
+and \texttt{Logging}). A scenario-scoped Cypher query then retains only the
+call edges whose caller and callee belong to those components. This keeps
+the interactions that are relevant to the scenario and discards those that
+belong to other, concurrently exercised behaviour.
 
-The adaptation used in this thesis (\cref{sec:fusion-slicing}) replaces the
-traditional \ac{PDG} traversal with a scope-constrained Cypher query.
-It operates over the property graph rather than over a source-level program
-representation.
+The concrete query used in this thesis is described in
+\cref{sec:combine-scope}. It operates over the static property graph
+rather than over a source-level program representation, and the same
+component-scope constraint is applied to the trace-derived sequence table.
 
 \section{Publish-Subscribe via Callback Registration}\label{sec:pubsub-background}
 

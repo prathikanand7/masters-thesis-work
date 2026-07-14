@@ -47,9 +47,6 @@ real, previously-resolved defect on a large industrial \Cpp\ system
 because a reset call was missing from the connection-handling code. As a
 result, the system silently stopped delivering change-notification events
 after a service restart.
-The fault was visible only by following an implicit chain of events that no
-existing interaction model showed. Diagnosing it meant manually
-reconstructing exactly the kind of model this thesis automates.
 
 The \ac{GDI} project at \ac{TNO}-\ac{ESI} aims to address this problem by using
 graph-based program analysis to support the automatic extraction and maintenance of
@@ -103,16 +100,12 @@ Recovering that missing structure is part of the contribution of this thesis
 This thesis is guided by the following research questions:
 
 \begin{description}
-  \item[\rqone] What intermediate property graph representation can integrate
-    static call graphs and timestamped runtime events for interaction model
-    reconstruction?
+  \item[\rqone] How does combining static analysis and incomplete runtime
+    traces improve the accuracy and completeness of scenario-specific
+    interaction model reconstruction?
 
-  \item[\rqtwo] How does combining static analysis and incomplete traces
-    improve accuracy and completeness of scenario-specific interaction model
-    reconstruction?
-
-  \item[\rqthree] How can dependence-based slicing filter trace events and
-    constrain static interactions to only scenario-relevant behaviour?
+  \item[\rqtwo] How can scenario-scoped querying of the static call graph 
+  restrict reconstruction to only the behaviour relevant to a given scenario?
 \end{description}
 
 Each research question is paired with a corresponding hypothesis that makes it
@@ -120,9 +113,9 @@ testable, and each hypothesis is answered by a dedicated experiment
 (\cref{ch:experiments,ch:analysis}):
 
 \begin{description}
-  \item[H1 (\rqtwo).] Combining static analysis and dynamic instrumentation
+  \item[H1 (\rqone).] Combining static analysis and dynamic instrumentation
     improves reconstruction accuracy over either source alone.
-  \item[H2 (\rqthree).] Code-graph-guided instrumentation improves scenario
+  \item[H2 (\rqtwo).] Code-graph-guided instrumentation improves scenario
     focus by suppressing irrelevant execution detail relative to full,
     unguided instrumentation.
   \item[H3.] Reconstructed interaction models improve agent task performance
@@ -130,10 +123,9 @@ testable, and each hypothesis is answered by a dedicated experiment
     alone.
 \end{description}
 
-\rqone\ is answered by the design of the property graph schema
-(\cref{ch:methods}). \rqtwo\ and \rqthree\ are answered empirically by the H1
-and H2 experiments on the CPSCore case study, with H3 assessing whether the
-reconstructed models translate into a measurable downstream benefit
+\rqone\ and \rqtwo\ are answered empirically by the H1 and H2 experiments
+on the CPSCore case study, with H3 assessing whether the reconstructed
+models translate into a measurable downstream benefit
 (\cref{ch:experiments,ch:analysis}).
 
 \section{Approach}
@@ -149,21 +141,24 @@ The proposed approach consists of four stages:
     applies topology resolution to recover the implicit routing structure
     (\cref{sec:macro-resolution}).
 
-  \item \textbf{Trace ingestion.} Timestamped execution traces produced during
-    a scenario recording session are parsed and aligned to the entities in the
-    static graph, producing a set of observed interactions annotated with
-    temporal ordering information.
+  \item \textbf{Trace collection.} Trace probes are injected into the
+    source by the instrumentation tool (\cref{sec:csp-matcher}). The instrumented 
+    program is then run and the emitted timestamped trace lines are stored in a sequence table. 
+    This dynamic pipeline is kept separate from the static property graph. The two evidence sources are
+    combined only when the reconstructed models are compared during
+    evaluation.
 
-  \item \textbf{Graph fusion and slicing.} The static and trace graphs are merged
-    into a unified \acl{PG}. Dependence-based slicing is applied to the merged
-    graph to retain only those nodes and edges that are reachable from the
-    scenario entry point. As a result, only those interactions are retained that 
-    are causally connected to the scenario under analysis.
+  \item \textbf{Scenario-scoped querying.} The static call graph is queried
+    with scenario-scoped Cypher queries that retain only the interactions
+    whose caller and callee belong to the components declared for the
+    scenario. The equivalent component constraint is applied to the
+    trace-derived sequence table, so both evidence sources are narrowed to
+    the same scenario scope.
 
-  \item \textbf{SysML v2 generation.} The sliced graph is projected into
-    \sysml sequence diagrams using a template-driven generator.
-    The generated diagrams are written to a .sysml file following the
-    \sysml textual syntax.
+  \item \textbf{SysML v2 generation.} The scenario-scoped sequence table is
+    projected into \sysml sequence diagrams using a template-driven
+    generator. The generated diagrams are written to a .sysml file following
+    the \sysml textual syntax.
 \end{enumerate}
 
 The approach is developed and validated on \emph{CPSCore}, an open-source
@@ -175,13 +170,14 @@ happy-path and constructed indirection-boundary behaviour
 
 The remainder of this thesis is structured as follows.
 \Cref{ch:background} introduces the technical concepts underpinning the approach:
-\sysml Interaction Models, property graphs, static call-graph analysis, execution
-tracing and dependence-based slicing.
+\sysml Interaction Models, property graphs, static call-graph analysis,
+execution tracing and scenario-scoped graph querying.
 \Cref{ch:related} surveys existing work on program comprehension, architecture
 recovery and trace-based diagram synthesis. It positions this thesis within
 that landscape.
 \Cref{ch:methods} describes the design approach in detail, including the
-property graph schema, the fusion algorithm and the slicing procedure.
+property graph schema, the trace-collection pipeline and the
+scenario-scoped querying procedure.
 \Cref{ch:experiments} presents the implementation and the results of applying
 the approach to the CPSCore case study.
 \Cref{ch:analysis} analyses those results with respect to the three research

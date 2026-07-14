@@ -223,8 +223,10 @@ Kienle \& M\"{u}ller \cite{kienle:reconstructing}
 \end{table}
 
 No existing approach addresses all five dimensions simultaneously.
-In particular, three things are missing from prior work. First, none fuses static and trace information into a unified \acl{PG}.
-Second, none applies dependence-based slicing to that graph for scenario
-filtering. Third, none targets \sysml as the output formalism.
+In particular, three things are missing from prior work. First, none combines
+static call-graph evidence with runtime traces for \sysml interaction model
+reconstruction while keeping track of which source each interaction came from.
+Second, none applies scenario-scoped graph querying to focus the result on a
+single scenario. Third, none targets \sysml as the output formalism.
 This gap constitutes the primary research contribution of this thesis.
 

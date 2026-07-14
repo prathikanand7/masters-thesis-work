@@ -11,28 +11,25 @@ indexes used by the pipeline, using the actual node labels from
 // Uniqueness constraints
 CREATE CONSTRAINT fn_def_unique IF NOT EXISTS
   FOR (f:CppFunctionDefinition)
-  REQUIRE f.qualified_name IS UNIQUE;
+  REQUIRE f.symbol IS UNIQUE;
 
 CREATE CONSTRAINT fn_decl_unique IF NOT EXISTS
   FOR (f:CppFunctionDeclaration)
-  REQUIRE f.qualified_name IS UNIQUE;
+  REQUIRE f.symbol IS UNIQUE;
 
 CREATE CONSTRAINT decl_unique IF NOT EXISTS
   FOR (d:CppDeclaration)
-  REQUIRE d.qualified_name IS UNIQUE;
+  REQUIRE d.symbol IS UNIQUE;
 
 CREATE CONSTRAINT symbol_unique IF NOT EXISTS
   FOR (s:Symbol) REQUIRE s.name IS UNIQUE;
 
 // Indexes for lookup performance
-CREATE INDEX fn_source IF NOT EXISTS
-  FOR (f:CppFunctionDefinition) ON (f.source_file, f.line);
+CREATE INDEX fn_line IF NOT EXISTS
+  FOR (f:CppFunctionDefinition) ON (f.lineNumber);
 
-CREATE INDEX trace_scenario IF NOT EXISTS
-  FOR (e:TraceEvent) ON (e.scenario_id, e.timestamp);
-
-CREATE INDEX file_path IF NOT EXISTS
-  FOR (f:SourceFile) ON (f.path);
+CREATE INDEX file_name IF NOT EXISTS
+  FOR (f:SourceFile) ON (f.name);
 \end{minted}
 
 \section{csp\_matcher Tracing Rules for CPSCore}
@@ -314,9 +311,9 @@ package 'S3-Sequence' {
 \label{sec:appendix-generated}
 
 The following shows representative output from the full pipeline condition
-(C5: static + dynamic + slicing, \cref{sec:h1-results}).
+(C5: static + dynamic + scenario scoping, \cref{sec:h1-results}).
 Scenarios are represented as component-interaction edge lists
-(\texttt{elements.json}) extracted from the sliced \ac{PG}.
+(\texttt{elements.json}) extracted from the scenario-scoped edge set.
 
 \subsection{C5 Edge Lists by Scenario}
 
@@ -606,7 +603,7 @@ under condition C5 (full pipeline).
   \centering
   \includegraphics[width=\textwidth]{figures/sysmlv2 diagrams/connections.png}
   \caption{SysML v2 connections diagram: node-type hierarchy and property graph
-    schema relationships between all 13 node labels.}
+    schema relationships between all 11 node labels.}
   \label{fig:sysml-connections}
 \end{figure}
 

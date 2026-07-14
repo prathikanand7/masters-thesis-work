@@ -43,7 +43,7 @@ This would make dynamic evidence genuinely additive.
 In CPSCore, that situation does not arise: every edge the trace discovers
 is already present in the static graph (formally, C3~$\subseteq$~C2). This
 is a structural property of the codebase, not a flaw in the pipeline, and
-its consequence for fusion (C4~$=$~C2 on these scenarios) is analysed in
+its consequence for combining sources (C4~$=$~C2 on these scenarios) is analysed in
 \cref{sec:h1-c4c2}.
 
 \subsection{CPSCore Architecture}
@@ -88,11 +88,12 @@ The \Cpp\ source tree of CPSCore was analysed by the Renaissance
 semantic extraction tool, which resolves the full \ac{AST} (including
 template instantiations, overload candidates and macro expansions)
 and emits the property graph schema described in \cref{tab:node-types,tab:edge-types}.
-The Renaissance-populated graph contains 11 static node labels and 11
-static relationship types. Trace ingestion and slicing later add two
-dynamic node labels (\texttt{TraceEvent} and \texttt{Scenario}) and also
-two dynamic relationship types. This brings the total to 13 node labels
-and 13 relationship types (\cref{tab:node-types,tab:edge-types}).
+The Renaissance-populated graph contains 11 node labels and 11
+relationship types (\cref{tab:node-types,tab:edge-types}), all derived
+from static analysis. Runtime traces are not ingested into the graph; they
+are processed by a separate pipeline into a sequence table and combined
+with the static edge set only at evaluation time
+(\cref{sec:combine-scope}).
 
 \subsection{Schema Introspection Skill}
 
@@ -161,11 +162,13 @@ characterises the structural connectivity of the codebase.
 
 \section{Stage 2: Sequence Dependency Table}\label{sec:seq-table}
 
-The \texttt{get-sequence-dependency-table} skill queries the
-\texttt{CppCalls} edges in the graph, annotates each edge with a
-monotonically increasing synthetic timestamp (at 1\,ms intervals
-from a base time of \texttt{2026-05-22T12:42:09}), and writes the
-result to a CSV file.
+The \texttt{get-sequence-dependency-table} skill reads a runtime trace log
+(the \texttt{[TRACE]} lines captured by the instrumentation pipeline,
+\cref{sec:trace-impl}) and normalises it into an ordered sequence CSV. It is
+read-only with respect to the graph and performs no Cypher query of its own.
+It preserves the execution order of the trace, sorts by \texttt{EventTimestamp}
+where needed, and assigns a 1-based \texttt{Sequence} number to each observed
+interaction.
 
 The format of each row is:
 
@@ -195,85 +198,46 @@ to many distinct components, one per source sub-path, which is why the
 component count (121) is far larger than the module count (5).
 The extraction yielded \textbf{2,574 ordered interactions} covering
 \textbf{2,169 unique client to server function pairs} across
-\textbf{121 distinct components} in the CPSCore codebase.
-This forms the \emph{static-only} baseline in the three-way evaluation
-(\cref{ch:analysis}).
+\textbf{121 distinct components} in the CPSCore codebase, forming the
+\emph{static-only} baseline (condition~C2) evaluated in \cref{ch:analysis}.
+Because this baseline is a static projection of \texttt{CppCalls} edges
+rather than a run. Its timestamps are synthetic. The per-scenario dynamic
+traces used as the C3 evidence (\cref{sec:trace-impl}) are, by contrast,
+real runtime captures with true wall-clock timestamps.
 
 \section{Stage 3: Runtime Trace Collection}\label{sec:trace-impl}
 
-\subsection{Instrumentation Target Selection}
+\subsection{Probe Insertion via csp\_matcher}\label{sec:trace-probe-insertion}
 
-Live trace collection proceeds in two steps.
-First, a Cypher query identifies cross-component function call targets:
-functions that serve as observable entry points into major
-subsystems.
-The query, executed by the \texttt{get-runtime-traces} skill, traverses
-the static graph to find all \texttt{CppCalls} edges between functions
-in different architectural components:
-
-\begin{minted}[fontsize=\footnotesize]{cypher}
-WITH ['Aggregation', 'Configuration', 'Synchronization',
-      'Logging', 'Utilities', 'Framework'] AS validComponents
-MATCH (callerFunc)-[:Source]->(callerFile)-[:ParentFolder]->(callerFolder)
-MATCH (calleeFile)-[:ParentFolder]->(calleeFolder)
-MATCH (callerFunc)-[:CppCalls]->(calleeDecl)
-MATCH (calleeDecl)-[:Source]->(calleeFile)
-WHERE last(split(callerFolder.name, '/')) IN validComponents
-  AND last(split(calleeFolder.name, '/')) IN validComponents
-  AND last(split(callerFolder.name, '/'))
-      <> last(split(calleeFolder.name, '/'))
-  AND NOT toLower(callerFolder.name) CONTAINS 'test'
-  AND NOT toLower(calleeFolder.name) CONTAINS 'test'
-RETURN DISTINCT
-    callerFile.name AS callerFile,
-    callerFunc.name AS callerFunctionQualified,
-    last(split(callerFolder.name, '/')) AS callerComponent
-ORDER BY callerComponent, callerFunctionQualified
-\end{minted}
-
-The query constrains traversal to the six architectural modules of
-CPSCore, requires that caller and callee reside in \emph{different}
-components (cross-component edges only) and excludes test files.
-This produced nine instrumentation targets across five source files,
-written to a mapping CSV:
-
-\begin{minted}{text}
-source_file | function_name | component | trace_label
-\end{minted}
-
-\subsection{Probe Insertion}
-
-The \texttt{apply\_instrumentation\_from\_mapping.py} script
-inserts \texttt{TRACE\_FUNCTION\_SCOPE} at the opening brace of each
-target function, using the mapping CSV as a deterministic specification
-so that the edit is reproducible and reviewable:
+The \texttt{add-runtime-instrumentation} skill drives \texttt{csp\_matcher}
+(\cref{sec:csp-matcher}) to wrap the cross-component call \emph{sites}
+identified above with a comma-operator trace emission. The tool is driven by
+the find/replace rules in \texttt{add\_tracing.txt} --- three call-site
+patterns (\texttt{getAll}, \texttt{flush}, \texttt{convert}), one per
+distinct cross-component call type surfaced by the Cypher query --- so that
+the edit is declarative, reproducible, and reviewable.
+The \texttt{apply\_tracing.ps1} script applies \texttt{csp\_matcher} across
+all compilation units listed in \texttt{compile\_commands.json}, injecting
+the three tracing rules and the CPSLOG macro patch (covering every
+\texttt{RAIILogStream::stream} call site) in sequence:
 
 \begin{minted}{cpp}
-// Example insertion result in Aggregator.cpp
-void Aggregator::add(std::shared_ptr<IAggregatableObject> obj) {
-    TRACE_FUNCTION_SCOPE("Aggregation", "Aggregator.add");
-    // ... original function body
-}
+// Example wrapped call site in AggregatableRunner.cpp
+(cspTrace("Synchronization", "Aggregation", "Aggregator.getAll"),
+ agg->getAll<IAggregatableObject>())
 \end{minted}
 
-The macro emits a structured pipe-delimited log entry on function entry,
-capturing wall-clock timestamp, component, and function name.
-
-A second instrumentation path uses \texttt{csp\_matcher}
-(\cref{sec:csp-matcher}) to wrap specific call \emph{sites} rather than
-function entries.
-This is used for the call-site-level tracing needed in the H1/H2
-experiments, where the trace must record not just that a function was
-entered but that a specific cross-component call was made.
-The \texttt{apply\_tracing.ps1} script drives \texttt{csp\_matcher}
-across all compilation units listed in \texttt{compile\_commands.json},
-applying the three tracing rules (\texttt{getAll}, \texttt{flush},
-\texttt{convert}) and the CPSLOG macro patch in sequence.
+Each probe emits a structured pipe-delimited \texttt{[TRACE]} line to
+\texttt{stderr} at the moment the call fires, capturing the real wall-clock
+timestamp, caller and callee component, and function names.
 The full tracing rules are reproduced in \cref{sec:appendix-tracing-rules}.
+Because the probes wrap call \emph{sites} rather than function entries, the
+trace records not merely that a function was entered but that a specific
+cross-component call actually executed.
 
 \subsection{Trace Format and Output}
 
-The live trace output follows the format:
+The captured trace output follows the format:
 
 \begin{minted}{text}
 EventTimestamp | EventName | ClientComponent | ClientFunction
@@ -281,9 +245,10 @@ EventTimestamp | EventName | ClientComponent | ClientFunction
                | RelationshipType | InterfaceNames
 \end{minted}
 
-Running the CPSCore test suite after instrumentation produced
-\textbf{27 runtime trace events} covering \textbf{26 unique
-client to server interaction pairs}. Example events:
+Running the CPSCore test suite under \texttt{csp\_matcher} instrumentation
+produced \textbf{27 real trace events} covering \textbf{26 unique
+client to server interaction pairs}. These are genuine runtime captures with
+real wall-clock timestamps, not a static projection. Example events:
 
 \begin{minted}{text}
 2026-06-18T10:07:15.686645Z | Aggregator.getAll |
@@ -364,7 +329,7 @@ Utilities, Data Presentation, and Test Execution flows.
 \section{Scenario Suite and Experimental Conditions}\label{sec:scenario-suite}
 
 The implementation described above produces the raw artefacts (the static
-sequence dependency table and the live trace log) that feed the H1 and H2
+sequence dependency table and the real \texttt{csp\_matcher} trace log) that feed the H1 and H2
 experiments reported in \cref{ch:analysis}.
 This section documents the experimental configurations those artefacts were
 assembled into, so that the results in \cref{ch:analysis} can be read against
@@ -378,7 +343,7 @@ Synchronization and Redis/IDC subsystems, occurring naturally in CPSCore's
 existing code.
 A fourth scenario (S4) was purpose-built production code (not a test
 fixture), added for a specific, narrow reason: none of S1--S3 could, even
-in principle, show fusion (C4) strictly exceeding \emph{both} single-source
+in principle, show the combination (C4) strictly exceeding \emph{both} single-source
 conditions (C2, C3) at once, because CPSCore's existing code has no
 boundary where static analysis and runtime tracing each miss a
 \emph{different} interaction. S4 introduces exactly one such boundary.
@@ -432,9 +397,10 @@ boundary where static analysis and runtime tracing each miss a
 \end{description}
 
 S4 is marked as constructed rather than found-in-the-wild. Its ground
-truth was authored from the new source files directly. Its dynamic trace
-was captured by actually running the accompanying Catch2 test in the same
-instrumented environment as S1--S3. And its results are genuine and
+truth was authored from the new source files directly. Like S1--S3, its
+dynamic trace was a real \texttt{csp\_matcher} capture, obtained by actually
+running the accompanying Catch2 test under instrumentation; none of the
+S1--S4 traces are synthetic. Its results are genuine and
 unedited. It is reported and stratified separately
 from S1--S3 throughout \cref{sec:h1}, never folded silently into the
 happy-path numbers, for exactly this reason.
@@ -453,32 +419,32 @@ isolate the contribution of each information source:
     agent can infer without the \ac{GDI} pipeline at all.
   \item[C2: Static-only.] The sequence dependency table extracted from
     \texttt{CppCalls} edges alone (\cref{sec:seq-table}).
-  \item[C3: Dynamic-only.] The live runtime trace captured via
-    \texttt{TRACE\_FUNCTION\_SCOPE} instrumentation alone (\cref{sec:trace-impl}).
-  \item[C4: Static + Dynamic (fusion).] The union of the static and trace
-    artefacts, with no dependence-based slicing applied.
-  \item[C5: Full pipeline.] Fusion (C4) followed by dependence-based
-    slicing from the scenario entry point, \ie the complete approach
-    proposed in this thesis.
+  \item[C3: Dynamic-only.] The real runtime trace captured via
+    \texttt{csp\_matcher} instrumentation alone (\cref{sec:trace-impl}).
+  \item[C4: Static + Dynamic (combined).] The union of the static and trace
+    artefacts, with no scenario-scoped querying applied.
+  \item[C5: Full pipeline.] The combination (C4) followed by scenario-scoped
+    querying from the scenario's declared components, \ie the complete
+    approach proposed in this thesis.
 \end{description}
 
 C1--C4 test \hyperref[sec:h1]{H1} (whether combining sources improves
 reconstruction accuracy over any single source). C5 versus C4 tests
 \hyperref[sec:h2]{H2} (whether code-graph-guided filtering improves
-scenario focus over unfiltered fusion).
+scenario focus over the unfiltered combination).
 
 \subsection{Guided versus Full Instrumentation}\label{sec:guided-vs-full}
 
 H2 additionally requires a second instrumentation axis, orthogonal to the
-five conditions above: \emph{how} the live trace itself is collected.
+five conditions above: \emph{how} the trace itself is collected.
 
 \begin{description}
-  \item[Full instrumentation.] \texttt{TRACE\_FUNCTION\_SCOPE} probes are
-    inserted at every candidate entry point identified in the static graph,
+  \item[Full instrumentation.] \texttt{csp\_matcher} trace probes are
+    inserted at every candidate call site identified in the static graph,
     independent of scenario.
   \item[Code-graph-guided instrumentation.] Probes are inserted only at
-    entry points that lie within the static dependence slice for the
-    scenario under test (\cref{sec:slicing}), computed \emph{before}
+    call sites that lie within the scenario scope for the
+    scenario under test (\cref{sec:scenario-scoping}), computed \emph{before}
     instrumentation rather than filtered after the fact.
 \end{description}
 
@@ -501,15 +467,15 @@ pipeline stage on CPSCore.
 \toprule
 \textbf{Artefact} & \textbf{Count} \\
 \midrule
-Graph node labels                            & 13 \\
-Graph relationship types                     & 13 \\
+Graph node labels                            & 11 \\
+Graph relationship types                     & 11 \\
 Sequence dependency table rows               & 2,574 \\
 Unique client$\to$server function pairs (static) & 2,169 \\
 Distinct components in sequence table        & 121 \\
 Instrumentation targets (functions)          & 9 \\
 Source files instrumented                    & 5 \\
-Runtime trace events (live)                  & 27 \\
-Unique client$\to$server pairs (live)        & 26 \\
+Real trace events (csp\_matcher)             & 27 \\
+Unique client$\to$server pairs (trace)        & 26 \\
 SysML v2 scenarios generated                 & 14 \\
 Test assertions passing post-instrumentation & 1,425 / 1,425 \\
 \bottomrule

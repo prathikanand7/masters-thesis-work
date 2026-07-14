@@ -4,7 +4,7 @@
 \label{sec:appendix-schema}
 
 The following Cypher statements create the uniqueness constraints and
-indexes used by the pipeline, using the actual node labels from
+indexes used by the pipeline, using the node labels from
 \cref{tab:node-types}.
 
 \begin{minted}{cypher}
@@ -35,12 +35,11 @@ CREATE INDEX file_path IF NOT EXISTS
 \section{csp\_matcher Tracing Rules for CPSCore}
 \label{sec:appendix-tracing-rules}
 
-The following rules file (\texttt{add\_tracing.txt}) specifies the three
-call-site patterns instrumented by \texttt{csp\_matcher} during trace
-collection (\cref{sec:csp-matcher}).
-Each \texttt{find:}/\texttt{replace:} pair wraps a target call expression
-with a comma-operator trace emission that captures caller context at the
-call site.
+The rules file (\texttt{add\_tracing.txt}) below specifies the three
+call-site patterns instrumented by \texttt{csp\_matcher}
+(\cref{sec:csp-matcher}). Each \texttt{find:}/\texttt{replace:} pair
+wraps a target call expression with a comma-operator trace emission
+capturing caller context at the call site.
 
 \begin{minted}[fontsize=\footnotesize]{text}
 find:    $agg.getAll<$T>()
@@ -71,8 +70,8 @@ replace: (std::fprintf(stderr,
           EnumMap<RunStage>::convert($stage))
 \end{minted}
 
-The corresponding removal rule (\texttt{remove\_tracing.txt}) uses a
-filter function to identify and strip trace wrappers:
+The corresponding removal rule (\texttt{remove\_tracing.txt}) strips
+trace wrappers via a filter function:
 
 \begin{minted}[fontsize=\footnotesize]{text}
 find:    ($any, $orig)
@@ -80,8 +79,10 @@ filter:  is_trace_remove
 replace: $orig
 \end{minted}
 
-The filter (\texttt{tracing\_filters.cpp}) accepts only comma expressions
-whose left operand contains the \texttt{[TRACE]} marker:
+The filter (\texttt{tracing\_filters.cpp}) accepts only comma
+expressions whose left operand contains the \texttt{[TRACE]} marker, so
+only trace-injected expressions are removed and pre-existing comma
+expressions are untouched:
 
 \begin{minted}[fontsize=\footnotesize]{cpp}
 bool is_trace_remove(int n, const char* const* ns,
@@ -91,16 +92,13 @@ bool is_trace_remove(int n, const char* const* ns,
 }
 \end{minted}
 
-This ensures that only trace-injected comma expressions are removed,
-leaving any pre-existing comma expressions in the codebase untouched.
-
 \section{Ground-Truth Reference Diagrams (S1--S3)}
 \label{sec:appendix-groundtruth}
 
-The manually authored \sysml reference diagrams used as ground truth for
-the H1 evaluation (\cref{sec:h1-results}).
-Each pair consists of a structural diagram (component connectivity) and a
-sequence diagram (message interactions).
+The manually authored \sysml reference diagrams used as ground truth
+for the H1 evaluation (\cref{sec:h1-results}). Each scenario has a
+structural diagram (component connectivity) and a sequence diagram
+(message interactions).
 
 \subsection{S1: Aggregator Notification Chain, Structural}
 
@@ -310,10 +308,10 @@ package 'S3-Sequence' {
 \section{Generated Pipeline Output (C5: Full Pipeline)}
 \label{sec:appendix-generated}
 
-The following shows representative output from the full pipeline condition
-(C5: static + dynamic + scenario scoping, \cref{sec:h1-results}).
-Scenarios are represented as component-interaction edge lists
-(\texttt{elements.json}) extracted from the scenario-scoped edge set.
+Representative output from the full pipeline condition (C5: static +
+dynamic + scenario scoping, \cref{sec:h1-results}), shown as
+component-interaction edge lists (\texttt{elements.json}) extracted
+from the scenario-scoped edge set.
 
 \subsection{C5 Edge Lists by Scenario}
 
@@ -340,9 +338,9 @@ S3 & Synchronization & Utilities   & convert \\
 
 \subsection{Generated SysML~v2 Sequence Model (Excerpt)}
 
-The full pipeline also produces a \sysml sequence model with typed
-messages. The following is the \emph{Aggregation} scenario (one of 14
-auto-generated scenarios in the complete 800-line output):
+The pipeline also produces a \sysml sequence model with typed messages.
+Below is the \emph{Aggregation} scenario, one of 14 auto-generated
+scenarios in the complete 800-line output:
 
 \begin{minted}[fontsize=\footnotesize]{text}
 part def AggregationScenario :> InteractionScenario {
@@ -390,8 +388,8 @@ part def AggregationScenario :> InteractionScenario {
 \label{sec:appendix-mermaid}
 
 The pipeline also produces Mermaid diagrams for module-level structural
-views. The following module-dependency diagram is generated from the static
-call-graph in \neo, summarising cross-directory call edges:
+views. The module-dependency diagram below, generated from the static
+call graph in \neo, summarises cross-directory call edges:
 
 \begin{minted}[fontsize=\footnotesize]{text}
 flowchart TD
@@ -414,9 +412,9 @@ flowchart TD
   Logging -->|"calls (1)"| Utilities
 \end{minted}
 
-The runtime-tracing Mermaid diagram shows how the \texttt{SignalHandler}
-subsystem interacts with logging, IPC, and scheduler components, including
-both static call edges (solid) and runtime subscription edges (dashed):
+The runtime-tracing diagram below shows how \texttt{SignalHandler}
+interacts with logging, IPC, and scheduler components, with static call
+edges (solid) and runtime subscription edges (dashed):
 
 \begin{minted}[fontsize=\footnotesize]{text}
 flowchart TD
@@ -447,23 +445,15 @@ flowchart TD
 \section{Rendered Diagram Figures}
 \label{sec:appendix-rendered}
 
-The following figures show the rendered versions of the diagrams listed in
-the preceding sections.
-The source \texttt{.mmd} files and both PNG and SVG outputs are available
-in the \texttt{figures/} directory of the repository.
+Rendered versions of the diagrams from the preceding sections. Source
+\texttt{.mmd} files and both PNG and SVG outputs are in the
+\texttt{figures/} directory of the repository.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.85\textwidth]{figures/module-dependency.png}
   \caption{Module-level dependency structure of CPSCore (cross-directory call edges).}
   \label{fig:module-dep}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\textwidth]{figures/signal-runtime-tracing.png}
-  \caption{SignalHandler subsystem: static call edges (solid) and runtime subscriptions (dashed).}
-  \label{fig:signal-tracing}
 \end{figure}
 
 \begin{figure}[htbp]
@@ -475,135 +465,137 @@ in the \texttt{figures/} directory of the repository.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.75\textwidth]{figures/s1-structural.png}
-  \caption{S1 structural diagram: Aggregator notification chain component connectivity.}
-  \label{fig:s1-struct}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/s1-structural.png}
+    \caption{S1 structural diagram: component connectivity.}
+    \label{fig:s1-struct}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/s1-sequence.png}
+    \caption{S1 sequence diagram: message interactions.}
+    \label{fig:s1-seq}
+  \end{subfigure}
+  \caption{S1 (Aggregator notification chain): structural (left) and sequence (right) diagrams.}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.85\textwidth]{figures/s1-sequence.png}
-  \caption{S1 sequence diagram: Aggregator notification chain message interactions.}
-  \label{fig:s1-seq}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/s3-structural.png}
+    \caption{S3 structural diagram: multi-component runner fan-out connectivity.}
+    \label{fig:s3-struct}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/s3-sequence.png}
+    \caption{S3 sequence diagram: multi-component runner orchestration.}
+    \label{fig:s3-seq}
+  \end{subfigure}
+  \caption{S3 (multi-component runner orchestration): structural (left) and sequence (right) diagrams.}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.6\textwidth]{figures/s2-sequence.png}
-  \caption{S2 sequence diagram: Configuration property mapping (linear chain).}
-  \label{fig:s2-seq}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.75\textwidth]{figures/s3-structural.png}
-  \caption{S3 structural diagram: Multi-component runner fan-out connectivity.}
-  \label{fig:s3-struct}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.85\textwidth]{figures/s3-sequence.png}
-  \caption{S3 sequence diagram: Multi-component runner orchestration.}
-  \label{fig:s3-seq}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/signal-runtime-tracing.png}
+    \caption{SignalHandler subsystem: static call edges (solid) and runtime subscriptions (dashed).}
+    \label{fig:signal-tracing}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/s2-sequence.png}
+    \caption{S2 sequence diagram: Configuration property mapping (linear chain).}
+    \label{fig:s2-seq}
+  \end{subfigure}
+  \caption{SignalHandler runtime tracing (left) and S2 sequence diagram (right).}
 \end{figure}
 
 \section{H2 Qualitative Arm: Per-Rater Decomposition}
 \label{sec:appendix-h2-perrater}
 
-This appendix records the full per-rater decomposition and free-text
-analysis of the blinded expert rating study summarised in
-\cref{sec:h2-qual}. The aggregate results (\cref{tab:h2-qual-results}) and
-the headline finding are given in the main text; the detail below supports
-the claim that the accuracy/readability effect is unanimous in direction
-and that the only genuine split is usefulness on~S2.
+This appendix records the per-rater decomposition and free-text analysis
+behind the blinded expert rating study summarised in
+\cref{sec:h2-qual}. The aggregate results (\cref{tab:h2-qual-results})
+are given in the main text; the detail below supports the claim that
+the accuracy/readability effect is unanimous in direction, and that the
+only genuine split is usefulness on S2.
 
-Expanding the panel from two to six raters did not change the direction of
-the effect, but it did surface real heterogeneity that a two-rater sample
-could not. One rater (R4) consistently rated the two conditions closer
-together than the other five, accounted for two of the six accuracy ties
-(S2, S3) and one of the six usefulness ties (S1), and produced the
-dataset's only reversal: rating full instrumentation's usefulness
-\emph{above} guided's on S2 ($4$ vs.\ $3$). The remaining three ties (S2
-usefulness, from raters R1--R3) are a separate, converging signal,
-discussed below. No rater ever rated full instrumentation higher on
-accuracy or readability, on any scenario: that effect is unanimous in
-direction across all six raters (never reversed, though twice tied), while
-the usefulness effect is unanimous on S1 and S3 and genuinely mixed on S2.
+One rater, R4, consistently rated the two conditions closer together
+than the other five: R4 accounts for two of the six accuracy ties (S2,
+S3), one of the six usefulness ties (S1), and the dataset's only
+reversal --- rating full instrumentation's usefulness above guided's on
+S2 (4 vs.\ 3). No rater ever rated full instrumentation higher on
+accuracy or readability on any scenario, so that effect is unanimous in
+direction (never reversed, though twice tied); usefulness is unanimous
+on S1 and S3 but genuinely mixed on S2.
 
-The free-text comments explain why.
-For S1 and S3, five of the six raters independently described the guided
-diagram as retaining only the components named in the scenario context and
-starting at the correct point in the sequence, while the
-full-instrumentation diagram was called more complete but cluttered with
-additional \texttt{stream} events that are just streaming and not
-obviously relevant without prior codebase knowledge. One rater (R1), while
-still preferring the guided diagram overall, flagged a residual critique
-of it directly: an \texttt{instance} call retained in the guided S1
-diagram was, in their words, ``also superfluous.'' This is a useful
-reminder that H2's noise$=0$ result (\cref{sec:h2-results}) is scoped to
-the reference set used for scoring, not to what a domain expert reading
-the diagram cold considers extraneous. The two need not coincide, and
-here, for at least one rater, they did not.
+The free-text comments explain why. On S1 and S3, five of six raters
+independently described the guided diagram as retaining only the
+components named in the scenario context and starting at the correct
+point in the sequence, while calling the full-instrumentation diagram
+more complete but cluttered with additional \texttt{stream} events not
+obviously relevant without prior codebase knowledge. One rater (R1),
+while still preferring the guided diagram overall, flagged a residual
+\texttt{instance} call retained in guided S1 as ``also superfluous'' ---
+a reminder that H2's noise$=0$ result (\cref{sec:h2-results}) is scoped
+to the reference set used for scoring, not to what a domain expert reading
+the diagram cold considers extraneous; the two need not coincide.
 
-S2 shows the same underlying pattern with the surface direction reversed:
-the guided diagram collapses seven repeated
-\texttt{Configuration}$\to$\texttt{Logging} property-read calls into a
-single edge (\cref{tab:h2-per-scenario}), and five of the six raters rated
-this collapsed diagram as more accurate and more readable because it
-matches the two components named in the scenario context. Usefulness is
-where the panel genuinely splits. Three raters (R1--R3) rated usefulness
-an exact tie, each independently giving the same reason in their
-free-text comments: collapsing the repeated reads into one edge loses the
-\emph{count} of property reads, information they considered relevant to
-debugging even though it played no part in their accuracy or readability
-judgement. A fourth rater (R4) went further and rated full instrumentation
-\emph{more} useful on S2, commenting that with the guided diagram alone
-``it is not clear what triggers a logging event.'' This is a distinct usability
-concern (about explaining a trigger condition) rather than a repeat of the
-counting concern raised by R1--R3. Only two raters (R5, R6) rated guided as
-more useful outright on S2. Usefulness on S2 is therefore best read as a
-genuine three-way split (tied, reversed, and in-favour-of-guided) rather
-than a clean preference in either direction: a more precise, and more
-defensible, characterisation than the exact 2-rater tie originally
-reported from the smaller panel.
+S2 shows the same pattern in reverse: the guided diagram collapses seven
+repeated \texttt{Configuration}$\to$\texttt{Logging} property-read calls
+into a single edge (\cref{tab:h2-per-scenario}), and five of six raters
+rated it more accurate and more readable for matching the two components
+named in the scenario. Usefulness is where the panel genuinely splits.
+Three raters (R1--R3) tied it, each independently citing the same
+reason: collapsing the reads loses a \emph{count} they considered
+relevant to debugging, even though it played no part in their accuracy
+or readability judgement. R4 rated full instrumentation \emph{more}
+useful on S2, for a distinct reason: with the guided diagram alone ``it
+is not clear what triggers a logging event.'' Only R5 and R6 rated
+guided as more useful outright. Usefulness on S2 is therefore a genuine
+three-way split --- tied, reversed, and in favour of guided --- rather
+than the clean 2-rater tie originally reported from the smaller panel.
 
-Several raters also converged independently on the same practical
-suggestions for handling high-volume \texttt{stream} events. Two raters
-(R3, R6) suggested a way to toggle, filter, or visually distinguish them
-rather than always including or always omitting them, and a third (R2)
-suggested recording the specific property value emitted by each
-\texttt{stream} call, so that the collapsed S2 edge would be as useful for
-debugging as the uncollapsed one without losing its readability advantage.
-R3 additionally proposed a two-stage workflow: use the
-full-instrumentation diagram to see where an interaction sits within the
-broader flow, then use the guided diagram to reason about the scenario
-itself. This reframes full instrumentation not as a failed alternative to
-guided instrumentation, but as a complementary, coarser-grained view.
+Several raters converged independently on the same suggestions for
+handling high-volume \texttt{stream} events: R3 and R6 suggested a
+toggle/filter to distinguish them rather than always including or
+omitting them; R2 suggested recording the specific property value
+emitted by each \texttt{stream} call, so the collapsed S2 edge stays
+useful for debugging without losing its readability advantage; and R3
+additionally proposed a two-stage workflow --- full instrumentation to
+see where an interaction sits in the broader flow, then guided
+instrumentation to reason about the scenario itself --- reframing full
+instrumentation as a complementary, coarser-grained view rather than a
+failed alternative.
 
 \section{SysML v2 Generated Diagrams}
 \label{sec:appendix-sysmlv2}
 
-The following figures show the SysML v2 diagrams generated by the pipeline
-for the CPSCore case study. These include both structural (component
-connectivity) diagrams and sequence (interaction flow) diagrams produced
-under condition C5 (full pipeline).
+The following figures show the SysML v2 diagrams generated for the
+CPSCore case study: structural (component connectivity) and sequence
+(interaction flow) diagrams, all produced under condition C5 (full
+pipeline).
 
 \subsection{Structural Diagrams}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{figures/sysmlv2 diagrams/structure.png}
-  \caption{SysML v2 structural diagram: complete CPSCore component model showing
-    all part definitions and their interface connections.}
+  \caption{Complete CPSCore component model: all part definitions and interface connections.}
   \label{fig:sysml-structure}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{figures/sysmlv2 diagrams/connections.png}
-  \caption{SysML v2 connections diagram: node-type hierarchy and property graph
-    schema relationships between all 13 node labels.}
+  \caption{Node-type hierarchy and property graph schema relationships (13 node labels).}
   \label{fig:sysml-connections}
 \end{figure}
 
@@ -611,107 +603,123 @@ under condition C5 (full pipeline).
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.9\textwidth]{figures/sysmlv2 diagrams/aggregationFlow.png}
-  \caption{SysML v2 sequence diagram: Aggregation scenario showing component
-    wiring and lifecycle interactions (Aggregator, DynamicObjectContainer,
-    Logger, AggregatableObject).}
-  \label{fig:sysml-aggregation}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/sysmlv2 diagrams/aggregationFlow.png}
+    \caption{Aggregation scenario: component wiring and lifecycle interactions
+      (Aggregator, DynamicObjectContainer, Logger, AggregatableObject).}
+    \label{fig:sysml-aggregation}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/sysmlv2 diagrams/synchronizationFlow.png}
+    \caption{Synchronization scenario: run-stage scheduling interactions
+      (AggregatableRunner, IRunnableObject, SimpleRunner, Logger, EnumMap,
+      Aggregator, SynchronizedRunnerMaster, SynchronizedRunner).}
+    \label{fig:sysml-synchronization}
+  \end{subfigure}
+  \caption{SysML v2 sequence diagrams: Aggregation (left) and Synchronization (right).}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/sysmlv2 diagrams/idcFlow.png}
+    \caption{IDC scenario: inter-component communication through the IDC
+      abstraction layer (IDC, AggregatableObject, Logger, IDCSender).}
+    \label{fig:sysml-idc}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/sysmlv2 diagrams/ipcFlow.png}
+    \caption{IPC scenario: message queue and shared memory publisher/subscriber
+      interactions (MessageQueuePublisher, Logger, Packet, SharedMemoryPublisher,
+      SharedMemorySubscriber, MessageQueueSubscriber).}
+    \label{fig:sysml-ipc}
+  \end{subfigure}
+  \caption{SysML v2 sequence diagrams: IDC (left) and IPC (right).}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.9\textwidth]{figures/sysmlv2 diagrams/synchronizationFlow.png}
-  \caption{SysML v2 sequence diagram: Synchronization scenario showing
-    run-stage scheduling interactions between AggregatableRunner,
-    IRunnableObject, SimpleRunner, Logger, EnumMap, Aggregator,
-    SynchronizedRunnerMaster, and SynchronizedRunner.}
-  \label{fig:sysml-synchronization}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/sysmlv2 diagrams/redisFlow.png}
+    \caption{Redis scenario: Redis-based publish-subscribe communication path
+      (RedisPublisher, CppRedis, RedisSubscriber, Logger, Packet).}
+    \label{fig:sysml-redis}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/sysmlv2 diagrams/serialFlow.png}
+    \caption{Serial scenario: data serialisation interactions (SerialHandler,
+      Logger, Packet, BinarySerialization, Hamming74).}
+    \label{fig:sysml-serial}
+  \end{subfigure}
+  \caption{SysML v2 sequence diagrams: Redis (left) and Serial (right).}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\textwidth]{figures/sysmlv2 diagrams/idcFlow.png}
-  \caption{SysML v2 sequence diagram: IDC scenario showing inter-component
-    communication through the IDC abstraction layer (IDC, AggregatableObject,
-    Logger, IDCSender).}
-  \label{fig:sysml-idc}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/sysmlv2 diagrams/signalHandlerFlow.png}
+    \caption{Signal handler scenario: signal handling to logging interaction
+      path (SignalHandler, Logger).}
+    \label{fig:sysml-signalhandler}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/sysmlv2 diagrams/testFlow.png}
+    \caption{Test scenario: test runner and test info interactions
+      (TestRunner, TestInfo, Logger, Catch2).}
+    \label{fig:sysml-test}
+  \end{subfigure}
+  \caption{SysML v2 sequence diagrams: Signal handler (left) and Test (right).}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.9\textwidth]{figures/sysmlv2 diagrams/ipcFlow.png}
-  \caption{SysML v2 sequence diagram: IPC scenario showing message queue and
-    shared memory publisher/subscriber interactions (MessageQueuePublisher,
-    Logger, Packet, SharedMemoryPublisher, SharedMemorySubscriber,
-    MessageQueueSubscriber).}
-  \label{fig:sysml-ipc}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.9\textwidth]{figures/sysmlv2 diagrams/redisFlow.png}
-  \caption{SysML v2 sequence diagram: Redis scenario showing the Redis-based
-    publish-subscribe communication path (RedisPublisher, CppRedis,
-    RedisSubscriber, Logger, Packet).}
-  \label{fig:sysml-redis}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.85\textwidth]{figures/sysmlv2 diagrams/serialFlow.png}
-  \caption{SysML v2 sequence diagram: Serial scenario showing data
-    serialisation interactions (SerialHandler, Logger, Packet,
-    BinarySerialization, Hamming74).}
-  \label{fig:sysml-serial}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/sysmlv2 diagrams/utilitiesFlow.png}
+    \caption{Utilities scenario: cross-utility interactions (EnumMap, Logger,
+      Packet, Hamming74, Split, Time, LinearAlgebra).}
+    \label{fig:sysml-utilities}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/sysmlv2 diagrams/dataPresentationFlow.png}
+    \caption{Data presentation scenario: Hamming74 encoding/decoding and
+      packet-level interactions.}
+    \label{fig:sysml-datapresentation}
+  \end{subfigure}
+  \caption{SysML v2 sequence diagrams: Utilities (left) and Data presentation (right).}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.7\textwidth]{figures/sysmlv2 diagrams/signalHandlerFlow.png}
-  \caption{SysML v2 sequence diagram: Signal handler scenario showing the
-    signal handling to logging interaction path (SignalHandler, Logger).}
-  \label{fig:sysml-signalhandler}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.9\textwidth]{figures/sysmlv2 diagrams/utilitiesFlow.png}
-  \caption{SysML v2 sequence diagram: Utilities scenario showing cross-utility
-    interactions (EnumMap, Logger, Packet, Hamming74, Split, Time,
-    LinearAlgebra).}
-  \label{fig:sysml-utilities}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.85\textwidth]{figures/sysmlv2 diagrams/dataPresentationFlow.png}
-  \caption{SysML v2 sequence diagram: Data presentation scenario showing
-    Hamming74 encoding/decoding and packet-level interactions.}
-  \label{fig:sysml-datapresentation}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.85\textwidth]{figures/sysmlv2 diagrams/miscellaneousFlow.png}
-  \caption{SysML v2 sequence diagram: Miscellaneous scenario showing
-    PropertyMapper, Logger, DynamicObjectContainer, IAggregatableObject,
-    StaticFactory, and Event interactions.}
-  \label{fig:sysml-misc}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.9\textwidth]{figures/sysmlv2 diagrams/testExecutionFlow.png}
-  \caption{SysML v2 sequence diagram: Test execution scenario showing
-    the test framework interactions (FilterTest, Catch2, AngleTest,
-    LoggerTest, Logger, Angle, EnumMapTest, EnumMap).}
-  \label{fig:sysml-testexecution}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.7\textwidth]{figures/sysmlv2 diagrams/testFlow.png}
-  \caption{SysML v2 sequence diagram: Test scenario showing test runner and
-    test info interactions (TestRunner, TestInfo, Logger, Catch2).}
-  \label{fig:sysml-test}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/sysmlv2 diagrams/miscellaneousFlow.png}
+    \caption{Miscellaneous scenario: PropertyMapper, Logger,
+      DynamicObjectContainer, IAggregatableObject, StaticFactory, and Event
+      interactions.}
+    \label{fig:sysml-misc}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/sysmlv2 diagrams/testExecutionFlow.png}
+    \caption{Test execution scenario: test framework interactions (FilterTest,
+      Catch2, AngleTest, LoggerTest, Logger, Angle, EnumMapTest, EnumMap).}
+    \label{fig:sysml-testexecution}
+  \end{subfigure}
+  \caption{SysML v2 sequence diagrams: Miscellaneous (left) and Test execution (right).}
 \end{figure}

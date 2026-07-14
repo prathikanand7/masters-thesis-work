@@ -16,7 +16,7 @@ This understanding is captured by the \emph{Interaction Model}: a
 formal, scenario-specific description of the message exchanges between
 components, most commonly expressed as sequence diagrams in \ac{UML} or,
 more recently, \sysml. In practice, Interaction Models rarely stay
-current with the source code they describe --- complexity accumulates
+current with the source code they describe. Complexity accumulates
 from evolving requirements, heterogeneous technologies and concurrency
 \cite{systa:reverse}, and diagrams accurate when drawn drift out of sync
 as the system changes. Engineers are consequently left to reconstruct
@@ -30,7 +30,7 @@ components relate to one another \cite{cornelissen:systematic}.
 Determining which components interact, in what order and under what
 conditions, is non-trivial, yet essential for identifying architectural
 bottlenecks, isolating faulty behaviour and assessing the impact of
-proposed changes --- which is why industry needs accurate,
+proposed changes, which is why industry needs accurate,
 scenario-specific interaction models reflecting how a system actually
 behaves under concrete execution scenarios \cite{egyed:scenario}.
 
@@ -65,7 +65,7 @@ Hybrid static-dynamic approaches have been proposed
 primarily use static structure to organise or contextualise an
 already-observed trace (\cref{ch:related}); they do not actively infer
 interactions the trace never captured. No existing approach
-systematically combines the two directions at once --- using static
+systematically combines the two directions at once: using static
 structure to recover what a trace missed, and the trace to trim an
 over-approximate static graph down to what is relevant to the scenario
 at hand. Closing that gap in both directions is the core problem this

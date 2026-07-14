@@ -59,7 +59,7 @@ default \texttt{RedisNetworkLayer} maps channel identifiers to
 (\texttt{onPacket\_.connect(slot)}) that fires when a Redis message
 arrives. A static call graph built from call sites alone therefore
 contains edges into the IDC layer but cannot reveal which component
-receives a given packet --- recovering that topology is what
+receives a given packet. Recovering that topology is what
 \cref{sec:macro-resolution} does, and is necessary for meaningful
 sequence diagram reconstruction.
 
@@ -170,7 +170,7 @@ Example rows from the CPSCore extraction:
 Here, \emph{component} refers to the fine-grained, path-derived unit
 from the component-name resolution algorithm
 (\cref{sec:sysml-generation}), not the five top-level modules of
-\cref{sec:cpscoreintro} --- Utilities alone resolves to many components,
+\cref{sec:cpscoreintro}: Utilities alone resolves to many components,
 one per source sub-path, which is why the component count (121) is far
 larger than the module count (5). The extraction yielded 2,574 ordered
 interactions, 2,169 unique client-to-server function pairs, and 121
@@ -218,7 +218,7 @@ EventTimestamp | EventName | ClientComponent | ClientFunction
 
 Running the CPSCore test suite under \texttt{csp\_matcher} instrumentation
 produced 27 real trace events covering 26 unique client-to-server
-interaction pairs --- genuine runtime captures, not a static projection.
+interaction pairs, genuine runtime captures, not a static projection.
 Example events:
 
 \begin{minted}{text}
@@ -348,7 +348,7 @@ dynamic evidence each miss a different interaction. S4 introduces one.
     \texttt{CPSLogger::LogLevelScope(LogLevel::NONE)} idiom. The
     signal/slot dispatch has no resolvable static call expression, so C2
     sees \texttt{stream} but not \texttt{onStageEvent}, while C3 sees the
-    reverse --- the one construction in the suite where C2 and C3 each
+    reverse, the one construction in the suite where C2 and C3 each
     miss a different edge rather than one containing the other.
     \emph{Reference interactions:} 2 (stream, onStageEvent).
 \end{description}
@@ -356,7 +356,7 @@ dynamic evidence each miss a different interaction. S4 introduces one.
 S4 is marked constructed rather than found-in-the-wild: its ground
 truth was authored from the new source files directly, though its
 dynamic trace, like S1--S3's, is a real \texttt{csp\_matcher} capture from
-running the accompanying Catch2 test under instrumentation --- none of
+running the accompanying Catch2 test under instrumentation; none of
 the S1--S4 traces are synthetic. It is reported and stratified
 separately from S1--S3 throughout \cref{sec:h1} for this reason, never
 folded silently into the happy-path numbers. The full \sysml reference
@@ -368,8 +368,8 @@ Each scenario was reconstructed independently under five conditions:
 
 \begin{description}
   \item[C1: LLM-only.] Reconstruction by an \ac{LLM} reasoning over raw
-    source code alone, with no access to the static graph or any trace
-    --- a baseline for what an agent can infer without the pipeline.
+    source code alone, with no access to the static graph or any trace,
+    a baseline for what an agent can infer without the pipeline.
   \item[C2: Static-only.] The sequence dependency table extracted from
     \texttt{CppCalls} edges alone (\cref{sec:seq-table}).
   \item[C3: Dynamic-only.] The real runtime trace from \texttt{csp\_matcher}
@@ -377,7 +377,7 @@ Each scenario was reconstructed independently under five conditions:
   \item[C4: Static + Dynamic (combined).] The union of the static and
     trace artefacts, with no scenario-scoped querying applied.
   \item[C5: Full pipeline.] C4 followed by scenario-scoped querying from
-    the scenario's declared components --- the complete approach
+    the scenario's declared components, the complete approach
     proposed in this thesis.
 \end{description}
 

@@ -26,8 +26,8 @@ experiments themselves.
 
 \Cref{sec:rq-answers} draws the two research questions' answers together
 from these experiments.
-\Cref{sec:practitioner} reports a fourth, exploratory data point ---
-practitioner feedback from a second, much larger industrial codebase ---
+\Cref{sec:practitioner} reports a fourth, exploratory data point:
+practitioner feedback from a second, much larger industrial codebase,
 kept separate from H1--H3 since it was not run as a controlled or
 pre-registered comparison.
 
@@ -78,7 +78,7 @@ Four risks were identified and corrected while H1 was being run:
     $\pm 0.013$.
   \item[Constructed-scenario disclosure.] S4 was added after S1--S3
     were scored, to test whether combining could exceed \emph{both}
-    single sources at once --- a property no naturally-occurring CPSCore
+    single sources at once, a property no naturally-occurring CPSCore
     path exhibits. It is reported as its own stratum
     (\cref{tab:h1-results}) rather than blended into the S1--S3 aggregate.
 \end{description}
@@ -168,8 +168,8 @@ C3 alone is the best-performing condition on these scenarios
 of the static graph. The gap traces to two static over-approximation
 false positives on S3 (\texttt{flush}, \texttt{instance}) that C2/C4
 carry but C3 never sees, since those calls do not execute during the S3
-test. Combining is therefore not protective on S1--S3 --- there is
-nothing suppressed to protect against --- and is mildly harmful to
+test. Combining is therefore not protective on S1--S3; there is
+nothing suppressed to protect against, and is mildly harmful to
 precision relative to the trace alone. The stronger case for combining
 rests on S4 (\cref{sec:h1-c4c3}).
 
@@ -177,8 +177,8 @@ The same S3 false positives explain C2/C4's precision deficit
 (0.867, not 1.000): both calls are genuine source-level call sites, but
 belong to \texttt{SynchronizedRunnerMaster.runStage} rather than S3's
 primary function \texttt{SimpleRunner.runStage}. This reflects a more
-general limitation --- static analysis has no way to scope itself to a
-single scenario --- which is the over-approximation problem motivating
+general limitation: static analysis has no way to scope itself to a
+single scenario, which is the over-approximation problem motivating
 C5.
 
 \subsection{Discussion: S4 and the Limits of C4 $=$ C2}\label{sec:h1-c4c3}
@@ -272,7 +272,7 @@ and Recall~\cite{manning:ir}; the noise concept is adapted from its use
 in architecture recovery evaluation~\cite{constantinou:noise}, applied
 here to instrumentation scoping rather than clustering. A configuration
 that reduces noise by discarding relevant nodes along with irrelevant
-ones is not an improvement --- coverage rules that failure mode out.
+ones is not an improvement; coverage rules that failure mode out.
 
 \subsection{Circularity Check}\label{sec:h2-corrections}
 
@@ -356,7 +356,7 @@ excess events for guided instrumentation to remove.
 Unlike S1--S3, whose full trace is a direct copy of a pre-existing
 capture, S4's production code did not exist when that capture was
 taken; its full-instrumentation trace was constructed as the
-pre-existing capture plus S4's own test-captured row --- the best
+pre-existing capture plus S4's own test-captured row, the best
 available simulation of a full instrumentation pass over the larger
 test suite.
 
@@ -365,7 +365,7 @@ coverage~$=$~1.000, appearing to recover \texttt{stream} as well as
 \texttt{onStageEvent}. This is a false positive. The pre-existing
 capture already contains several unrelated
 \texttt{Synchronization$\to$Logging:stream} rows from other functions
-(\eg \texttt{SimpleRunner.runStage}) under normal logging conditions ---
+(\eg \texttt{SimpleRunner.runStage}) under normal logging conditions;
 none originating from \texttt{StageEventBridge::publishStage}, the
 function that actually matters for S4. The scoring convention matches
 only on the bare (source, target, interaction-name) triple, deliberately,
@@ -378,7 +378,7 @@ guided, suppressed by the same runtime gate. The guided trace cannot
 exhibit this artifact by construction, since it only ever contains rows
 captured during the S4 test itself; it correctly reports
 coverage~$=$~0.500. This strengthens rather than weakens the H2 argument:
-it surfaces a failure mode of full instrumentation beyond noise ---
+it surfaces a failure mode of full instrumentation beyond noise:
 pooling events across an unscoped test suite risks an unrelated call
 coincidentally satisfying a reference triple by bare name, producing
 unverifiable, inflated coverage rather than a true positive. S4-full's
@@ -389,7 +389,7 @@ excluded from the S1--S3 aggregate in \cref{tab:h2-results}.
 \subsection{Qualitative Arm: Blinded Expert Rating}\label{sec:h2-qual}
 
 Structural compression alone cannot establish that guided instrumentation
-produces a \emph{more usable} diagram --- that is a claim about human
+produces a \emph{more usable} diagram. That is a claim about human
 perception. A blinded A/B protocol tested this directly: six external
 domain engineers, with no prior knowledge of the codebase, independently
 rated diagrams from both configurations without being told which was
@@ -435,7 +435,7 @@ unanimous for guided on S1 and S3 but genuinely split on S2, the one
 scenario where guided instrumentation collapses seven repeated
 \texttt{Configuration}$\to$\texttt{Logging} property-read calls into a
 single edge: three raters tied it, one preferred full, two preferred
-guided. Free-text comments suggest this reflects a real trade-off ---
+guided. Free-text comments suggest this reflects a real trade-off:
 collapsing repeated reads discards a \emph{count} some raters consider
 useful for debugging, independent of accuracy or readability. Full
 per-rater decomposition and comments are in
@@ -550,7 +550,7 @@ H3 is supported. Across all four scenarios, diagram only and
 source+trace+diagram achieve identical, perfect scores on every metric,
 matching or outperforming every condition that additionally includes
 source and/or traces. The three conditions without the diagram are held
-to 0.917/0.800--0.900 recall by the same recurring failure ---
+to 0.917/0.800--0.900 recall by the same recurring failure:
 under-reporting the interaction the diagram states explicitly.
 
 This mirrors the H1 finding (\cref{sec:h1-c5}): source-aware synthesis
@@ -637,7 +637,7 @@ answerable from the static call/containment graph alone, making this a
 check on the same static capability underlying \rqone\ and \rqtwo, now
 on an unfamiliar, industrial-scale codebase. Participants correctly
 identified the modified file, the relevant test, and the proxy's
-construction/release sites --- the components underlying the actual fix.
+construction/release sites, the components underlying the actual fix.
 
 \subsection{Interview Findings}\label{sec:interview-findings}
 
@@ -652,7 +652,7 @@ diagram).
 All four use AI coding assistants daily and saw value in
 architecture/dependency information. P3 reported completing an
 investigation in a five-minute session that had previously taken roughly
-five months --- a striking self-report, but a single, unverified,
+five months, a striking self-report, but a single, unverified,
 retrospective comparison, reported as anecdote rather than measured
 effect. P2 noted the graph-based tool located a stub implementation
 whose concrete definition lived outside the visible workspace, a failure
@@ -670,7 +670,7 @@ polymetric view drew the most mixed feedback: three of four preferred
 the plain class diagram, and the polymetric view's size-based encoding
 was repeatedly flagged as measuring the wrong thing (P2, P4 suggested
 cyclomatic complexity or requirements traceability instead). Call graphs
-were the most polarising output --- redundant with existing build-system
+were the most polarising output: redundant with existing build-system
 views for P4, not what P3 expected, while P2 rated the equivalent
 dependency diagram positively for indicating ``hops'' between
 components.
@@ -678,7 +678,7 @@ components.
 Three requests recurred across interviews, independent of diagram type:
 interactivity (static diagrams compared unfavourably to tools allowing
 search/filter/collapse, P1--P3); non-code context such as timing,
-deployment configuration and product variant (P2, P4) --- a direct
+deployment configuration and product variant (P2, P4), a direct
 instance of the construct-validity limitation already noted for this
 thesis's own evaluation (\cref{sec:h1-corrections}), since the graph
 only contains what was extracted; and invocation friction, with some
@@ -701,7 +701,7 @@ work (\cref{sec:future-work}).
 The proxy-leak defect (\cref{sec:scenario-exercise}) is structurally
 analogous to S4: an interaction architecturally present in source but
 invisible at runtime unless a specific failure condition is exercised.
-Participants resolved it using only the static graph --- the same
+Participants resolved it using only the static graph, the same
 evidence source as C2, which recovers architecturally-present
 interactions that traces are liable to miss
 (\cref{sec:h1-c4c2}). This is informal, but convergent, evidence that
@@ -710,7 +710,7 @@ the H1 finding generalises beyond CPSCore.
 The same architecture also motivates, without measuring, the C4$=$C2
 prediction (\cref{sec:cpscore-scale,sec:h1-c4c2}). Unlike CPSCore, this
 codebase uses proxy objects, virtual interfaces (118 events on one
-representative interface) and dynamic connect/disconnect --- exactly the
+representative interface) and dynamic connect/disconnect, exactly the
 cross-module dispatch scenario where C4$>$C2 would be predicted. P2's
 stub-resolution observation is consistent with this mechanism, but the
 session collected no dynamic evidence, so it cannot confirm C4$>$C2
@@ -737,7 +737,7 @@ is otherwise redundant.
     precisely where the removed information was itself useful for
     debugging.
   \item[H3.] The reconstructed diagram improves task performance only on
-    the fault-path scenario where the trace is incomplete --- exactly
+    the fault-path scenario where the trace is incomplete, exactly
     where H1 shows combining adds value.
   \item[Practitioner session.] The proxy-leak defect was resolved using
     only the static graph, mirroring the mechanism H1 demonstrates on S4.
@@ -810,7 +810,7 @@ so the same skill set works on any Renaissance-analysed codebase
 unmodified.
 
 \paragraph{Scale.} A single Cypher query extracted 2,574 ordered
-interactions from CPSCore --- a task that would take an experienced
+interactions from CPSCore, a task that would take an experienced
 engineer several working days by hand. The same query identified the
 cross-component call boundaries to instrument (nine caller functions
 across five files); \texttt{csp\_matcher} then wrapped the corresponding
@@ -854,7 +854,7 @@ catch them too.
   \item[Synthetic timestamps in the static baseline.] Timestamps in the
     C2 sequence table are synthetic (1\,ms spacing from an arbitrary
     base), since that table projects \texttt{CppCalls} edges rather than
-    a run --- correct for ordering but not wall-clock behaviour. The
+    a run, correct for ordering but not wall-clock behaviour. The
     per-scenario C3 traces, by contrast, carry real
     \texttt{csp\_matcher} wall-clock timestamps.
 \end{description}
@@ -882,8 +882,8 @@ catch them too.
     CPSCore. It is reported and stratified separately for this reason.
     The finding is corroborated by an independent, naturally-occurring
     observation in the practitioner session, but a larger, more diverse
-    sample of fault-path/dual-gap scenarios --- ideally from a codebase
-    where such indirection is pervasive --- would give more confidence
+    sample of fault-path/dual-gap scenarios, ideally from a codebase
+    where such indirection is pervasive, would give more confidence
     that the effect reflects the underlying mechanism rather than a
     property of S4 specifically.
 \end{description}

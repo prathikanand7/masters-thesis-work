@@ -201,16 +201,24 @@ The pipeline is a set of eleven composable agent skills rather than a
 monolithic script. Each is defined by a declarative specification (name,
 description, input/output contracts, execution instructions) and
 invocable via natural-language prompt. This was chosen over a monolithic
-implementation because it keeps the pipeline codebase-agnostic --- skills
-query the graph schema dynamically (\texttt{get-neo4j-schema}) rather than
-hardcoding node labels, so switching target codebases requires only
-re-running Renaissance --- because each skill produces an intermediate
-artefact (a CSV, a Cypher query, a model file) that an engineer can
-inspect, edit, or override, and because the scope of a reconstruction can
-then be expressed as a natural-language query (``show me the interaction
-between Synchronization and Aggregation when a runner timeout occurs'')
-rather than a hardcoded configuration, with \texttt{text-to-cypher}
-translating it into the appropriate Cypher pattern at invocation time.
+implementation for three reasons:
+
+\begin{itemize}
+  \item \textbf{Codebase agnosticism.} Skills query the graph schema
+    dynamically (\texttt{get-neo4j-schema}) rather than hardcoding node
+    labels, so switching target codebases requires only re-running
+    Renaissance.
+  \item \textbf{Composability.} Each skill produces an intermediate
+    artefact (a CSV, a Cypher query, a model file) that an engineer can
+    inspect, edit, or override before it feeds the next skill.
+  \item \textbf{Scenario flexibility.} The scope of a reconstruction can
+    be expressed as a natural-language query (``show me the interaction
+    between Synchronization and Aggregation when a runner timeout
+    occurs'') rather than a hardcoded configuration, with
+    \texttt{text-to-cypher} translating it into the appropriate Cypher
+    pattern at invocation time.
+\end{itemize}
+
 \Cref{tab:skills} summarises the eleven skills, their inputs, outputs,
 and role in the pipeline.
 

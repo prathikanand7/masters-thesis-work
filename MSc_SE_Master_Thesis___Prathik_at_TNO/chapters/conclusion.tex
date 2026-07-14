@@ -28,27 +28,36 @@ other three cannot exercise.
 
 The three hypotheses tested to answer the research questions were all
 confirmed, though with an important qualification on \emph{when} each
-effect holds. Combining static and dynamic evidence (H1) produces the
-most accurate reconstruction of any condition tested: the full pipeline
-(C5) reaches a macro-F1 of 0.964 with perfect recall on every scenario.
-But this advantage is conditional rather than universal. On the three
-happy-path scenarios, the static graph is already reachability-complete,
-so combining is redundant with static analysis alone (C4$=$C2). It is
-only on the constructed scenario S4 --- where a publish-subscribe
-boundary and a log suppression each hide a different interaction --- that
-combining becomes strictly additive (F1(C4)$=$1.000 against 0.667 for
-either source alone). Code-graph-guided instrumentation (H2) eliminates
-all measured noise (50\% fewer retained nodes, 70\% fewer edges) without
-losing coverage, and a blinded six-rater panel rated the guided output
-strictly higher in 47 of 54 comparisons, with the one reversal traceable
-to a specific trade-off: collapsing repeated property-read calls into a
-single edge. The reconstructed diagram itself (H3) is more than a
-supplement --- in a holistic five-condition experiment it alone achieved
-perfect component recall, interaction recall and rated completeness on
-every scenario, matching or exceeding every combination that additionally
-included source code and traces, while every condition without the
-diagram missed the same suppressed-but-source-visible interaction the
-diagram states explicitly.
+effect holds:
+
+\begin{description}
+  \item[H1 (confirmed).] Combining static and dynamic evidence produces
+    the most accurate reconstruction of any condition tested: the full
+    pipeline (C5) reaches a macro-F1 of 0.964 with perfect recall on
+    every scenario. But this advantage is conditional rather than
+    universal. On the three happy-path scenarios, the static graph is
+    already reachability-complete, so combining is redundant with static
+    analysis alone (C4$=$C2). It is only on the constructed scenario S4,
+    where a publish-subscribe boundary and a log suppression each
+    hide a different interaction, that combining becomes strictly
+    additive (F1(C4)$=$1.000 against 0.667 for either source alone).
+
+  \item[H2 (confirmed).] Code-graph-guided instrumentation eliminates
+    all measured noise (50\% fewer retained nodes, 70\% fewer edges)
+    without losing coverage, and a blinded six-rater panel rated the
+    guided output strictly higher in 47 of 54 comparisons, with the one
+    reversal traceable to a specific trade-off: collapsing repeated
+    property-read calls into a single edge.
+
+  \item[H3 (confirmed).] The reconstructed diagram itself is more than a
+    supplement. In a holistic five-condition experiment it alone
+    achieved perfect component recall, interaction recall and rated
+    completeness on every scenario, matching or exceeding every
+    combination that additionally included source code and traces,
+    while every condition without the diagram missed the same
+    suppressed-but-source-visible interaction the diagram states
+    explicitly.
+\end{description}
 
 As an exploratory complement, a hands-on session and interview study with
 four engineers on a second, much larger industrial codebase
@@ -57,7 +66,7 @@ half of the approach holds at industrial scale, though the session
 exercised only static extraction and graph querying, with no runtime
 tracing involved. The key scenario there was a proxy-leak defect whose
 root cause was an implicit event-driven interaction, invisible without
-reconstructing the call chain, resolved using only the static graph ---
+reconstructing the call chain, resolved using only the static graph,
 consistent with H1's finding that static analysis preserves fault-path
 recall where traces cannot. The industrial system's architecture
 (proxy-based, virtual interfaces, dynamic service binding) is the kind
@@ -100,7 +109,7 @@ dependency diagrams consistently useful for architectural comprehension.
 \begin{enumerate}
   \item \textbf{A static property graph and a separate trace pipeline}
     whose interaction edge sets are compared while keeping track of
-    which evidence each interaction came from --- static, dynamic, or
+    which evidence each interaction came from: static, dynamic, or
     both. Keeping the sources separate but comparable is what lets the
     evaluation report exactly where each edge originated
     (\cref{sec:pg-schema}).

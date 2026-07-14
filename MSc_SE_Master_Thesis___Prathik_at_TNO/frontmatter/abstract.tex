@@ -1,57 +1,53 @@
 Software systems in safety-critical domains such as medical imaging and
 industrial automation evolve rapidly, and their runtime behaviour quickly
-outgrows manual documentation.
-\sysml Interaction Models capture scenario-specific component interactions,
-but existing reconstruction techniques are each incomplete: static analysis
-is scenario-agnostic, while execution traces are inherently partial.
+outgrows manual documentation. \sysml Interaction Models capture
+scenario-specific component interactions, but existing reconstruction
+techniques are each incomplete: static analysis is scenario-agnostic, while
+execution traces are inherently partial. This thesis investigates: (RQ1)
+whether combining a static call graph with runtime execution traces
+reconstructs scenario-specific Interaction Models more accurately than
+either source alone; (RQ2) whether guiding trace collection with the static
+call graph removes reconstruction noise without losing scenario coverage.
+It also further investigates whether the reconstructed diagram alone, without 
+any other further evidence, can match or exceed multi-source combinations in recall and
+completeness as a downstream benefit.
 
-This thesis presents a hybrid pipeline that synthesises scenario-specific
-Interaction Models for event-driven \Cpp\ systems by combining a static call
-graph, stored in a \neo property graph, with timestamped runtime traces
-collected by a separate pipeline. The two evidence sources are kept in
-separate artefacts and combined as a set union of their interaction edges;
-scenario-scoped Cypher queries then isolate the interactions relevant to a
-given scenario.
-Implemented as eleven composable, natural-language-invocable agent skills,
-the pipeline is evaluated on \emph{CPSCore}, an open-source event-driven
-framework, across four scenarios (three happy-path, one constructed)
-reconstructed under five conditions ranging from an \ac{LLM}-only baseline
-to the full pipeline.
+\textbf{Methods:} A hybrid pipeline was built that synthesises Interaction
+Models for event-driven \Cpp\ systems by combining a static call graph,
+stored in a \neo property graph and timestamped runtime traces collected
+by a separate pipeline. The two evidence sources were kept as separate
+artefacts. The scenario-scoped Cypher queries isolated the static interactions relevant to
+a given scenario and combined as a set union of their interaction edges at the time of evaluation. 
+The pipeline was implemented as eleven composable,
+natural-language-invocable agent skills and evaluated on \emph{CPSCore}. It is an
+open-source event-driven framework, across four scenarios (three
+happy-path and one constructed) reconstructed under five conditions ranging
+from an \ac{LLM}-only baseline to the full pipeline. A blinded six-rater
+expert panel additionally compared guided and unguided trace output.
+The underlying static approach was further tested in a practitioner session on a
+second, larger industrial codebase.
 
-Three hypotheses are confirmed.
-\textbf{H1:} The full pipeline achieves the highest reconstruction accuracy
-of any condition tested (macro-F1~$=$~0.964, with perfect recall on every
-scenario). Combining the two sources is strictly additive where static and
-dynamic analysis each miss a different interaction and redundant where the
-static call graph is already complete.
-\textbf{H2:} Code-graph-guided instrumentation eliminates all measured noise
-(50\% fewer nodes, 70\% fewer edges) without losing scenario coverage. It is also
-confirmed by a blinded six-rater expert panel rating guided output higher in 47 of 54
-comparisons.
-\textbf{H3:} The reconstructed diagram alone achieves perfect component
-recall, interaction recall and completeness on every scenario, either
-matching or exceeding all other evidence combinations.
-Together, the three findings converge on one pattern: additional evidence
-improves reconstruction or comprehension specifically when the primary
-evidence source is missing something.
-As an exploratory complement, a practitioner session on a second, larger
-industrial codebase found the underlying static-extraction and query
-approach transferred well. Structural and dependency diagrams were rated
-consistently useful and sequence-diagram message labelling was identified
-as the clearest area for improvement.
+\textbf{Results:} The full pipeline achieved the highest reconstruction
+accuracy of any condition tested (macro-F1~$=$~0.964, with perfect recall
+on every scenario); combining the two sources was strictly additive where
+static and dynamic analysis each missed a different interaction, and
+redundant where the static call graph was already complete.
+Code-graph-guided instrumentation eliminated all measured noise (50\%
+fewer nodes, 70\% fewer edges) without losing scenario coverage. It was also
+rated higher by the expert panel in 47 of 54 comparisons. The reconstructed
+diagram alone achieved perfect component recall, interaction recall and
+completeness on every scenario. It matched or exceeded all other evidence
+combinations. In the practitioner session, structural and dependency
+diagrams were rated consistently useful, while sequence-diagram message
+labelling was identified as the clearest area for improvement.
 
-The main contributions are as follows.
-(i)~A static property graph plus a separate runtime-trace pipeline whose
-interaction edge sets are compared while remembering which evidence each
-interaction came from.
-(ii)~A scenario-scoping method, using plain scenario-scoped Cypher queries,
-that trims the call graph down to just the interactions relevant to one
-scenario.
-(iii)~A way to recover publish-subscribe wiring that ordinary call-graph
-analysis cannot see.
-(iv)~A small, reversible tool (\texttt{csp\_matcher}) that inserts and
-removes trace probes automatically.
-(v)~A set of eleven natural-language agent skills that run the whole
-pipeline, from source code to \sysml diagram. Its designed to be codebase agnostic.
-(vi)~A clear, evidence-based account of when combining static and dynamic
-analysis actually helps and when it is redundant.
+\textbf{Evaluation and Conclusion:} The three results converge on one
+pattern: additional evidence improves reconstruction or comprehension
+specifically when the primary evidence source is missing something, and is
+otherwise redundant. The thesis contributes a Hybrid static-plus-trace pipeline
+that tracks the provenance of each interaction edge. A scenario-scoping
+method built on plain Cypher queries, a way to recover publish-subscribe
+wiring invisible to ordinary call-graph analysis, a small reversible
+instrumentation tool (\texttt{csp\_matcher}), and a codebase-agnostic set
+of eleven natural-language agent skills that run the whole pipeline from
+source code to \sysml diagram.

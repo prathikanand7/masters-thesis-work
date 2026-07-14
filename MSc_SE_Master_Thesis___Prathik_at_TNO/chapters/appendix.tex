@@ -94,6 +94,13 @@ bool is_trace_remove(int n, const char* const* ns,
 This ensures that only trace-injected comma expressions are removed,
 leaving any pre-existing comma expressions in the codebase untouched.
 
+\subsection{Tool Validation}
+
+\texttt{csp\_matcher} was validated by a test suite of 130 cases across
+seven suites (pattern parse, find, replacement, generated replacement,
+compilation database, rules file and filter), exercised by an automated
+PowerShell harness that generates a Markdown report and case artefacts.
+
 \section{Ground-Truth Reference Diagrams (S1--S3)}
 \label{sec:appendix-groundtruth}
 

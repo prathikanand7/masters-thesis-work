@@ -1,46 +1,45 @@
 \chapter{Background}\label{ch:background}
 
-This chapter provides the technical foundation for the approach presented in
-\cref{ch:methods}.
-It introduces \sysml and its Interaction Model constructs. It explains the property
-graph data model. It describes the static and dynamic analysis techniques used.
-Finally, it summarises how scenarios are scoped through graph queries.
-This chapter contains background knowledge rather than contributions.
+This chapter provides the technical foundation for the approach in
+\cref{ch:methods}: \sysml and its Interaction Model constructs, the
+property graph data model, the static and dynamic analysis techniques
+used, and how scenarios are scoped through graph queries. It is
+background rather than contribution.
 
 \section{SysML v2 and Interaction Models}\label{sec:sysml}
 
-The \acl{OMG} \acl{SysML} version~2 (\sysml) is a general-purpose modelling language
-for systems engineering. It is built on top of the Kernel Modeling Language (\ac{KerML})
-\cite{omg:sysmlv2}.
-Unlike its predecessor (SysML v1, which was a profile of UML), \sysml defines
-its own textual and graphical notation. This enables model interchange via a
-standardised textual syntax.
+The \acl{OMG} \acl{SysML} version~2 (\sysml) is a general-purpose
+modelling language for systems engineering, built on the Kernel Modeling
+Language (\ac{KerML}) \cite{omg:sysmlv2}. Unlike its predecessor (SysML
+v1, a profile of UML), \sysml defines its own textual and graphical
+notation, enabling model interchange via a standardised textual syntax.
 
 \subsection{Sequence Diagrams in SysML v2}
 
-Interaction Models in \sysml are expressed as \emph{occurrence specifications}
-that describe ordered sequences of message occurrences between \emph{parts}
-(\ie instances of blocks in the system structure).
-The constructs used by the generator in this thesis (\cref{sec:sysml-impl}) are:
+Interaction Models in \sysml are expressed as \emph{occurrence
+specifications}: ordered sequences of message occurrences between
+\emph{parts} (instances of blocks in the system structure). The
+constructs used by the generator in this thesis (\cref{sec:sysml-impl})
+are:
 \begin{description}
   \item[\texttt{part def}~$:>$~\texttt{InteractionScenario}] A named
     container for a scenario-specific interaction model, analogous to a
     \ac{UML} interaction.
-  \item[\texttt{Lifeline}] A participant in the interaction, \ie an
+  \item[\texttt{Lifeline}] A participant in the interaction --- an
     instance of a structural block along which message occurrences are
     ordered.
   \item[\texttt{SynchronousCall} / \texttt{ReturnMessage} /
-    \texttt{AsynchronousMessage}] Message stereotypes (specialising a
-    common \texttt{Message} definition) that model a call, its return and
+    \texttt{AsynchronousMessage}] Message stereotypes, specialising a
+    common \texttt{Message} definition, modelling a call, its return and
     an asynchronous send between two lifelines.
-  \item[\texttt{from} / \texttt{to}] References on a message that bind it
-    to its sending and receiving lifelines, giving each message occurrence
-    its position in the ordered sequence.
+  \item[\texttt{from} / \texttt{to}] References binding a message to its
+    sending and receiving lifelines, giving each occurrence its position
+    in the ordered sequence.
 \end{description}
 
-An example in \sysml textual notation, corresponding to the S1
-scenario (Aggregator notification chain) used in this thesis and following
-the same stereotype-based form the generator emits (\cref{sec:sysml-impl}):
+An example in \sysml textual notation, corresponding to scenario S1
+(Aggregator notification chain) and following the same stereotype-based
+form the generator emits (\cref{sec:sysml-impl}):
 
 \begin{minted}[fontsize=\footnotesize]{text}
 package AggregatorNotification {
@@ -79,119 +78,104 @@ package AggregatorNotification {
 
 A \acl{PG} is a directed, attributed multigraph in which both nodes and
 edges carry arbitrary key-value properties \cite{angles:pg-survey}.
-Formally, a \ac{PG} is defined as $G = (V, E, \lambda, \mu)$ where:
-\begin{itemize}
-  \item $V$ is the set of nodes in the graph.
-  \item $\lambda(v) \in \mathcal{L}$ assigns a label from the label set
-    $\mathcal{L}$ to each node $v \in V$.
-  \item $E \subseteq V \times \mathcal{R} \times V$ is the set of directed edges.
-    Each edge carries a relation type $r$ drawn from the relation-type set
-    $\mathcal{R}$.
-  \item $\mu : (V \cup E) \times \mathcal{K} \rightharpoonup \mathcal{V}$
-    is a partial function that assigns property values from value set
-    $\mathcal{V}$ to nodes or edges, indexed by property keys from key set
-    $\mathcal{K}$.
-\end{itemize}
+Formally, a \ac{PG} is $G = (V, E, \lambda, \mu)$, where $V$ is the set
+of nodes; $\lambda(v) \in \mathcal{L}$ assigns a label from the label set
+$\mathcal{L}$ to each node $v \in V$; $E \subseteq V \times \mathcal{R}
+\times V$ is the set of directed edges, each carrying a relation type $r$
+from the relation-type set $\mathcal{R}$; and $\mu : (V \cup E) \times
+\mathcal{K} \rightharpoonup \mathcal{V}$ is a partial function assigning
+property values from value set $\mathcal{V}$ to nodes or edges, indexed
+by property keys from key set $\mathcal{K}$.
 
-\neo is the most widely deployed \ac{GDB} that implements the \ac{PG} model.
-It is queried using the Cypher declarative query language \cite{neo4j:cypher}.
-The choice of a \ac{PG} over a relational or document store is motivated by the
-need to traverse heterogeneous analysis artefacts (functions, files, modules
-and trace events) efficiently along typed relationships.
+\neo is the most widely deployed \ac{GDB} implementing the \ac{PG} model,
+queried via the Cypher declarative query language \cite{neo4j:cypher}. A
+\ac{PG} was chosen over a relational or document store because it lets
+heterogeneous analysis artefacts --- functions, files, modules and trace
+events --- be traversed efficiently along typed relationships.
 
 \section{Static Call-Graph Analysis}\label{sec:static-analysis}
 
-A \emph{call graph} is a directed graph in which nodes represent functions
-(or methods) and edges represent potential call relationships
-\cite{grove:callgraph}.
-An edge $(f, g)$ exists if and only if function $f$ may call function $g$
-under some execution. Here, $f$ denotes the caller function and $g$ denotes
-the callee function.
+A \emph{call graph} is a directed graph in which nodes represent
+functions (or methods) and edges represent potential call relationships
+\cite{grove:callgraph}: an edge $(f, g)$ exists if and only if caller $f$
+may call callee $g$ under some execution.
 
 \subsection{Clang and the Renaissance Semantic Extractor}
 
-Clang is the \Cpp\ frontend of the LLVM compiler infrastructure. It exposes
-a rich \ac{AST} traversal \ac{API} that enables static analysis tools to
-extract precise call-graph information \cite{llvm:clang}.
-Rather than driving Clang directly, this thesis uses \emph{Renaissance}.
-Renaissance is a semantic-level \Cpp\ analyser already in use at TNO-ESI.
-It extracts the static call graph and populates the property graph
-(\cref{sec:pg-decision}).
-Renaissance resolves the full \ac{AST}, including template instantiations,
-overload candidates, and macro expansions. It emits the property graph
-schema described in \cref{sec:pg-schema}.
+Clang, the \Cpp\ frontend of LLVM, exposes an \ac{AST} traversal \ac{API}
+that lets static analysis tools extract precise call-graph information
+\cite{llvm:clang}. Rather than driving Clang directly, this thesis uses
+\emph{Renaissance}, a semantic-level \Cpp\ analyser already in use at
+TNO-ESI, to extract the static call graph and populate the property
+graph (\cref{sec:pg-decision}). Renaissance resolves the full \ac{AST},
+including template instantiations, overload candidates and macro
+expansions, and emits the schema described in \cref{sec:pg-schema}.
 
 \subsection{Limitations in Event-Driven Systems}
 
 Event-driven systems that route inter-component communication through
 callback registration or publish-subscribe indirection pose a specific
-challenge for static call-graph construction.
-In CPSCore, subscriptions are registered via the IDC layer:
+problem for static call-graph construction. In CPSCore, subscriptions
+are registered via the IDC layer:
 \begin{minted}{cpp}
 IDC::subscribeOnPacket(channelId, handlerSlot);
 \end{minted}
 Standard \ac{AST} traversal identifies the call to
-\texttt{subscribeOnPacket} but does not resolve which component will
-receive a packet published on the same channel.
-The consequence is a static call graph that contains edges \emph{into} the
-IDC/Redis layer but lacks the cross-component routing information required
-for interaction model reconstruction.
-Resolving this limitation is part of the contribution of this thesis
-(see \cref{sec:macro-resolution}).
+\texttt{subscribeOnPacket} but cannot resolve which component receives a
+packet published on the same channel, since publisher and subscriber are
+tied together only by a shared runtime identifier, not a call expression.
+The resulting static call graph contains edges \emph{into} the IDC/Redis
+layer but lacks the cross-component routing information interaction
+model reconstruction needs. \Cref{sec:macro-resolution} addresses this
+by matching publisher and subscriber call sites on that shared
+identifier, the general mechanism behind CPSCore's own IDC/Redis
+implementation (\cref{sec:idc,sec:pubsub-background}).
 
 \section{Execution Trace Analysis}\label{sec:trace-analysis}
 
-An \emph{execution trace} is a temporally ordered sequence of events recorded
-at runtime. Systems under analysis are typically instrumented with logging
-or profiling statements to produce these events \cite{zaidman:traces}.
-In this thesis, traces take the form of timestamped log entries that record
-function entry and exit events. Each entry also records the component identity
+An \emph{execution trace} is a temporally ordered sequence of events
+recorded at runtime, typically by instrumenting the system under
+analysis with logging or profiling statements \cite{zaidman:traces}. In
+this thesis, traces take the form of timestamped log entries recording
+function entry and exit events, each also carrying component identity
 and the topic name on the message bus.
 
 \subsection{Challenges with Incomplete Traces}
 
-Practical execution traces are almost always \emph{incomplete}:
-\begin{itemize}
-  \item Not all components are instrumented.
-  \item Recording overhead may cause log entries to be dropped.
-  \item A single scenario recording covers only a subset of the system's
-    behaviour.
-\end{itemize}
-
-These gaps motivate the hybrid approach. The static call graph provides
-structural completeness. The trace provides scenario specificity.
+Practical execution traces are almost always incomplete: not every
+component is instrumented, recording overhead can drop log entries, and
+a single scenario recording covers only a subset of the system's
+behaviour. These gaps are what motivate the hybrid approach --- the
+static call graph supplies structural completeness, the trace supplies
+scenario specificity.
 
 \section{Scenario Scoping through Graph Queries}\label{sec:scenario-scoping}
 
-Reconstructing a diagram for a single scenario requires narrowing a large
-call graph down to the interactions that belong to that scenario. Rather
-than adopt a formal program-slicing procedure over a program dependence
-graph, this thesis performs scenario scoping directly as a declarative
-graph query.
+Reconstructing a diagram for a single scenario requires narrowing a
+large call graph down to the interactions that belong to it. Rather than
+a formal program-slicing procedure over a program dependence graph, this
+thesis performs scenario scoping directly as a declarative graph query:
+a scenario's scope is expressed as a set of participating components
+(\eg \texttt{Synchronization} calling into \texttt{Aggregation} and
+\texttt{Logging}), and a scenario-scoped Cypher query retains only the
+call edges whose caller and callee belong to those components, keeping
+what is relevant to the scenario and discarding interactions belonging
+to other, concurrently exercised behaviour.
 
-The scope of a scenario is expressed as a set of participating components
-(for example, \texttt{Synchronization} calling into \texttt{Aggregation}
-and \texttt{Logging}). A scenario-scoped Cypher query then retains only the
-call edges whose caller and callee belong to those components. This keeps
-the interactions that are relevant to the scenario and discards those that
-belong to other, concurrently exercised behaviour.
-
-The concrete query used in this thesis is described in
-\cref{sec:combine-scope}. It operates over the static property graph
-rather than over a source-level program representation, and the same
-component-scope constraint is applied to the trace-derived sequence table.
+The concrete query is described in \cref{sec:combine-scope}. It operates
+over the static property graph rather than a source-level program
+representation, and the same component-scope constraint is applied to
+the trace-derived sequence table.
 
 \section{Publish-Subscribe via Callback Registration}\label{sec:pubsub-background}
 
-Many event-driven \Cpp\ systems decouple component communication through a
-publish-subscribe pattern. In these systems, subscriptions are registered at
-runtime via callback slots rather than direct function calls.
-As a result, the publish-subscribe topology is \emph{implicit} in the
-source code. It cannot be recovered by reading function call sites alone.
-
-CPSCore implements this pattern through its \ac{IDC}
-layer. This layer delegates to a pluggable \texttt{INetworkLayer} backed by
-\texttt{boost::signals2} and Redis channels (\cref{sec:idc}).
-Recovering the subscription topology requires matching publisher and subscriber
-call sites by their shared channel identifier. This is the approach taken in
-this thesis (see \cref{sec:macro-resolution}).
+Many event-driven \Cpp\ systems decouple component communication through
+a publish-subscribe pattern, where subscriptions are registered at
+runtime via callback slots rather than direct function calls, making the
+topology implicit in the source and unrecoverable from call sites alone
+(\cref{sec:static-analysis}). CPSCore implements this through its
+\ac{IDC} layer, which delegates to a pluggable \texttt{INetworkLayer}
+backed by \texttt{boost::signals2} and Redis channels
+(\cref{sec:idc}). Recovering the subscription topology means matching
+publisher and subscriber call sites by their shared channel identifier,
+the approach taken in \cref{sec:macro-resolution}.

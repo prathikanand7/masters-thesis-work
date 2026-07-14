@@ -1,23 +1,21 @@
 \chapter{Methods}\label{ch:methods}
 
-This chapter describes the design of the hybrid reconstruction pipeline.
-It covers the property graph schema that stores the static artefacts,
-the separate trace-collection pipeline, the agent skill architecture that
-orchestrates the extraction and generation stages, the pattern-based
-instrumentation tool used for trace collection and the scenario-scoped
-querying that produces scenario-specific interaction models.
+This chapter describes the design of the hybrid reconstruction pipeline:
+the property graph schema that stores the static artefacts, the separate
+trace-collection pipeline, the agent skill architecture that orchestrates
+extraction and generation, the pattern-based instrumentation tool used for
+trace collection, and the scenario-scoped querying that produces
+scenario-specific interaction models.
 
 \section{Pipeline Overview}\label{sec:pipeline-overview}
 
-The pipeline takes as input a \Cpp\ source tree and (optionally) a set
-of timestamped execution traces. It produces \sysml sequence diagrams
-scoped to a user-specified scenario.
-It is implemented as a chain of eleven composable agent skills. Each skill
-is invocable by natural-language query. The skills are backed by a \neo
-property graph that serves as the shared knowledge store.
-
-The pipeline stages and the skills that implement them are shown in
-\cref{fig:pipeline-overview} and described below.
+The pipeline takes a \Cpp\ source tree and, optionally, a set of
+timestamped execution traces, and produces \sysml sequence diagrams
+scoped to a user-specified scenario. It is implemented as a chain of
+eleven composable agent skills, each invocable by natural-language query
+and backed by a shared \neo property graph. \Cref{fig:pipeline-overview}
+shows the pipeline stages and the skills that implement them, described
+in turn below.
 
 \begin{figure}[htb]
 \centering
@@ -59,88 +57,73 @@ The pipeline stages and the skills that implement them are shown in
 \end{figure}
 
 \begin{enumerate}
-  \item \textbf{Static extraction} (\cref{sec:static-impl}).
-    The \Cpp\ source is analysed by the Renaissance semantic extraction
-    tool, which populates the \neo graph with 11 node labels and 11
-    relationship types (\cref{sec:pg-schema}).
+  \item \textbf{Static extraction} (\cref{sec:static-impl}). The \Cpp\
+    source is analysed by Renaissance, which populates the \neo graph
+    with 11 node labels and 11 relationship types (\cref{sec:pg-schema}).
 
-  \item \textbf{Schema introspection} (\texttt{get-neo4j-schema}).
-    The graph schema is read dynamically so that downstream skills are
-    codebase-agnostic: they query the live schema rather than
-    hardcoding node labels.
+  \item \textbf{Schema introspection} (\texttt{get-neo4j-schema}). The
+    graph schema is read dynamically, so downstream skills query the
+    live schema rather than hardcoding node labels and remain
+    codebase-agnostic.
 
   \item \textbf{Structural dependency extraction}
-    (\texttt{get-interface-dependency-table}).
-    All relationship types are aggregated into a compact CSV table of
-    interface dependencies between components.
+    (\texttt{get-interface-dependency-table}). All relationship types are
+    aggregated into a compact CSV table of interface dependencies between
+    components.
 
   \item \textbf{Sequence dependency extraction}
-    (\texttt{get-sequence-dependency-table}).
-    \texttt{CppCalls} edges are projected into an ordered sequence table
-    with synthetic timestamps, capturing the static calling relationships
-    between all functions in the codebase.
+    (\texttt{get-sequence-dependency-table}). \texttt{CppCalls} edges are
+    projected into an ordered sequence table with synthetic timestamps,
+    capturing static calling relationships across the codebase.
 
   \item \textbf{Runtime instrumentation and trace collection}
-    (\texttt{add-runtime-instrumentation}).
-    Pattern-based code transformation injects trace probes. Runtime logs
-    are collected and normalised into the sequence table format.
+    (\texttt{add-runtime-instrumentation}). Pattern-based code
+    transformation injects trace probes; runtime logs are collected and
+    normalised into the sequence table format.
 
   \item \textbf{Graph query and scenario scoping}
     (\texttt{text-to-cypher}, \texttt{cypher-to-output}).
-    Natural-language scenario queries are translated into plain Cypher
-    traversals over the static property graph, retaining only the
-    interactions whose caller and callee belong to the components declared
-    for the scenario. The same component constraint is applied to the
-    trace-derived sequence table.
+    Natural-language scenario queries are translated into Cypher
+    traversals over the static graph, retaining only interactions whose
+    caller and callee belong to the scenario's declared components. The
+    same constraint is applied to the trace-derived sequence table.
 
   \item \textbf{Diagram generation}
     (\texttt{draw-sysml-sequence-model},
      \texttt{draw-sysml-structural-model},
      \texttt{draw-sequential-mermaid-general},
-     \texttt{draw-structural-mermaid}).
-    The scenario-scoped table is projected into \sysml textual notation or
-    Mermaid syntax for visualisation.
+     \texttt{draw-structural-mermaid}). The scenario-scoped table is
+    projected into \sysml textual notation or Mermaid syntax.
 \end{enumerate}
 
-Each skill is stateless and side-effect-free with respect to the graph
-(read-only queries). The only exception is the instrumentation skill which
-modifies source files.
-The skill interface accepts a natural-language prompt and returns a
-structured artefact (CSV, Cypher query, or model file). This allows
-chaining without code changes when the target codebase changes.
+Each skill is stateless and read-only with respect to the graph, except
+the instrumentation skill, which modifies source files. Every skill
+accepts a natural-language prompt and returns a structured artefact (CSV,
+Cypher query, or model file), which allows the chain to be reused on a
+new codebase without code changes.
 
 \section{Property Graph Schema}\label{sec:pg-schema}
 
 \subsection{Design Decision}\label{sec:pg-decision}
 
-The representation of the static knowledge store was a key design
-decision.
-A \ac{PG} in \neo was chosen over alternatives (relational database,
-document store, in-memory graph library) for three reasons:
-
-\begin{enumerate}
-  \item \textbf{Heterogeneous traversal.}
-    The pipeline needs to traverse function$\to$file$\to$folder paths,
-    function$\to$function call chains, and class$\to$function containment
-    relationships in the same query.
-    A typed, directed property graph represents all of these as first-class
-    traversal edges rather than as join tables.
-  \item \textbf{Incremental enrichment.}
-    The static graph can be re-derived or extended without disturbing the
-    separate trace-collection pipeline. Static-derived edges are typed and
-    distinguishable, so structural queries remain stable as the codebase
-    evolves.
-  \item \textbf{Declarative querying.}
-    Cypher's pattern-matching syntax maps naturally onto the
-    text-to-cypher skill: a natural-language scenario query can be
-    translated into a graph pattern that traverses exactly the relevant
-    relationships.
-\end{enumerate}
+A \ac{PG} in \neo was chosen for the static knowledge store over a
+relational database, a document store, and an in-memory graph library.
+The pipeline traverses function$\to$file$\to$folder paths,
+function$\to$function call chains, and class$\to$function containment
+within the same query; a typed, directed property graph represents each
+as a first-class edge, where a relational schema would need join tables.
+The static graph can also be re-derived or extended without disturbing
+the separate trace pipeline, since static edges are typed and
+distinguishable from anything added later, and Cypher's pattern-matching
+syntax maps directly onto the \texttt{text-to-cypher} skill
+(\cref{sec:skill-design}): a natural-language scenario query becomes a
+graph pattern with little translation. An in-memory graph library would
+satisfy traversal alone, and a document store neither traversal nor
+declarative querying.
 
 \subsection{Node Types}\label{sec:node-types}
 
-\Cref{tab:node-types} lists the 11 C++ node labels (emitted by Renaissance are noted
-below the table).
+\Cref{tab:node-types} lists the 11 node labels emitted by Renaissance.
 
 \begin{table}[htb]
 \centering
@@ -168,12 +151,11 @@ below the table).
 \end{tabular}
 \end{table}
 
-All eleven labels above are emitted by Renaissance during static
-extraction. Renaissance additionally emits four build-system labels
+Renaissance additionally emits four build-system labels
 (\texttt{DynamicLinkLibrary}, \texttt{Executable},
-\texttt{ProjectPropertySheet}, and \texttt{Solution}) that are omitted here
-because they carry no interaction-reconstruction information and the
-pipeline never queries them. The graph holds static artefacts only.
+\texttt{ProjectPropertySheet}, \texttt{Solution}) omitted from the table:
+they carry no interaction-reconstruction information and the pipeline
+never queries them. The graph holds static artefacts only.
 
 \subsection{Relationship Types}\label{sec:edge-types}
 
@@ -205,48 +187,30 @@ Renaissance.
 \end{tabular}
 \end{table}
 
-The static \texttt{CppCalls} edges and the trace-derived
-sequence table are compared as two independent edge sets.
-
-A \texttt{CppCalls} edge says a call \emph{may} happen: it is read from the
-source code, which lists every call that could occur. A trace record says a
-call \emph{did} happen: it is recorded from a real run. The static edges
-therefore tend to over-count (they include calls that never fire) and the
-trace records tend to under-count (they miss calls a given run did not
-exercise). The evaluation (\cref{sec:combine-scope}) uses both together.
+The static \texttt{CppCalls} edges and the trace-derived sequence table
+are kept as two independent edge sets and compared only at evaluation
+time (\cref{sec:combine-scope}): a \texttt{CppCalls} edge says a call
+\emph{may} happen, since it is read from source code listing every call
+that could occur, while a trace record says a call \emph{did} happen,
+recorded from a real run. The static edges therefore tend to over-count
+and the trace tends to under-count.
 
 \section{Agent Skill Architecture}\label{sec:skill-design}
 
-The pipeline is not a monolithic script but a set of eleven composable
-agent skills. Each skill is defined by a declarative specification (name,
-description, input/output contracts, and execution instructions) and is
-invocable via natural-language prompt.
-This architecture was chosen for three reasons:
-
-\begin{enumerate}
-  \item \textbf{Codebase agnosticism.}
-    Skills query the graph schema dynamically
-    (\texttt{get-neo4j-schema}) and construct Cypher from the live
-    schema rather than from hardcoded node labels.
-    Switching between target codebases requires only re-running
-    Renaissance and re-invoking the same skills. No skill code
-    needs modification.
-
-  \item \textbf{Composability.}
-    Each skill produces an intermediate artefact (a CSV, a Cypher query,
-    a model file) that is both human-readable and machine-consumable.
-    Engineers can inspect, edit, or override any intermediate before
-    feeding it to the next skill.
-
-  \item \textbf{Scenario flexibility.}
-    The scope of the reconstruction is expressed as a natural-language
-    query (``show me the interaction between Synchronization and
-    Aggregation when a runner timeout occurs'') rather than as a
-    hardcoded configuration.
-    The \texttt{text-to-cypher} skill translates this into the
-    appropriate Cypher traversal pattern at invocation time.
-\end{enumerate}
-
+The pipeline is a set of eleven composable agent skills rather than a
+monolithic script. Each is defined by a declarative specification (name,
+description, input/output contracts, execution instructions) and
+invocable via natural-language prompt. This was chosen over a monolithic
+implementation because it keeps the pipeline codebase-agnostic --- skills
+query the graph schema dynamically (\texttt{get-neo4j-schema}) rather than
+hardcoding node labels, so switching target codebases requires only
+re-running Renaissance --- because each skill produces an intermediate
+artefact (a CSV, a Cypher query, a model file) that an engineer can
+inspect, edit, or override, and because the scope of a reconstruction can
+then be expressed as a natural-language query (``show me the interaction
+between Synchronization and Aggregation when a runner timeout occurs'')
+rather than a hardcoded configuration, with \texttt{text-to-cypher}
+translating it into the appropriate Cypher pattern at invocation time.
 \Cref{tab:skills} summarises the eleven skills, their inputs, outputs,
 and role in the pipeline.
 
@@ -310,29 +274,22 @@ and role in the pipeline.
 
 \section{Pattern-Based Instrumentation (csp\_matcher)}\label{sec:csp-matcher}
 
-Automated insertion of trace probes into an existing \Cpp\ codebase is
-a prerequisite for runtime trace collection.
-Manual instrumentation is error-prone, non-reproducible and does not
-scale to large codebases. Additionally, using an LLM alone to generate instrumentation code
-proved brittle in a preliminary experiment: the model could not
-reliably identify all call sites of interest, and the generated code
-was often over-instrumented, lacking the granular control needed to
-target only scenario-specific interactions.
-The \texttt{csp\_matcher} tool, developed alongside Dr.~Rosilde Corvino
-as part of this thesis, addresses this by providing AST-level pattern
-matching and code transformation.
+Automated insertion of trace probes into an existing \Cpp\ codebase is a
+prerequisite for runtime trace collection: manual instrumentation is
+error-prone and does not scale, and a preliminary experiment with an LLM
+alone proved brittle, since the model could not reliably identify every
+call site of interest and tended to over-instrument. The
+\texttt{csp\_matcher} tool, developed alongside Dr.~Rosilde Corvino as
+part of this thesis, addresses this with AST-level pattern matching and
+code transformation.
 
 \subsection{Design}
 
-\texttt{csp\_matcher} is a Clang LibTooling-based tool that:
-\begin{enumerate}
-  \item Parses a user-provided pattern (written as near-normal \Cpp\
-    with hole variables) into a Clang \ac{AST}.
-  \item Translates the pattern AST into ASTMatcher DSL expressions.
-  \item Runs the generated matchers against target source files.
-  \item Optionally rewrites matched code using a template that
-    back-references captured holes.
-\end{enumerate}
+\texttt{csp\_matcher} is a Clang LibTooling-based tool that parses a
+user-provided pattern (near-normal \Cpp\ with hole variables) into a
+Clang \ac{AST}, translates it into ASTMatcher DSL expressions, runs the
+generated matchers against target source files, and optionally rewrites
+matched code using a template that back-references captured holes.
 
 Patterns use two kinds of hole variables:
 \begin{description}
@@ -354,58 +311,41 @@ replace: (std::fprintf(stderr, "[TRACE] %s %s::%s\n",
           $agg.getAll<$T>())
 \end{minted}
 
-This approach has several advantages over manual macro insertion:
-\begin{itemize}
-  \item The transformation is specified declaratively, not imperatively.
-  \item It is reproducible: re-running the same rules file produces the
-    same edits.
-  \item It is reversible. A corresponding \texttt{remove:} rule
-    strips the trace wrapper without leaving artefacts.
-  \item Filter functions (compiled at runtime from plain \Cpp) allow
-    selective matching, \eg excluding test-internal call sites.
-\end{itemize}
+This is preferable to manual macro insertion in three respects: the
+transformation is declarative, so a rules file states \emph{what} to
+match and replace rather than \emph{how} to walk the AST; it is
+reproducible, since re-running the same rules file produces the same
+edits; and it is reversible, via a corresponding \texttt{remove:} rule
+(\cref{sec:reversibility}). Filter functions, compiled at runtime from
+plain \Cpp, additionally allow selective matching, \eg excluding
+test-internal call sites.
 
 \subsection{Integration with the Pipeline}
 
-The \texttt{add-runtime-instrumentation} skill invokes \texttt{csp\_matcher}
-with a rules file (\texttt{add\_tracing.txt}) and a filter definitions file
-(\texttt{tracing\_filters.cpp}).
-The rules file specifies find/replace pairs for each call site of interest.
-The filter file provides C++ predicate functions that accept or reject
-matches based on captured hole values.
+The \texttt{add-runtime-instrumentation} skill invokes
+\texttt{csp\_matcher} with a rules file (\texttt{add\_tracing.txt}) and a
+filter definitions file (\texttt{tracing\_filters.cpp}), following a
+two-pronged approach. First, call-site wrapping: target call expressions
+such as \texttt{Aggregator::getAll}, \texttt{CPSLogger::flush}, and
+\texttt{EnumMap::convert} are wrapped with a comma-operator trace
+emission. Second, CPSLOG macro patching: the \texttt{CPSLOG(level)}
+macro in \texttt{CPSLogger.h} is patched to emit a \texttt{[TRACE]} line
+on every logging call, covering all \texttt{RAIILogStream::stream} call
+sites regardless of translation unit. The macro patch is applied only
+\emph{after} call-site wrapping is complete, since \texttt{csp\_matcher}
+parses target files using a pattern preamble that includes
+\texttt{CPSLogger.h}, which must be in its clean, unpatched state when
+the matcher runs.
 
-The instrumentation follows a two-pronged approach:
-\begin{enumerate}
-  \item \textbf{Call-site wrapping} (via \texttt{csp\_matcher}):
-    target call expressions are wrapped with a comma-operator trace
-    emission.
-    This covers explicit call sites such as \texttt{Aggregator::getAll},
-    \texttt{CPSLogger::flush}, and \texttt{EnumMap::convert}.
-  \item \textbf{CPSLOG macro patching}:
-    the \texttt{CPSLOG(level)} macro in \texttt{CPSLogger.h}  is patched
-    to emit a \texttt{[TRACE]} line on every logging call, covering all
-    \texttt{RAIILogStream::stream} call sites regardless of which
-    translation unit they appear in.
-\end{enumerate}
+Once the probes are in place, the same skill rebuilds and runs the
+target (the CPSCore test suite, or a scenario-specific harness) and
+captures the emitted \texttt{[TRACE]} lines from \texttt{stderr}. This
+log is normalised into the sequence-table format consumed by
+\texttt{get-sequence-dependency-table} and rendered by the diagram
+skills, and its cross-component pairs can equally feed
+\texttt{get-interface-dependency-table}.
 
-The ordering of these two steps matters: \texttt{csp\_matcher} parses
-target files using a pattern preamble that includes \texttt{CPSLogger.h},
-so the header must be in its clean (unpatched) state when the matcher
-runs.
-The CPSLOG macro patch is applied only \emph{after} all call-site
-wrapping is complete.
-
-Once the probes are in place, the same skill rebuilds the target, runs it
-(the CPSCore test suite, or a scenario-specific harness), and captures the
-emitted \texttt{[TRACE]} lines from \texttt{stderr}. This runtime log is the
-skill's output: it is normalised into the sequence-table format consumed by
-\texttt{get-sequence-dependency-table} and rendered by the diagram skills
-(\texttt{draw-sysml-sequence-model},
-\texttt{draw-sequential-mermaid-general}), and its cross-component pairs can
-equally feed \texttt{get-interface-dependency-table} to record which
-components actually interact at runtime.
-
-\subsection{Reversibility via Filter Functions}
+\subsection{Reversibility via Filter Functions}\label{sec:reversibility}
 
 Instrumentation removal is handled by a single generic rule:
 
@@ -416,8 +356,7 @@ replace: $orig
 \end{minted}
 
 This matches every comma expression in the codebase, but the
-\texttt{is\_trace\_remove} filter (compiled at runtime from
-\texttt{tracing\_filters.cpp}) rejects any match whose left operand
+\texttt{is\_trace\_remove} filter rejects any match whose left operand
 does not contain the \texttt{[TRACE]} marker string:
 
 \begin{minted}[fontsize=\footnotesize]{cpp}
@@ -428,66 +367,50 @@ bool is_trace_remove(int n, const char* const* ns,
 }
 \end{minted}
 
-The filter guarantees that only trace-injected comma expressions are
-stripped. Pre-existing comma expressions in the codebase are left
-untouched.
-This makes instrumentation fully reversible: applying
+Only trace-injected comma expressions are stripped; pre-existing comma
+expressions are left untouched, so applying
 \texttt{remove\_tracing.txt} restores the source tree to its
-pre-instrumentation state byte-for-byte.
-
-\subsection{Tool Validation}
-
-\texttt{csp\_matcher} was validated by a test suite of 130 cases across
-seven suites (pattern parse, find, replacement, generated replacement,
-compilation database, rules file and filter), exercised by an automated
-PowerShell harness that generates a Markdown report and case artefacts.
+pre-instrumentation state byte-for-byte. \texttt{csp\_matcher} was
+validated by an automated test suite of 130 cases across seven suites
+(\cref{sec:appendix-tracing-rules}).
 
 \section{Macro Resolution for Publish-Subscribe Systems}\label{sec:macro-resolution}
 
 The CPSCore IDC layer (\cref{sec:idc}) implements publish-subscribe via
 \texttt{boost::signals2} callbacks registered through
-\texttt{subscribeOnPacket}.
-From a static call-graph perspective, the subscription relationship is
-indirect: the static graph contains an edge from the subscribing
-component into the IDC layer, but not from the publishing component to
-the subscriber's handler.
+\texttt{subscribeOnPacket}. A static call graph sees an edge from the
+subscribing component into the IDC layer, but not from the publisher to
+the subscriber's handler, since the two sides are wired by a shared
+runtime channel identifier rather than a direct call.
 
-The macro resolution strategy recovers this topology by matching
-publisher and subscriber declarations by channel identifier:
-\begin{enumerate}
-  \item All \texttt{subscribeOnPacket(id, slot)} call sites are
-    identified in the static graph (\texttt{CppCalls} edges targeting
-    \texttt{IDC::subscribeOnPacket} or \newline
-    \texttt{RedisNetworkLayer::subscribeOnPacket}).
-  \item All \texttt{sendPacket(id, payload)} call sites are identified
-    analogously.
-  \item Publisher-subscriber pairs sharing the same \texttt{id}
-    argument are linked by a synthetic \texttt{PubSubRoute} edge in the
-    graph.
-\end{enumerate}
+Macro resolution recovers this topology by matching publisher and
+subscriber declarations on that identifier: every
+\texttt{subscribeOnPacket(id, slot)} and \texttt{sendPacket(id, payload)}
+call site is located in the static graph, and pairs sharing the same
+\texttt{id} are linked by a synthetic \texttt{PubSubRoute} edge. This
+lets the sequence dependency table contain cross-component interactions
+invisible to naive call-graph extraction, and generalises to any
+publish-subscribe system keyed by a shared identifier (topic name,
+channel ID, signal slot).
 
-This step is what allows the sequence dependency table to contain
-cross-component interactions that are invisible to naive static
-call-graph extraction.
-The same strategy generalises to any publish-subscribe system where
-subscriptions are registered by a shared identifier (topic name,
-channel ID or signal slot) rather than by direct function call.
+This only resolves \texttt{subscribeOnPacket}/\texttt{sendPacket} pairs
+sharing an \texttt{id}. A pair wired directly through a
+\texttt{boost::signals2::signal} and \texttt{connect()}, outside the IDC
+abstraction, has no shared identifier to match and is observable only in
+a runtime trace (S4, \cref{sec:h1-c4c3}).
 
 \section{Combining Evidence and Scenario Scoping}\label{sec:combine-scope}
 
 \subsection{Combining the Two Evidence Sources}
 
-The static and dynamic evidence are held in two separate artefacts: the
-static \texttt{CppCalls} edges in the \neo property graph, and the
-trace-derived sequence table produced by the instrumentation pipeline
-(\cref{sec:csp-matcher}).
-Each is projected to a set of directed component-level interaction
-edges keyed by \texttt{(ClientComponent, ServerComponent, EventName)} and
-the two edge sets are combined only when the reconstructed models are
-evaluated.
+The static and dynamic evidence live in two separate artefacts: the
+static \texttt{CppCalls} edges in the property graph, and the
+trace-derived sequence table (\cref{sec:csp-matcher}). Each is projected
+to a set of directed, component-level interaction edges keyed by
+\texttt{(ClientComponent, ServerComponent, EventName)}, and the two edge
+sets are combined only when the reconstructed models are evaluated.
 
-The static edge set is obtained with a plain Cypher query over the property
-graph:
+The static edge set is obtained with a plain Cypher query:
 
 \begin{minted}{cypher}
 MATCH (caller:CppFunctionDefinition)-[:Source]->(f)-[:ParentFolder]->(folder)
@@ -496,114 +419,79 @@ MATCH (caller)-[:CppCalls]->(callee)
 RETURN caller, callee
 \end{minted}
 
-The dynamic edge set is read from the real runtime trace captured by the
-\texttt{csp\_matcher} instrumentation (\cref{sec:csp-matcher}), normalised
-into the same sequence-table schema. The union
-of the two edge sets, tagged by the source each interaction came from
-(static, dynamic, or both), is what conditions C4 and C5 of the H1
-experiment operate over. This union is a set operation over two separate
-artefacts computed at evaluation time.
+The dynamic edge set is read from the real runtime trace, normalised
+into the same schema. The union of the two, tagged by which source each
+interaction came from, is what conditions C4 and C5 of the H1 experiment
+operate over --- a set operation over two separate artefacts computed at
+evaluation time.
 
 \subsection{Scenario Scoping by Component Constraint}\label{sec:scoping-impl}
 
-Scenario scoping is performed as a plain, scope-constrained Cypher query
-rather than as a program-dependence-graph slice. The scope of a scenario is
-expressed as a conjunction of:
-\begin{itemize}
-  \item A \emph{primary component} constraint: only edges whose source
-    (caller) belongs to the scenario's primary component are retained.
-  \item A \emph{target component set}: only edges whose target (callee)
-    belongs to one of the scenario's declared participant components are
-    retained.
-  \item Optionally, a \emph{client function filter}: only edges
-    originating from specific entry-point functions within the primary
-    component.
-\end{itemize}
+Scenario scoping is a plain, scope-constrained Cypher query rather than a
+program-dependence-graph slice. A scenario's scope is a conjunction of a
+\emph{primary component} constraint (only edges whose caller belongs to
+it are retained), a \emph{target component set} (only edges whose callee
+belongs to a declared participant is retained), and optionally a
+\emph{client function filter} restricting to specific entry-point
+functions. For scenario S1, concretely:
 
-Concretely, for scenario S1:
 \begin{minted}{text}
 ClientComponent == Synchronization
 ServerComponent in {Aggregation, Logging}
 \end{minted}
 
-This component constraint is what the \texttt{text-to-cypher} skill
-generates when given a natural-language scenario description: the user
-says ``Using agent skills, show me Synchronization calling into Aggregation and Logging''.
-The explicit \emph{Using agent skills} prefix anchors the model to the skill invocation,
-preventing it from hallucinating an ad-hoc inspection of the codebase instead of
-generating a Cypher query. From this prompt, the skill generates the corresponding \texttt{WHERE} clause.
+This is what \texttt{text-to-cypher} generates from a scenario
+description such as ``Using agent skills, show me Synchronization
+calling into Aggregation and Logging'' --- the explicit \emph{Using agent
+skills} prefix anchors the model to the skill invocation, preventing it
+from hallucinating an ad-hoc codebase inspection instead of generating a
+Cypher query.
 
-The same component constraint is applied to both evidence sources: it runs
-as a \texttt{WHERE} clause over the static graph and as an equivalent
-row filter over the trace-derived sequence table (both carry
-\texttt{ClientComponent} and \texttt{ServerComponent} metadata). Because
-the scope is defined over components, it can be computed \emph{before}
-instrumentation and used to decide where to place probes
-(\cref{sec:guided-vs-full}), rather than applied only as a post-hoc
-filter.
+The same constraint applies to both evidence sources: a \texttt{WHERE}
+clause over the static graph, and an equivalent row filter over the
+trace-derived table (both carry \texttt{ClientComponent} and
+\texttt{ServerComponent} metadata). Since the scope is defined over
+components, it can be computed \emph{before} instrumentation and used to
+decide where to place probes (\cref{sec:guided-vs-full}), rather than
+applied only as a post-hoc filter.
 
 \subsection{Formal Description}
 
-Let $E_s$ be the static interaction edge set (from the \texttt{CppCalls}
-query) and $E_t$ the trace-derived interaction edge set (from the sequence
-table). Let $\sigma = (\text{primary}, \text{targets}, \text{functions})$
-denote the scenario scope: a primary component, a set of target
-components, and an optional set of entry-point functions. The
-scenario-scoped, combined edge set is:
+Let $E_s$ be the static interaction edge set and $E_t$ the trace-derived
+edge set, with $\text{src}(e)$ and $\text{tgt}(e)$ an edge's caller and
+callee. Let $\sigma = (\text{primary}, \text{targets}, \text{functions})$
+be the scenario scope. The scenario-scoped, combined edge set is:
 \[
   E_\sigma
   = \{ e \in E_s \cup E_t \mid \text{src}(e) \in \sigma.\text{primary}
        \land \text{tgt}(e) \in \sigma.\text{targets} \}
 \]
-
-In this expression:
-\begin{itemize}
-  \item $E_s$ is the static interaction edge set derived from the
-    \texttt{CppCalls} query over the property graph.
-  \item $E_t$ is the dynamic interaction edge set derived from the runtime
-    trace sequence table.
-  \item $\sigma$ is the scenario scope: a primary component, a set of
-    target components, and optionally a set of entry-point functions.
-  \item $\text{src}(e)$ and $\text{tgt}(e)$ denote the source (caller) and
-    target (callee) of edge $e$.
-  \item The result $E_\sigma$ contains only those edges originating from
-    the primary component and terminating in a declared target component.
-\end{itemize}
-
-The union $E_s \cup E_t$ is a set union over two separate edge sets. The scope constraint is a single-hop edge filter. For CPSCore, where cross-component calls are shallow (typically one hop through the IDC
-layer), this suffices. Multi-hop scoping is a straightforward extension via
-Cypher's variable-length path syntax.
+that is, $E_s \cup E_t$ restricted to edges originating from the primary
+component and terminating in a declared target component. This is a
+single-hop edge filter, which suffices for CPSCore, where cross-component
+calls are shallow (typically one hop through the IDC layer); multi-hop
+scoping is a straightforward extension via Cypher's variable-length path
+syntax.
 
 \section{SysML v2 Generation}\label{sec:sysml-generation}
 
-The final stage projects the scenario-scoped sequence table into \sysml
-textual notation.
-The \texttt{draw-sysml-sequence-model} skill reads the sequence
-dependency table CSV and generates a \texttt{.sysml} file following
-the SysML v2 Interaction Model constructs described in
-\cref{sec:sysml}:
+The final stage projects the scenario-scoped, evidence-tagged sequence
+table into \sysml textual notation. The \texttt{draw-sysml-sequence-model}
+skill reads the CSV and generates a \texttt{.sysml} file following the
+SysML v2 Interaction Model constructs described in \cref{sec:sysml}:
+each unique component becomes a \texttt{part def} (lifeline); each row
+becomes an ordered message, typed as \texttt{SynchronousCall},
+\texttt{ReturnMessage}, or \texttt{AsynchronousMessage} from the
+\texttt{RelationshipType} column; message labels come from
+\texttt{EventName}, optionally annotated with \texttt{ClientFunction
+$\to$ ServerFunction}; and the sequence number preserves temporal
+ordering from the trace (dynamic edges) or the synthetic timestamp
+(static edges).
 
-\begin{itemize}
-  \item Each unique component in the \texttt{ClientComponent} /
-    \texttt{ServerComponent} columns becomes a \texttt{part def}
-    (lifeline).
-  \item Each row in the CSV becomes an ordered message between
-    lifelines, typed as \texttt{SynchronousCall},
-    \texttt{ReturnMessage}, or \texttt{AsynchronousMessage} based on
-    the \texttt{RelationshipType} column.
-  \item Message labels are derived from the \texttt{EventName} column,
-    optionally annotated with \texttt{ClientFunction $\to$
-    ServerFunction} detail.
-  \item The sequence number preserves the temporal ordering from the
-    trace (for dynamic edges) or the synthetic timestamp ordering (for
-    static edges).
-\end{itemize}
-
-Component names are derived algorithmically from file paths (no
-hardcoded mapping table) using a path-to-component resolution function
-that handles \texttt{/src/}, \texttt{/include/}, \texttt{/extern/},
-and \texttt{/tests/} path prefixes as well as CamelCase normalisation
-and \texttt{Impl} suffix stripping.
-This makes the generator codebase-agnostic: the same script produces
-meaningful lifeline names on CPSCore or any other source tree that
-follows standard C++ project layout conventions.
+Component names are derived algorithmically from file paths, not from a
+hardcoded mapping table, using a path-to-component resolution function
+that handles \texttt{/src/}, \texttt{/include/}, \texttt{/extern/}, and
+\texttt{/tests/} prefixes, CamelCase normalisation, and \texttt{Impl}
+suffix stripping. This keeps the generator codebase-agnostic: the same
+script produces meaningful lifeline names on CPSCore or any other source
+tree following standard C++ project layout conventions.

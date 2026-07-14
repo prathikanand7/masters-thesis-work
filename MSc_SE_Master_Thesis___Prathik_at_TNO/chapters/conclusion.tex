@@ -2,149 +2,117 @@
 
 \section{Summary \& Findings}
 
-This thesis addressed the problem of automatically reconstructing
-scenario-specific Interaction Models from \Cpp\ codebases and execution
-traces in event-driven systems.
-The core challenge is that static analysis alone produces over-approximate,
-scenario-agnostic graphs, while trace-based analysis alone produces
-under-complete models due to limited runtime instrumentation.
-No prior approach simultaneously addresses publish-subscribe topology
-recovery and scenario-scoped querying of the call graph, nor targets \sysml
-as the output formalism.
+This thesis addressed the reconstruction of scenario-specific Interaction
+Models from \Cpp\ codebases and execution traces in event-driven systems.
+Static analysis alone tends to produce over-approximate, scenario-agnostic
+graphs; trace-based analysis alone tends to under-complete them, since
+runtime instrumentation is rarely exhaustive. No prior approach appeared
+to address publish-subscribe topology recovery and scenario-scoped
+call-graph querying together, or to target \sysml\ as the output
+formalism.
 
-The proposed hybrid approach builds a static call graph in \neo (including
-IDC pub-sub topology-resolved edges) and, separately, collects timestamped
-execution traces into runtime logs. The two evidence sources are kept
-separate: they are combined only as a set union of their interaction edge
-sets when the reconstructed models are compared during evaluation.
-Scenario-scoped Cypher queries then narrow the static call graph (and,
-equivalently, the trace-derived sequence table) to the interactions
-relevant to a single scenario.
-The scenario-scoped sequence table is projected into \sysml textual
-notation.
+The approach builds a static call graph in \neo, including
+topology-resolved IDC pub-sub edges, and separately collects timestamped
+execution traces. The two evidence sources are kept apart and combined
+only as a set union of interaction edges when the reconstructed models
+are compared at evaluation time. Scenario-scoped Cypher queries then
+narrow the static graph, and equivalently the trace-derived sequence
+table, to a single scenario's relevant interactions, which are projected
+into \sysml\ textual notation.
 
-The approach was developed and evaluated on \emph{CPSCore}, an open-source
-event-driven \Cpp\ framework, across four scenarios: three
-happy-path scenarios occurring naturally in CPSCore's existing code,
-plus one (S4) purpose-built to isolate an evidence-combination precondition the other
-three cannot exercise.
-Three hypotheses were tested to answer the research questions:
+The approach was developed and evaluated on \emph{CPSCore}, an
+open-source event-driven \Cpp\ framework, across four scenarios: three
+happy-path scenarios occurring naturally in its existing code, and one
+(S4) purpose-built to isolate an evidence-combination precondition the
+other three cannot exercise.
 
-\begin{description}
-  \item[H1 (confirmed).]
-    Combining static and dynamic evidence produces more accurate interaction models than any single
-    evidence source.
-    The full pipeline (C5) achieves the highest macro-F1 of any condition
-    tested (0.964) with perfect recall on every scenario.
-    On the three happy-path scenarios, the static graph is already
-    reachability-complete, so combining is redundant with static analysis
-    alone (C4$=$C2). On the constructed scenario~S4, where a
-    publish-subscribe boundary and log suppression each hide a different
-    interaction, combining is strictly additive: F1(C4)$=$1.000, versus
-    0.667 for either single source.
-    This confirms that the combination's value activates precisely when no single
-    source can see the full picture, and is otherwise safely redundant
-    (\cref{sec:h1-results}).
+The three hypotheses tested to answer the research questions were all
+confirmed, though with an important qualification on \emph{when} each
+effect holds. Combining static and dynamic evidence (H1) produces the
+most accurate reconstruction of any condition tested: the full pipeline
+(C5) reaches a macro-F1 of 0.964 with perfect recall on every scenario.
+But this advantage is conditional rather than universal. On the three
+happy-path scenarios, the static graph is already reachability-complete,
+so combining is redundant with static analysis alone (C4$=$C2). It is
+only on the constructed scenario S4 --- where a publish-subscribe
+boundary and a log suppression each hide a different interaction --- that
+combining becomes strictly additive (F1(C4)$=$1.000 against 0.667 for
+either source alone). Code-graph-guided instrumentation (H2) eliminates
+all measured noise (50\% fewer retained nodes, 70\% fewer edges) without
+losing coverage, and a blinded six-rater panel rated the guided output
+strictly higher in 47 of 54 comparisons, with the one reversal traceable
+to a specific trade-off: collapsing repeated property-read calls into a
+single edge. The reconstructed diagram itself (H3) is more than a
+supplement --- in a holistic five-condition experiment it alone achieved
+perfect component recall, interaction recall and rated completeness on
+every scenario, matching or exceeding every combination that additionally
+included source code and traces, while every condition without the
+diagram missed the same suppressed-but-source-visible interaction the
+diagram states explicitly.
 
-  \item[H2 (confirmed).]
-    Code-graph-guided instrumentation eliminates all measured noise
-    (50\% fewer retained nodes, 70\% fewer edges) without losing coverage.
-    A blinded six-rater expert panel confirmed perceptual superiority:
-    guided output was rated strictly higher in 47 of 54 comparisons, with
-    one reversal traceable to a specific design trade-off (collapsing
-    repeated property-read calls into a single edge).
-    The quantitative and perceptual results align: noise removal improves
-    usability (\cref{sec:h2-results,sec:h2-qual}).
+As an exploratory complement, a hands-on session and interview study with
+four engineers on a second, much larger industrial codebase
+(\cref{sec:practitioner}) offers encouraging evidence that the static
+half of the approach holds at industrial scale, though the session
+exercised only static extraction and graph querying, with no runtime
+tracing involved. The key scenario there was a proxy-leak defect whose
+root cause was an implicit event-driven interaction, invisible without
+reconstructing the call chain, resolved using only the static graph ---
+consistent with H1's finding that static analysis preserves fault-path
+recall where traces cannot. The industrial system's architecture
+(proxy-based, virtual interfaces, dynamic service binding) is the kind
+where H1 would predict C4$>$C2 to materialise
+(\cref{sec:cpscore-scale,sec:h1-c4c2}), but since no dynamic evidence was
+collected there, this remains a motivated prediction rather than a
+measured result.
 
-  \item[H3 (confirmed).]
-    In a holistic five-condition experiment: the reconstructed diagram
-    alone achieves perfect component recall, interaction recall and rated
-    completeness on every scenario. It matches or exceedes all combinations
-    that include source code and traces.
-    Conditions without the diagram consistently miss a suppressed-but-source-visible
-    interaction that the diagram states explicitly.
-    The diagram is therefore the distinguishing factor, not merely a
-    supplement (\cref{sec:h3-holistic}).
-\end{description}
-
-As an exploratory complement to H1--H3, a practitioner hands-on session and
-interview study with four engineers on a second, much larger industrial
-codebase (\cref{sec:practitioner}) provides encouraging evidence that the
-\emph{static half} of the approach holds at industrial scale. This session
-exercised only the static-extraction and graph-querying capability. It did not
-involve any runtime tracing or dynamic analysis.
-The key scenario exercise involved a proxy-leak defect whose root cause is an
-implicit event-driven interaction invisible without reconstructing the call
-chain. It was resolved using only the static graph. This mirrors H1's
-finding that static analysis preserves fault-path recall where traces
-cannot.
-The industrial system's architecture (proxy-based, virtual interfaces,
-dynamic service binding) is the kind of system where H1 predicts C4$>$C2
-would materialise (\cref{sec:cpscore-scale,sec:h1-c4c2}). Because the
-session collected no dynamic evidence, this remains a motivated prediction
-rather than a measured result, and is left to future work.
-
-A single cross-cutting pattern unifies all four evidence sources
-(\cref{sec:discussion}): \textbf{additional evidence helps exactly when
-the primary evidence source is missing something and is otherwise
-redundant.}
-Combining evidence helps on fault paths but not happy paths (H1). Diagrams help comprehension 
-when traces are incomplete but not when they are already sufficient (H3). Guided 
-instrumentation improves usability by removing what is irrelevant (H2).
-Furthermore, practitioners solved a fault-path defect using the exact evidence 
-source (static graph) that H1 identifies as the recall-preserving complement 
-to incomplete traces. This pattern also generates a concrete, falsifiable 
-prediction for future work: on systems with cross-module virtual dispatch, combining
-should show C4$>$C2 on \emph{all} scenario types, not just fault
-paths (\cref{sec:future-work}).
+Taken together, a single pattern runs through all four evidence
+sources (\cref{sec:discussion}): additional evidence helps
+exactly when the primary source is missing something, and is otherwise
+redundant. This generates a falsifiable prediction for future work: on
+systems with cross-module virtual dispatch, combining should show
+C4$>$C2 on \emph{all} scenario types, not only fault paths
+(\cref{sec:future-work}).
 
 \section{Practical Implications}
 
-The pipeline enables an engineer working on an event-driven \Cpp\ system to
-obtain a scenario-specific \sysml\ interaction diagram by issuing
-natural-language queries against the property graph, rather than spending
-several working days manually tracing call chains, cross-referencing header
-files and correlating log output.
+The pipeline lets an engineer working on an event-driven \Cpp\ system
+obtain a scenario-specific \sysml\ interaction diagram through
+natural-language queries against the property graph, rather than
+manually tracing call chains, cross-referencing headers and correlating
+log output over several working days.
 
-On CPSCore, the static extraction skill populated 2,574 ordered interactions
-across 121 components in a single Cypher query execution. A further Cypher
-query identified the cross-component call boundaries to trace (nine caller
-functions across five files); the \texttt{add-runtime-instrumentation} skill
-then instrumented the corresponding call-site patterns with
-\texttt{csp\_matcher}, requiring no manual call-graph reading.
-Because the pipeline is codebase-agnostic (skills query the live schema, not
-hardcoded labels), switching to a new target requires only re-running the
-static extractor and re-invoking the same skills.
-The practitioner session confirmed this transfer cost is low in practice:
+On CPSCore, static extraction populated 2,574 ordered interactions
+across 121 components in a single Cypher query. A further query
+identified the nine caller functions across five files to trace, and
+\texttt{add-runtime-instrumentation} then instrumented them with
+\texttt{csp\_matcher}, without any manual call-graph reading. Because the
+skills query the live schema rather than hardcoded labels, switching to
+a new target requires only re-running the static extractor. The
+practitioner session suggests this transfer cost is low in practice:
 four engineers on a much larger industrial codebase used the tool
-productively within a single session and the structural and dependency
-diagrams were rated consistently useful for architectural comprehension.
+productively within a single session, and rated the structural and
+dependency diagrams consistently useful for architectural comprehension.
 
 \section{Contributions}
-
-The primary contributions of this thesis are organised into three research
-contributions and three engineering artefacts:
 
 \paragraph{Research contributions.}
 \begin{enumerate}
   \item \textbf{A static property graph and a separate trace pipeline}
-    whose interaction edge sets are compared while remembering which
-    evidence each interaction came from (static, dynamic, or both).
-    Keeping the two sources separate but comparable is what lets the
+    whose interaction edge sets are compared while keeping track of
+    which evidence each interaction came from --- static, dynamic, or
+    both. Keeping the sources separate but comparable is what lets the
     evaluation report exactly where each edge originated
     (\cref{sec:pg-schema}).
 
-  \item \textbf{A scenario-scoping method} that trims the call graph down
-    to just the interactions relevant to one scenario using plain
+  \item \textbf{A scenario-scoping method} that trims the call graph to
+    the interactions relevant to one scenario, using plain
     scenario-scoped Cypher queries, without re-running the analysis from
     scratch (\cref{sec:combine-scope}).
 
-  \item \textbf{A clear, evidence-based account} of when combining static
-    and dynamic analysis actually helps and when it does not. Combining
-    protects fault paths and adds new interactions at indirection
-    boundaries (H1). Guided instrumentation removes noise without losing
-    coverage (H2). Finally, the reconstructed diagrams help comprehension
-    specifically when the trace is incomplete (H3).
+  \item \textbf{An evidence-based account of when combining static and
+    dynamic analysis helps}, and when it does not, summarised above for
+    H1--H3 (\cref{sec:h1-results,sec:h2-results,sec:h3-holistic}).
 \end{enumerate}
 
 \paragraph{Engineering artefacts.}
@@ -154,92 +122,82 @@ contributions and three engineering artefacts:
     automatically, driven by a simple find/replace specification
     (\cref{sec:csp-matcher}).
 
-  \item A \textbf{set of eleven natural-language agent skills} that run the
-    whole pipeline, from source code to \sysml\ diagram on any codebase
-    without code changes (\cref{sec:skill-design}).
+  \item A \textbf{set of eleven natural-language agent skills} that run
+    the whole pipeline, from source code to \sysml\ diagram, on any
+    codebase without code changes (\cref{sec:skill-design}).
 
   \item A \textbf{way to recover publish-subscribe wiring} that ordinary
     call-graph analysis cannot see, by matching subscription and
-    publication call sites that share the same channel identifier
+    publication call sites that share a channel identifier
     (\cref{sec:macro-resolution}).
 \end{enumerate}
 
 \section{Limitations \& Threats to Validity}
 
 The most significant limitation is scale: all three hypotheses were
-evaluated on a single open-source system (CPSCore, $\approx$13\,kLOC)
-across four scenarios.
-CPSCore's absence of cross-module virtual dispatch means the static call
-graph is already reachability-complete, explaining why combining is
-redundant on happy-path scenarios. In larger systems with virtual dispatch
-or dynamic plugin loading, the combination benefit would likely be more
-pronounced.
-The practitioner session on an industrial-scale codebase
-(\cref{sec:practitioner}) provides encouraging qualitative evidence of
+evaluated on a single open-source system ($\approx$13\,kLOC) across four
+scenarios. CPSCore's absence of cross-module virtual dispatch means its
+static call graph is already reachability-complete, which is presumably
+why combining is redundant on the happy-path scenarios; in a larger
+system with virtual dispatch or dynamic plugin loading, the benefit of
+combining would likely be more pronounced. The practitioner session on
+an industrial-scale codebase offers encouraging qualitative evidence of
 transfer, but does not substitute for a controlled replication.
 
-The H3 experiment used the same LLM family both to generate the C5 diagram
-and to carry out the comprehension task that judged it. Because the same
-model plays both roles, the two are not fully independent (a
-generator--consumer circularity).
-The H2 six-rater panel preserved effect direction on every dimension,
-but a larger sample would strengthen confidence in magnitude.
-Ground-truth diagrams are inherently subjective, and the evaluation
-metric does not capture temporal ordering accuracy.
+The H3 experiment used the same LLM family both to generate the C5
+diagram and to carry out the comprehension task judging it, so the two
+are not fully independent. The H2 six-rater panel preserved effect
+direction on every dimension, though a larger sample would strengthen
+confidence in magnitude. Ground-truth diagrams are inherently
+subjective, and the evaluation metric does not capture temporal ordering
+accuracy.
 
-A complete discussion of threats to validity, including the researcher
-degrees of freedom (the analysis choices that could have biased the result)
-identified and corrected during H1/H2, is given in
+A fuller discussion of threats to validity, including the researcher
+degrees of freedom identified and corrected during H1/H2, is given in
 \cref{ch:analysis}.
 
 \section{Future Work}\label{sec:future-work}
-
-Several directions are open for future investigation:
 
 \begin{description}
   \item[Controlled evaluation on a second system.]
     The practitioner session (\cref{sec:practitioner}) suggests the
     static approach transfers to larger, industrial codebases, but only
-    qualitatively. Extending the fault-path/dual-gap scenario set beyond
-    the single constructed scenario (S4) currently reported would be a
-    natural first step. Applying the full, pre-registered
-    H1/H2/H3 hypothesis tests to that codebase or to other event-driven
-    \Cpp\ systems (for example, using different publish-subscribe frameworks such as
-    ROS~2 or MQTT), would turn this encouraging signal into a controlled
-    generalisability result.
+    qualitatively. A natural first step would be extending the
+    fault-path/dual-gap scenario set beyond the single constructed
+    scenario (S4) reported here, and applying the full, pre-registered
+    H1/H2/H3 tests to that codebase or to other event-driven \Cpp\
+    systems (\eg using ROS~2 or MQTT for publish-subscribe) to turn this
+    encouraging signal into a controlled generalisability result.
 
   \item[Diagram labelling and interactivity.]
     The practitioner interviews (\cref{sec:interview-findings})
-    independently converged on two concrete requests. The first was
-    richer, less abstract event/message labels on sequence diagrams
-    (\eg inline source class and line number on hover). The second was
-    interactive exploration (search, filter, collapse/expand) rather than
-    static, one-shot diagrams. Both are natural extensions of the
-    source-location data the pipeline already carries (\cref{sec:utility}).
+    independently converged on two requests: richer, less abstract
+    event/message labels on sequence diagrams (\eg inline source class
+    and line number on hover), and interactive exploration (search,
+    filter, collapse/expand) rather than static, one-shot diagrams. Both
+    are natural extensions of the source-location data the pipeline
+    already carries (\cref{sec:utility}).
 
   \item[Temporal ordering accuracy.]
-    The current evaluation abstracts over message ordering.
-    Developing a metric that accounts for the relative order of interactions
-    in the generated diagram would provide a more complete picture.
+    The current evaluation abstracts over message ordering. A metric
+    accounting for the relative order of interactions would give a more
+    complete picture.
 
   \item[Incremental updates.]
-    As the codebase evolves, the \ac{PG} should be updatable incrementally
-    rather than re-built from scratch.
-    Neo4j's support for live graph updates makes this tractable. But, the
-    scenario-scoping invalidation logic would need to be designed carefully.
+    As the codebase evolves, the \ac{PG} should ideally be updatable
+    incrementally rather than rebuilt from scratch. Neo4j's support for
+    live graph updates makes this tractable, though the
+    scenario-scoping invalidation logic would need careful design.
 
   \item[LLM-assisted diagram naming.]
-    Function names in the generated diagrams are currently taken verbatim
-    from the source code.
-    A post-processing step using a \ac{LLM} could produce more
-    human-readable message labels, improving the practical utility of the
-    output.
+    Function names in the generated diagrams are currently taken
+    verbatim from source. A post-processing step using an \ac{LLM} could
+    produce more readable message labels.
 
   \item[Integration with Renaissance DB.]
-    The \ac{GDI} project maintains an architecture model database
-    (Renaissance DB) that could serve as a richer source of module-level
-    metadata, potentially reducing the number of unresolved black-box
-    components.
+    The \ac{GDI} project's architecture model database (Renaissance DB)
+    could serve as a richer source of module-level metadata, potentially
+    reducing the number of unresolved black-box components.
 \end{description}
 
 \section{Reproducibility}

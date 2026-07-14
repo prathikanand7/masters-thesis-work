@@ -1,105 +1,85 @@
 \chapter{Implementation}\label{ch:experiments}
 
-This chapter describes how the design of \cref{ch:methods} was realised.
-It introduces the representative system used for development. It documents
-each implementation stage with code artefacts. It reports the concrete
-measurements obtained at each stage.
+This chapter describes how the design of \cref{ch:methods} was realised:
+the representative system used for development, each implementation
+stage with its code artefacts, and the concrete measurements obtained at
+each stage.
 
 \section{Representative System: CPSCore}\label{sec:cpscoreintro}
 
 The pipeline was developed and validated on \emph{CPSCore}
 \cite{theile:cpscore}, an open-source modular \Cpp\ framework for
-cyber-physical systems originally developed for the uavAP autopilot
-project.
-CPSCore was chosen as the representative system because it is freely
-available. It uses a real event-driven publish-subscribe architecture.
-Its test suite (1,425 assertions in 61 test cases) provides a
-ground truth for behavioural verification.
+cyber-physical systems originally built for the uavAP autopilot project.
+It was chosen for three reasons: it is freely available, it uses a real
+event-driven publish-subscribe architecture, and its test suite (1,425
+assertions across 61 test cases) provides a ground truth for
+behavioural verification.
 
 \subsection{Scale and Dispatch Characteristics}\label{sec:cpscore-scale}
 
-CPSCore is a \emph{small} \Cpp\ codebase: 154 source and header files
-comprising approximately 13,000 lines of code (3,800 in \texttt{.cpp}
-implementation files, 9,200 in headers).
-The architecture uses \texttt{template}-based static polymorphism
-extensively ($\approx$470 template occurrences) and declares only
-32~\texttt{virtual} method signatures across 12~files.
-Crucially, \emph{all virtual interfaces reside within a single architectural
-module} (predominantly in Utilities: \texttt{INetworkLayer},
-\texttt{ITransportLayer}, \texttt{IPublisherImpl}, \texttt{IScheduler}) or
-at the per-module configuration boundary (\texttt{IConfigurableObject},
-\texttt{IRunnableObject}).
-No cross-module function call in CPSCore is dispatched through a virtual
-table: inter-module calls resolve statically through concrete class
-references or through \texttt{boost::signals2} slot connections.
+CPSCore is a small codebase: 154 source and header files, roughly
+13,000 lines (3,800 in \texttt{.cpp} files, 9,200 in headers). It relies
+heavily on \texttt{template}-based static polymorphism ($\approx$470
+occurrences) and declares only 32 \texttt{virtual} method signatures
+across 12 files, all confined to a single module (Utilities:
+\texttt{INetworkLayer}, \texttt{ITransportLayer}, \texttt{IPublisherImpl},
+\texttt{IScheduler}) or to per-module configuration boundaries
+(\texttt{IConfigurableObject}, \texttt{IRunnableObject}). No
+cross-module call resolves through a virtual table; inter-module calls
+go through concrete class references or \texttt{boost::signals2} slot
+connections.
 
-This property has a direct consequence for the H1 evaluation
-(\cref{sec:h1-results}). Because every cross-module call target is
-statically deterministic, the static call graph is
-\emph{reachability-complete} with respect to the trace.
-In a codebase with cross-module virtual dispatch or dynamic plugin loading,
-the trace could observe call targets that static analysis cannot resolve.
-This would make dynamic evidence genuinely additive.
-In CPSCore, that situation does not arise: every edge the trace discovers
-is already present in the static graph (formally, C3~$\subseteq$~C2). This
-is a structural property of the codebase, not a flaw in the pipeline, and
-its consequence for combining sources (C4~$=$~C2 on these scenarios) is analysed in
-\cref{sec:h1-c4c2}.
+This has a direct consequence for H1 (\cref{sec:h1-results}): since every
+cross-module target is statically determinate, the static call graph is
+reachability-complete with respect to the trace, and every edge the
+trace discovers is already present statically (C3~$\subseteq$~C2). A
+codebase with cross-module virtual dispatch or dynamic plugin loading
+would likely break this containment and make the dynamic evidence
+genuinely additive; CPSCore does not exhibit that property, which is
+why C4~$=$~C2 on these scenarios (\cref{sec:h1-c4c2}).
 
 \subsection{CPSCore Architecture}
 
-CPSCore organises its functionality into five modules:
-\textbf{Aggregation} (component wiring and lifecycle),
-\textbf{Configuration} (property mapping),
-\textbf{Synchronization} (run-stage scheduling),
-\textbf{Logging} (\texttt{CPSLogger} and \texttt{RAIILogStream}),
-and \textbf{Utilities} (schedulers, data presentation, signal handling,
-\ac{IPC}, and IDC).
-External dependencies are Eigen3, Boost.System, \texttt{cpp\_redis}/tacopie
-(Redis client), and Catch2 (test framework).
+CPSCore is organised into five modules: \textbf{Aggregation} (component
+wiring and lifecycle), \textbf{Configuration} (property mapping),
+\textbf{Synchronization} (run-stage scheduling), \textbf{Logging}
+(\texttt{CPSLogger}, \texttt{RAIILogStream}), and \textbf{Utilities}
+(schedulers, data presentation, signal handling, \ac{IPC}, IDC).
+External dependencies are Eigen3, Boost.System, \texttt{cpp\_redis}/tacopie,
+and Catch2.
 
 \subsection{Publish-Subscribe via IDC and Redis}\label{sec:idc}
 
-Inter-component communication in CPSCore is not direct. It flows
-through the \ac{IDC} abstraction layer, whose two operations
-(\texttt{subscribeOnPacket} and \texttt{sendPacket}) delegate to a
-pluggable \texttt{INetworkLayer} implementation. The default
-\texttt{RedisNetworkLayer} maps logical channel identifiers to
+Inter-component communication runs through the \ac{IDC} abstraction
+layer, whose two operations (\texttt{subscribeOnPacket},
+\texttt{sendPacket}) delegate to a pluggable \texttt{INetworkLayer}. The
+default \texttt{RedisNetworkLayer} maps channel identifiers to
 \texttt{RedisSubscriber}/\texttt{RedisPublisher} objects backed by
-\texttt{cpp\_redis}, and subscriptions are wired through a
-\texttt{boost::signals2} slot \newline (\texttt{onPacket\_.connect(slot)}) that
-fires when a Redis message arrives on the channel.
-The mechanism and the reason it defeats naive static call-graph
-extraction were introduced in \cref{sec:static-analysis}. The
-macro-resolution strategy that recovers the subscription topology is
-detailed in \cref{sec:macro-resolution}.
-
-This indirection means that a static call graph built from function
-call sites alone will contain edges into the IDC layer but will not
-reveal which component receives each published packet.
-Recovering the subscription topology is therefore necessary for
-meaningful sequence diagram reconstruction.
+\texttt{cpp\_redis}, wired through a \texttt{boost::signals2} slot
+(\texttt{onPacket\_.connect(slot)}) that fires when a Redis message
+arrives. A static call graph built from call sites alone therefore
+contains edges into the IDC layer but cannot reveal which component
+receives a given packet --- recovering that topology is what
+\cref{sec:macro-resolution} does, and is necessary for meaningful
+sequence diagram reconstruction.
 
 \section{Stage 1: Static Analysis and Graph Population}\label{sec:static-impl}
 
 \subsection{Renaissance to Neo4j}
 
-The \Cpp\ source tree of CPSCore was analysed by the Renaissance
-semantic extraction tool, which resolves the full \ac{AST} (including
-template instantiations, overload candidates and macro expansions)
-and emits the property graph schema described in \cref{tab:node-types,tab:edge-types}.
-The Renaissance-populated graph contains 11 node labels and 11
-relationship types (\cref{tab:node-types,tab:edge-types}), all derived
-from static analysis. Runtime traces are not ingested into the graph; they
-are processed by a separate pipeline into a sequence table and combined
-with the static edge set only at evaluation time
-(\cref{sec:combine-scope}).
+CPSCore's source tree was analysed by Renaissance, which resolves the
+full \ac{AST} (template instantiations, overload candidates, macro
+expansions) and emits the property graph schema in
+\cref{tab:node-types,tab:edge-types}: 11 node labels and 11 relationship
+types, all from static analysis. Runtime traces are processed
+separately into a sequence table and combined with the static edge set
+only at evaluation time (\cref{sec:combine-scope}).
 
 \subsection{Schema Introspection Skill}
 
-The \texttt{get-neo4j-schema} skill executes three Cypher statements
-against the live graph to produce a machine-readable schema summary
-used by downstream skills:
+The \texttt{get-neo4j-schema} skill runs three Cypher statements against
+the live graph to produce a machine-readable schema summary for
+downstream skills:
 
 \begin{minted}{cypher}
 -- Node labels and properties
@@ -121,10 +101,10 @@ RETURN DISTINCT labels(s) AS fromLabels,
 
 \subsection{Interface Dependency Table}\label{sec:idt}
 
-The \texttt{get-interface-dependency-table} skill aggregates the
-11 static relationship types into a compact interface dependency table that
-characterises the structural connectivity of the codebase.
-\Cref{tab:idt} reproduces the full table for CPSCore.
+The \texttt{get-interface-dependency-table} skill aggregates the 11
+static relationship types into a compact table characterising the
+codebase's structural connectivity. \Cref{tab:idt} reproduces the full
+table for CPSCore.
 
 \begin{table}[htb]
 \centering
@@ -162,15 +142,12 @@ characterises the structural connectivity of the codebase.
 
 \section{Stage 2: Sequence Dependency Table}\label{sec:seq-table}
 
-The \texttt{get-sequence-dependency-table} skill reads a runtime trace log
-(the \texttt{[TRACE]} lines captured by the instrumentation pipeline,
-\cref{sec:trace-impl}) and normalises it into an ordered sequence CSV. It is
-read-only with respect to the graph and performs no Cypher query of its own.
-It preserves the execution order of the trace, sorts by \texttt{EventTimestamp}
-where needed, and assigns a 1-based \texttt{Sequence} number to each observed
-interaction.
-
-The format of each row is:
+The \texttt{get-sequence-dependency-table} skill reads the runtime trace
+log (the \texttt{[TRACE]} lines from instrumentation,
+\cref{sec:trace-impl}) and normalises it into an ordered sequence CSV.
+It is read-only with respect to the graph, preserves trace execution
+order (sorting by \texttt{EventTimestamp} where needed), and assigns a
+1-based \texttt{Sequence} number to each interaction. Row format:
 
 \begin{minted}{text}
 Sequence | EventName | ClientComponent | ClientFunction
@@ -190,36 +167,33 @@ Example rows from the CPSCore extraction:
   connect,Command,2026-05-22T12:42:09.435085Z
 \end{minted}
 
-Here, \emph{component} refers to the fine-grained, path-derived unit produced
-by the component-name resolution algorithm (\cref{sec:sysml-generation}), not
-the five top-level architectural modules introduced in
-\cref{sec:cpscoreintro}. A single module such as \textbf{Utilities} resolves
-to many distinct components, one per source sub-path, which is why the
-component count (121) is far larger than the module count (5).
-The extraction yielded \textbf{2,574 ordered interactions} covering
-\textbf{2,169 unique client to server function pairs} across
-\textbf{121 distinct components} in the CPSCore codebase, forming the
-\emph{static-only} baseline (condition~C2) evaluated in \cref{ch:analysis}.
-Because this baseline is a static projection of \texttt{CppCalls} edges
-rather than a run. Its timestamps are synthetic. The per-scenario dynamic
-traces used as the C3 evidence (\cref{sec:trace-impl}) are, by contrast,
-real runtime captures with true wall-clock timestamps.
+Here, \emph{component} refers to the fine-grained, path-derived unit
+from the component-name resolution algorithm
+(\cref{sec:sysml-generation}), not the five top-level modules of
+\cref{sec:cpscoreintro} --- Utilities alone resolves to many components,
+one per source sub-path, which is why the component count (121) is far
+larger than the module count (5). The extraction yielded 2,574 ordered
+interactions, 2,169 unique client-to-server function pairs, and 121
+distinct components, forming the static-only baseline (C2) evaluated in
+\cref{ch:analysis}. Because this table is a projection of
+\texttt{CppCalls} edges rather than a run, its timestamps are synthetic;
+the per-scenario dynamic traces used as C3 evidence
+(\cref{sec:trace-impl}) are, by contrast, real captures with true
+wall-clock timestamps.
 
 \section{Stage 3: Runtime Trace Collection}\label{sec:trace-impl}
 
 \subsection{Probe Insertion via csp\_matcher}\label{sec:trace-probe-insertion}
 
 The \texttt{add-runtime-instrumentation} skill drives \texttt{csp\_matcher}
-(\cref{sec:csp-matcher}) to wrap the cross-component call \emph{sites}
-identified above with a comma-operator trace emission. The tool is driven by
-the find/replace rules in \texttt{add\_tracing.txt} --- three call-site
+(\cref{sec:csp-matcher}) to wrap the cross-component call sites
+identified above with a comma-operator trace emission, using the
+find/replace rules in \texttt{add\_tracing.txt}: three call-site
 patterns (\texttt{getAll}, \texttt{flush}, \texttt{convert}), one per
-distinct cross-component call type surfaced by the Cypher query --- so that
-the edit is declarative, reproducible, and reviewable.
-The \texttt{apply\_tracing.ps1} script applies \texttt{csp\_matcher} across
-all compilation units listed in \texttt{compile\_commands.json}, injecting
-the three tracing rules and the CPSLOG macro patch (covering every
-\texttt{RAIILogStream::stream} call site) in sequence:
+distinct cross-component call type the Cypher query surfaced, plus the
+CPSLOG macro patch covering every \texttt{RAIILogStream::stream} call
+site. \texttt{apply\_tracing.ps1} applies these across all compilation
+units in \texttt{compile\_commands.json}:
 
 \begin{minted}{cpp}
 // Example wrapped call site in AggregatableRunner.cpp
@@ -227,17 +201,14 @@ the three tracing rules and the CPSLOG macro patch (covering every
  agg->getAll<IAggregatableObject>())
 \end{minted}
 
-Each probe emits a structured pipe-delimited \texttt{[TRACE]} line to
-\texttt{stderr} at the moment the call fires, capturing the real wall-clock
-timestamp, caller and callee component, and function names.
-The full tracing rules are reproduced in \cref{sec:appendix-tracing-rules}.
-Because the probes wrap call \emph{sites} rather than function entries, the
-trace records not merely that a function was entered but that a specific
-cross-component call actually executed.
+Each probe emits a structured, pipe-delimited \texttt{[TRACE]} line to
+\texttt{stderr} when the call fires, capturing wall-clock timestamp,
+caller/callee component, and function names (full rules in
+\cref{sec:appendix-tracing-rules}). Because probes wrap call sites
+rather than function entries, the trace records that a specific
+cross-component call executed, not merely that a function was entered.
 
 \subsection{Trace Format and Output}
-
-The captured trace output follows the format:
 
 \begin{minted}{text}
 EventTimestamp | EventName | ClientComponent | ClientFunction
@@ -246,9 +217,9 @@ EventTimestamp | EventName | ClientComponent | ClientFunction
 \end{minted}
 
 Running the CPSCore test suite under \texttt{csp\_matcher} instrumentation
-produced \textbf{27 real trace events} covering \textbf{26 unique
-client to server interaction pairs}. These are genuine runtime captures with
-real wall-clock timestamps, not a static projection. Example events:
+produced 27 real trace events covering 26 unique client-to-server
+interaction pairs --- genuine runtime captures, not a static projection.
+Example events:
 
 \begin{minted}{text}
 2026-06-18T10:07:15.686645Z | Aggregator.getAll |
@@ -260,20 +231,17 @@ real wall-clock timestamps, not a static projection. Example events:
   Logging | CPSLogger.flush | Command | CPSLogger
 \end{minted}
 
-The full test run passed all 1,425 assertions in 61 test cases,
-confirming that instrumentation did not alter runtime behaviour.
+The full test run passed all 1,425 assertions across 61 test cases,
+confirming instrumentation did not alter runtime behaviour.
 
 \section{Stage 4: SysML v2 Generation}\label{sec:sysml-impl}
 
-The \texttt{gen\_sysml\_from\_csv.py} script reads the sequence
-dependency table and renders each scenario as a \sysml
-\texttt{interaction} definition.
-
-The generated package for CPSCore declares shared stereotype
-definitions (\texttt{SynchronousCall}, \texttt{ReturnMessage},
-\texttt{AsynchronousMessage}) and one \texttt{part def} per scenario.
-A representative excerpt from the generated \texttt{TestExecution}
-scenario:
+\texttt{gen\_sysml\_from\_csv.py} reads the sequence dependency table and
+renders each scenario as a \sysml \texttt{interaction} definition. The
+generated package declares shared stereotypes
+(\texttt{SynchronousCall}, \texttt{ReturnMessage},
+\texttt{AsynchronousMessage}) and one \texttt{part def} per scenario. An
+excerpt from the generated \texttt{TestExecution} scenario:
 
 \begin{minted}[fontsize=\footnotesize]{text}
 package CPScoreInteractionModels {
@@ -303,12 +271,12 @@ package CPScoreInteractionModels {
 }
 \end{minted}
 
-A separate \texttt{RedisConnectionScenario} was generated covering
-the Redis subscriber/publisher initialisation interactions, including
-\texttt{connect}, \texttt{auth}, \texttt{subscribe} and
-\texttt{onConnectionEvent} messages. These messages span the
-\texttt{RedisPublisher}, \texttt{RedisSubscriber},
-\texttt{CppRedisClient}, and \texttt{Logger} lifelines.
+A separate \texttt{RedisConnectionScenario} covers the Redis
+subscriber/publisher initialisation interactions
+(\texttt{connect}, \texttt{auth}, \texttt{subscribe},
+\texttt{onConnectionEvent}), spanning the \texttt{RedisPublisher},
+\texttt{RedisSubscriber}, \texttt{CppRedisClient}, and \texttt{Logger}
+lifelines.
 
 \begin{figure}[htb]
 \centering
@@ -321,143 +289,122 @@ the Redis subscriber/publisher initialisation interactions, including
 \end{figure}
 
 The complete set of generated SysML v2 sequence and structural diagrams
-(rendered as figures) is reproduced in \cref{sec:appendix-sysmlv2}.
-These diagrams cover all 14 auto-generated scenarios including
-Aggregation, Synchronization, IDC, IPC, Redis, Serial, Signal Handler,
-Utilities, Data Presentation, and Test Execution flows.
+is reproduced in \cref{sec:appendix-sysmlv2}, covering all 14
+auto-generated scenarios (Aggregation, Synchronization, IDC, IPC, Redis,
+Serial, Signal Handler, Utilities, Data Presentation, and Test Execution
+flows).
 
 \section{Scenario Suite and Experimental Conditions}\label{sec:scenario-suite}
 
-The implementation described above produces the raw artefacts (the static
-sequence dependency table and the real \texttt{csp\_matcher} trace log) that feed the H1 and H2
-experiments reported in \cref{ch:analysis}.
-This section documents the experimental configurations those artefacts were
-assembled into, so that the results in \cref{ch:analysis} can be read against
-a concrete experimental design rather than a single pipeline run.
+The stages above produce the raw artefacts (the static sequence
+dependency table and the real \texttt{csp\_matcher} trace log) feeding
+the H1 and H2 experiments in \cref{ch:analysis}. This section documents
+how those artefacts were assembled into experimental configurations.
 
 \subsection{Scenario Suite (S1--S4)}\label{sec:scenarios}
 
-Four scenarios were defined on CPSCore for hypothesis testing.
-The first three (S1--S3) cover happy-path behaviour across the Aggregation,
-Synchronization and Redis/IDC subsystems, occurring naturally in CPSCore's
-existing code.
-A fourth scenario (S4) was purpose-built production code (not a test
-fixture), added for a specific, narrow reason: none of S1--S3 could, even
-in principle, show the combination (C4) strictly exceeding \emph{both} single-source
-conditions (C2, C3) at once, because CPSCore's existing code has no
-boundary where static analysis and runtime tracing each miss a
-\emph{different} interaction. S4 introduces exactly one such boundary.
+Four scenarios were defined on CPSCore. The first three (S1--S3) cover
+happy-path behaviour across the Aggregation, Synchronization and
+Redis/IDC subsystems, occurring naturally in the existing code. S4 is
+purpose-built production code, added for a narrow reason: nothing in
+S1--S3 could show combining (C4) strictly exceeding both single-source
+conditions at once, since CPSCore has no boundary where static and
+dynamic evidence each miss a different interaction. S4 introduces one.
 
 \begin{description}
   \item[S1: Aggregator notification chain.]
     \emph{Primary:} Synchronization. \emph{Targets:} Aggregation, Logging.
-    Exercises the observer/notification pattern:
-    \texttt{SynchronizedRunner.\newline runSynchronized} ~$\to$~% 
-    \texttt{Aggregator.getAll}, followed by logging calls.
-    The \texttt{boost::signals2} callback chain is not visible in a
-    static include graph, making this scenario a test of the IDC
-    topology recovery.
-    \emph{Reference interactions:} 4 (getAll, stream, flush, instance).
+    The observer/notification pattern:
+    \texttt{SynchronizedRunner.runSynchronized}~$\to$~\texttt{Aggregator.getAll},
+    followed by logging calls. The \texttt{boost::signals2} callback
+    chain is invisible in a static include graph, making this a test of
+    IDC topology recovery. \emph{Reference interactions:} 4 (getAll,
+    stream, flush, instance).
 
   \item[S2: Configuration property mapping.]
-    \emph{Primary:} Configuration. \emph{Target:} Logging.
-    A mostly-static, linear chain:
-    \texttt{PropertyMapper.add}~$\to$~\texttt{RAIILogStream.stream}.
-    Serves as the ``easy case'' baseline, expected to be
-    well-reconstructed even by static-only conditions.
-    \emph{Reference interactions:} 1 (stream).
+    \emph{Primary:} Configuration. \emph{Target:} Logging. A mostly-static,
+    linear chain: \texttt{PropertyMapper.add}~$\to$~\texttt{RAIILogStream.stream}.
+    The easy-case baseline, expected to be reconstructed well even by
+    static-only conditions. \emph{Reference interactions:} 1 (stream).
 
   \item[S3: Multi-component runner orchestration.]
-    \emph{Primary:} Synchronization. \emph{Targets:} Aggregation,
-    Utilities, Logging.
-    Fan-out from \texttt{SimpleRunner.runStage} to multiple independent
-    subsystems simultaneously.
-    Hardest case for static analysis: call targets are resolved at
-    runtime via template/virtual dispatch, producing 2 false-positive
-    static edges (\texttt{flush}, \texttt{instance}) that C5 agent
-    synthesis eliminates.
-    \emph{Reference interactions:} 3 (getAll, stream, convert).
+    \emph{Primary:} Synchronization. \emph{Targets:} Aggregation, Utilities,
+    Logging. Fan-out from \texttt{SimpleRunner.runStage} to multiple
+    independent subsystems at once. The hardest case for static analysis:
+    call targets resolved at runtime via template/virtual dispatch produce
+    two false-positive static edges (\texttt{flush}, \texttt{instance})
+    that C5 synthesis eliminates. \emph{Reference interactions:} 3
+    (getAll, stream, convert).
 
   \item[S4: Stage event pub-sub bridge (constructed).]
     \emph{Primary:} Synchronization. \emph{Targets:} Aggregation, Logging.
-    Unlike S1--S3, S4 is not an existing CPSCore code path but two new
-    production files added specifically for this experiment:
-    \texttt{StageEventBridge} publishes a stage-completion event over a
-    \texttt{boost::signals2::signal}. \newline \texttt{StageEventListener} connects
-    \texttt{onStageEvent} as a slot with no static call site anywhere in the
-    codebase. If no listener is connected, \texttt{StageEventBridge} logs a
-    \texttt{CPSLOG\_ERROR} to \texttt{stream}, suppressed at runtime by a
-    \texttt{CPSLogger::LogLevelScope(LogLevel::NONE)} idiom.
-    The signal/slot dispatch is invisible to static analysis (no resolvable
-    call expression). So, C2 sees \texttt{stream} but not
-    \texttt{onStageEvent}, while C3 sees \texttt{onStageEvent} but not
-    \texttt{stream}. This is the one construction in the suite where C2 and C3 each
-    miss a \emph{different} edge rather than one being a subset of the other.
+    Unlike S1--S3, this is not an existing code path but two new
+    production files: \texttt{StageEventBridge} publishes a
+    stage-completion event over a \texttt{boost::signals2::signal};
+    \texttt{StageEventListener} connects \texttt{onStageEvent} as a slot
+    with no static call site anywhere in the codebase. If no listener is
+    connected, \texttt{StageEventBridge} logs a \texttt{CPSLOG\_ERROR} to
+    \texttt{stream}, suppressed at runtime by a
+    \texttt{CPSLogger::LogLevelScope(LogLevel::NONE)} idiom. The
+    signal/slot dispatch has no resolvable static call expression, so C2
+    sees \texttt{stream} but not \texttt{onStageEvent}, while C3 sees the
+    reverse --- the one construction in the suite where C2 and C3 each
+    miss a different edge rather than one containing the other.
     \emph{Reference interactions:} 2 (stream, onStageEvent).
 \end{description}
 
-S4 is marked as constructed rather than found-in-the-wild. Its ground
-truth was authored from the new source files directly. Like S1--S3, its
-dynamic trace was a real \texttt{csp\_matcher} capture, obtained by actually
-running the accompanying Catch2 test under instrumentation; none of the
-S1--S4 traces are synthetic. Its results are genuine and
-unedited. It is reported and stratified separately
-from S1--S3 throughout \cref{sec:h1}, never folded silently into the
-happy-path numbers, for exactly this reason.
-The full \sysml reference diagrams (structural and sequence) for S1--S3
-are reproduced in \cref{sec:appendix-groundtruth}.
+S4 is marked constructed rather than found-in-the-wild: its ground
+truth was authored from the new source files directly, though its
+dynamic trace, like S1--S3's, is a real \texttt{csp\_matcher} capture from
+running the accompanying Catch2 test under instrumentation --- none of
+the S1--S4 traces are synthetic. It is reported and stratified
+separately from S1--S3 throughout \cref{sec:h1} for this reason, never
+folded silently into the happy-path numbers. The full \sysml reference
+diagrams for S1--S3 are reproduced in \cref{sec:appendix-groundtruth}.
 
 \subsection{Five-Condition Design (C1--C5)}\label{sec:conditions}
 
-Each scenario was reconstructed independently under five conditions, to
-isolate the contribution of each information source:
+Each scenario was reconstructed independently under five conditions:
 
 \begin{description}
-  \item[C1: LLM-only.] The scenario is reconstructed by an \ac{LLM}
-    reasoning over the raw source code alone, with no access to the static
-    graph or any trace. This condition establishes a baseline for what an
-    agent can infer without the \ac{GDI} pipeline at all.
+  \item[C1: LLM-only.] Reconstruction by an \ac{LLM} reasoning over raw
+    source code alone, with no access to the static graph or any trace
+    --- a baseline for what an agent can infer without the pipeline.
   \item[C2: Static-only.] The sequence dependency table extracted from
     \texttt{CppCalls} edges alone (\cref{sec:seq-table}).
-  \item[C3: Dynamic-only.] The real runtime trace captured via
-    \texttt{csp\_matcher} instrumentation alone (\cref{sec:trace-impl}).
-  \item[C4: Static + Dynamic (combined).] The union of the static and trace
-    artefacts, with no scenario-scoped querying applied.
-  \item[C5: Full pipeline.] The combination (C4) followed by scenario-scoped
-    querying from the scenario's declared components, \ie the complete
-    approach proposed in this thesis.
+  \item[C3: Dynamic-only.] The real runtime trace from \texttt{csp\_matcher}
+    instrumentation alone (\cref{sec:trace-impl}).
+  \item[C4: Static + Dynamic (combined).] The union of the static and
+    trace artefacts, with no scenario-scoped querying applied.
+  \item[C5: Full pipeline.] C4 followed by scenario-scoped querying from
+    the scenario's declared components --- the complete approach
+    proposed in this thesis.
 \end{description}
 
 C1--C4 test \hyperref[sec:h1]{H1} (whether combining sources improves
-reconstruction accuracy over any single source). C5 versus C4 tests
+reconstruction accuracy over any single source); C5 versus C4 tests
 \hyperref[sec:h2]{H2} (whether code-graph-guided filtering improves
 scenario focus over the unfiltered combination).
 
 \subsection{Guided versus Full Instrumentation}\label{sec:guided-vs-full}
 
-H2 additionally requires a second instrumentation axis, orthogonal to the
-five conditions above: \emph{how} the trace itself is collected.
+H2 requires a second axis, orthogonal to the five conditions above: how
+the trace itself is collected.
 
 \begin{description}
-  \item[Full instrumentation.] \texttt{csp\_matcher} trace probes are
-    inserted at every candidate call site identified in the static graph,
-    independent of scenario.
+  \item[Full instrumentation.] \texttt{csp\_matcher} probes are inserted
+    at every candidate call site in the static graph, independent of
+    scenario.
   \item[Code-graph-guided instrumentation.] Probes are inserted only at
-    call sites that lie within the scenario scope for the
-    scenario under test (\cref{sec:scenario-scoping}), computed \emph{before}
-    instrumentation rather than filtered after the fact.
+    call sites within the scenario scope (\cref{sec:scenario-scoping}),
+    computed \emph{before} instrumentation rather than filtered after.
 \end{description}
 
-Guided instrumentation is what makes the H2 comparison meaningful: it tests
-whether using the code graph to decide \emph{where to look} produces a
-cleaner trace than instrumenting everything and filtering afterwards, at
-equivalent (or better) coverage of scenario-relevant behaviour.
-The quantitative results of this comparison (node reduction, edge
-reduction, noise reduction, and coverage) are reported in
-\cref{sec:h2-results}.
-
-\Cref{tab:impl-summary} summarises the quantitative outcomes of each
-pipeline stage on CPSCore.
+This is what makes the H2 comparison meaningful: whether using the code
+graph to decide where to look produces a cleaner trace than
+instrumenting everything and filtering afterwards, at equivalent or
+better coverage. Results (node/edge/noise reduction, coverage) are
+reported in \cref{sec:h2-results}.
 
 \begin{table}[htb]
 \centering

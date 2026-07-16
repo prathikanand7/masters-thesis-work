@@ -1,7 +1,7 @@
 // H1 ground-truth sequence diagram — S1: Aggregator notification chain
 // Derived from CPSCore source + validated against runtime_traces.txt
 
-package 'S1-Sequence' {
+package 'S1Sequence' {
 
     // Participants
     part sync  : Synchronization;

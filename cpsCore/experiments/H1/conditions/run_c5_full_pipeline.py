@@ -35,11 +35,14 @@ Output:
     experiments/H1/conditions/C5_full_pipeline/<scenario>/elements.json
     experiments/H1/conditions/C5_full_pipeline/<scenario>/sequence.json
     experiments/H1/conditions/C5_full_pipeline/<scenario>/sequence.mmd
+    experiments/H1/conditions/C5_full_pipeline/<scenario>/model.sysml   (SysML v2: structure + sequence)
+    experiments/H1/conditions/C5_full_pipeline/<scenario>/views.sysml  (SysML v2 views exposing model.sysml)
 """
 import argparse
 import json
 import os
 import pathlib
+import re
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
@@ -187,6 +190,161 @@ def _render_mermaid(sequence: list[dict], scenario: str, path: pathlib.Path) -> 
     print(f"  Saved sequence diagram → {path.relative_to(ROOT)}")
 
 
+def _sysml_id(name: str) -> str:
+    """Sanitize a name into a valid SysML v2 identifier fragment."""
+    safe = re.sub(r"[^0-9A-Za-z_]", "_", name)
+    if safe and safe[0].isdigit():
+        safe = f"_{safe}"
+    return safe
+
+
+def _port_type_name(interaction: str) -> str:
+    """Derive a port-def (interface) type name from an interaction, e.g. 'getAll' -> 'GetAll'."""
+    ident = _sysml_id(interaction)
+    return ident[:1].upper() + ident[1:]
+
+
+def _render_sysml_model(scenario: str, elements: set, sequence: list, path: pathlib.Path) -> None:
+    """Render a combined SysML v2 model (structural + sequence) for one scenario.
+
+    Follows the SAME textual conventions as the confirmed-working, visualizer-
+    rendering root files ``sysml_structural_model.sysml`` / ``sysml_sequence_model.sysml``
+    / ``Views.sysml`` (port-typed structural model + Message/Lifeline sequence
+    model), scoped per-scenario via distinct package names:
+    - Structural package (``ComponentModel_<scenario>``): one ``port def`` per
+      unique interaction, one ``part def`` per component with ``server<Type>``
+      ports for interactions it provides (is the call target of) and
+      ``client<Type>`` ports for interactions it requires (is the call source
+      of), and a ``part def System`` instantiating each component and
+      connecting provider→requirer ports (``connect target.serverX to
+      source.clientX;``). Derived from the final ``elements`` set.
+    - Sequence package (``CPScoreInteractionModels_<scenario>``): the standard
+      ``InteractionScenario`` / ``Lifeline`` / ``Message`` / ``SynchronousCall``
+      scaffolding, with one ``part def <Scenario>Scenario`` containing a
+      ``Lifeline`` part per participant and ordered ``SynchronousCall`` parts
+      labeled ``"<step>. <interaction>"`` (with the agent's provenance note
+      appended, if any). Derived from the ordered ``sequence`` list.
+    """
+    comp_pkg = f"ComponentModel_{scenario}"
+    seq_pkg  = f"CPScoreInteractionModels_{scenario}"
+    scenario_part = f"{scenario}Scenario"
+
+    components   = sorted({e.source for e in elements} | {e.target for e in elements})
+    interactions = sorted({e.interaction for e in elements})
+
+    lines: list[str] = []
+
+    # ---- structural package ----
+    lines.append(f"package {comp_pkg} {{")
+    lines.append("")
+    for intr in interactions:
+        lines.append(f"    port def {_port_type_name(intr)};")
+    lines.append("")
+    for comp in components:
+        provided = sorted({e.interaction for e in elements if e.target == comp})
+        required = sorted({e.interaction for e in elements if e.source == comp})
+        lines.append(f"    part def {_sysml_id(comp)} {{")
+        for intr in provided:
+            lines.append(f"        port server{_port_type_name(intr)} : {_port_type_name(intr)};")
+        for intr in required:
+            lines.append(f"        port client{_port_type_name(intr)} : {_port_type_name(intr)};")
+        lines.append("    }")
+        lines.append("")
+    lines.append("    part def System {")
+    for comp in components:
+        lines.append(f"        part {_sysml_id(comp).lower()} : {_sysml_id(comp)};")
+    if elements:
+        lines.append("")
+    for e in sorted(elements):
+        s = _sysml_id(e.source).lower()
+        t = _sysml_id(e.target).lower()
+        p = _port_type_name(e.interaction)
+        # provider (target, has serverX) → requirer (source, has clientX)
+        lines.append(f"        connect {t}.server{p} to {s}.client{p};")
+    lines.append("    }")
+    lines.append("}")
+    lines.append("")
+
+    # ---- sequence package ----
+    lines.append(f"package {seq_pkg} {{")
+    lines.append("    private import ScalarValues::String;")
+    lines.append("")
+    lines.append("    part def InteractionScenario;")
+    lines.append("    part def Lifeline;")
+    lines.append("")
+    lines.append("    part def Message {")
+    lines.append("        attribute label : String;")
+    lines.append("        ref from : Lifeline;")
+    lines.append("        ref to   : Lifeline;")
+    lines.append("    }")
+    lines.append("")
+    lines.append("    part def SynchronousCall :> Message;")
+    lines.append("")
+    lines.append(f"    part def {scenario_part} :> InteractionScenario {{")
+    lines.append("")
+
+    lifelines: list[str] = []
+    for step in sequence:
+        for p in (step.get("source"), step.get("target")):
+            if p and p not in lifelines:
+                lifelines.append(p)
+    for p in lifelines:
+        lines.append(f"        part {_sysml_id(p).lower()} : Lifeline;")
+    lines.append("")
+
+    for step in sequence:
+        note = (step.get("note") or "").strip()
+        label = f"{step['step']}. {step['interaction']}"
+        if note:
+            label += f" ({note})"
+        label = label.replace('"', "'")
+        src = _sysml_id(step["source"]).lower()
+        tgt = _sysml_id(step["target"]).lower()
+        lines.append(f"        part m{step['step']} : SynchronousCall {{")
+        lines.append(f"            ref from : Lifeline = {src};")
+        lines.append(f"            ref to   : Lifeline = {tgt};")
+        lines.append(f'            attribute :>> label = "{label}";')
+        lines.append("        }")
+        lines.append("")
+
+    lines.append("    }")
+    lines.append("}")
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"  Saved SysML model → {path.relative_to(ROOT)}")
+
+
+def _render_sysml_views(scenario: str, path: pathlib.Path) -> None:
+    """Render a views.sysml exposing the structural and sequence views for one scenario,
+    following the same convention as the confirmed-working root Views.sysml."""
+    comp_pkg = f"ComponentModel_{scenario}"
+    seq_pkg  = f"CPScoreInteractionModels_{scenario}"
+    scenario_part = f"{scenario}Scenario"
+    flow_view = f"{scenario.lower()}Flow"
+    lines = [
+        "package Views {",
+        f"    import {comp_pkg}::*;",
+        f"    import {seq_pkg}::*;",
+        "",
+        "    view structure : GeneralView {",
+        f"        expose {comp_pkg}::System;",
+        "    }",
+        "",
+        "    view connections : InterconnectionView {",
+        f"        expose {comp_pkg}::System;",
+        "    }",
+        "",
+        f"    view {flow_view} : SequenceView {{",
+        f"        expose {seq_pkg}::{scenario_part};",
+        "    }",
+        "}",
+    ]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"  Saved SysML views → {path.relative_to(ROOT)}")
+
+
 def run_scenario(scenario: str) -> None:
     primary = SCENARIO_PRIMARY[scenario]
     allowed = SCENARIO_COMPONENTS[scenario]
@@ -201,7 +359,10 @@ def run_scenario(scenario: str) -> None:
 
     if not static_norm and not dynamic_ordered:
         save_elements(set(), elements_path(LABEL, scenario))
-        _render_mermaid([], scenario, elements_path(LABEL, scenario).parent / "sequence.mmd")
+        out_dir = elements_path(LABEL, scenario).parent
+        _render_mermaid([], scenario, out_dir / "sequence.mmd")
+        _render_sysml_model(scenario, set(), [], out_dir / "model.sysml")
+        _render_sysml_views(scenario, out_dir / "views.sysml")
         return
 
     dynamic_keys = {(d["source"], d["target"], d["interaction"]) for d in dynamic_ordered}
@@ -277,6 +438,8 @@ def run_scenario(scenario: str) -> None:
         json.dump(sequence, f, indent=2)
 
     _render_mermaid(sequence, scenario, out_dir / "sequence.mmd")
+    _render_sysml_model(scenario, elements, sequence, out_dir / "model.sysml")
+    _render_sysml_views(scenario, out_dir / "views.sysml")
 
     evidence_union = len(static_keys | dynamic_keys)
     print(f"  static={len(static_norm)} dynamic={len(dynamic_ordered)} "

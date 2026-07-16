@@ -28,7 +28,7 @@ Skills used:
 - `get-interface-dependency-table`
 - `draw-structural-mermaid` / `draw-sysml-structural-model`
 
-Trace-ingestion skills (`add-runtime-instrumentation`, `get-sequence-dependency-table`) are **skipped**.
+Trace-ingestion skills (`get-runtime-traces`, `get-sequence-dependency-table`) are **skipped**.
 
 Script: `run_c2_static_only.py`
 
@@ -39,7 +39,7 @@ Script: `run_c2_static_only.py`
 Invoke the pipeline with **only** the trace-ingestion skills, skip Neo4j graph.
 
 Skills used:
-- `add-runtime-instrumentation`
+- `get-runtime-traces`
 - `get-sequence-dependency-table`
 - `draw-sequential-mermaid-general` / `draw-sysml-sequence-model`
 

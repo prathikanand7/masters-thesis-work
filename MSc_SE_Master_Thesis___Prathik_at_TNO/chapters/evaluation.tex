@@ -66,7 +66,10 @@ Four risks were identified and corrected while H1 was being run:
   \item[Ground-truth circularity.] An early reference set was partly
     derived from the same static extraction used to produce C2/C4/C5,
     which would have inflated their scores by construction. The
-    references were reauthored independently and verified against
+    references were reauthored independently, by direct inspection of
+    CPSCore's source and its exercising test cases rather than the
+    pipeline's own output (\cref{fig:s1-groundtruth,fig:s2-groundtruth,%
+    fig:s3-groundtruth,fig:s4-groundtruth}), and verified against
     Doxygen-generated call graphs, an unrelated static analysis tool.
   \item[\texttt{SCENARIO\_PRIMARY} scope boundary.] The in-scope
     boundary was initially defined \emph{after} inspecting a preferred
@@ -77,10 +80,10 @@ Four risks were identified and corrected while H1 was being run:
     aggregate~\cite{sokolova:metrics}; the two agree to within
     $\pm 0.013$.
   \item[Constructed-scenario disclosure.] S4 was added after S1--S3
-    were scored, to test whether combining could exceed \emph{both}
-    single sources at once, a property no naturally-occurring CPSCore
-    path exhibits. It is reported as its own stratum
-    (\cref{tab:h1-results}) rather than blended into the S1--S3 aggregate.
+    were scored (\cref{sec:scenarios}), a timing disclosed here so the
+    result isn't presented as if S4 were selected post hoc. It is
+    reported as its own stratum (\cref{tab:h1-results}) rather than
+    blended into the S1--S3 aggregate.
 \end{description}
 
 \subsection{Results}\label{sec:h1-results}
@@ -546,25 +549,14 @@ on S4 for the same reason.
 
 \subsection{H3 Conclusion}
 
-H3 is supported. Across all four scenarios, diagram only and
-source+trace+diagram achieve identical, perfect scores on every metric,
-matching or outperforming every condition that additionally includes
-source and/or traces. The three conditions without the diagram are held
-to 0.917/0.800--0.900 recall by the same recurring failure:
-under-reporting the interaction the diagram states explicitly.
-
-This mirrors the H1 finding (\cref{sec:h1-c5}): source-aware synthesis
-(C5) is what lets the reconstructed model retain the evidence that makes
-it useful downstream. The holistic result functions as an independent
-cross-validation, via a second measurement instrument (a comprehension
-task rather than an edge-set F1 score), suggesting the same mechanism
-behind H1's reconstruction accuracy also improves a consuming agent's
-task performance. The benefit appears to be one of \emph{presentation}
-rather than \emph{access}: source-only and source+trace conditions have
-the same information available and still fail to surface it, while the
-diagram's flat, unranked facts counteract the tendency to narrate around
-the trace-confirmed path. Limitations (one constructed scenario, two
-non-blind conditions) are discussed in \cref{sec:threats-rdof}.
+H3 is supported: the diagram-only and full-context conditions are
+statistically indistinguishable, while every condition lacking the
+diagram is held back by the same recurring omission (above). This
+mirrors the H1 finding that source-aware synthesis (C5) is what lets the
+reconstructed model retain the evidence that makes it useful downstream
+(\cref{sec:h1-c5}); \cref{sec:rq-answers} develops this connection
+further in answering \rqthree. Limitations (one constructed scenario,
+two non-blind conditions) are discussed in \cref{sec:threats-rdof}.
 
 \section{Practitioner Validation: A Second Industrial Codebase}\label{sec:practitioner}
 
@@ -762,26 +754,25 @@ spot.
 
 \subsection*{\rqone: Hybrid vs. Individual Sources}
 
-\textit{How does combining static analysis and incomplete runtime traces
-improve reconstruction accuracy and completeness?}
+\textit{Does combining a static call graph with runtime execution traces
+reconstruct scenario-specific Interaction Models more accurately than
+either source alone?}
 
-Combining improves reconstruction \emph{conditionally}, not universally.
-On happy-path scenarios, static analysis alone matches the full
-pipeline. On fault-path scenarios, combining improves over dynamic-only
-analysis by filling in error-handling interactions a single trace is
-unlikely to exercise. S4 shows the advantage is not limited to being
-protective: once a boundary is introduced where each source is blind to
-a different interaction, combining becomes strictly additive, beating
-both sources at once (F1~$=$~1.000 vs.\ 0.667 for both C2 and C3). Here,
+Combining improves reconstruction \emph{conditionally}, not
+universally: on happy-path scenarios static analysis alone already
+matches the full pipeline (\cref{sec:h1-c4c2}), while on the constructed
+fault-path scenario each source is blind to a different interaction, so
+combining becomes strictly additive, beating both sources at once
+(F1~$=$~1.000 vs.\ 0.667 for both C2 and C3, \cref{sec:h1-c4c3}). Here,
 ``combining'' denotes the set union of the two evidence sets computed at
 evaluation time, not a merged graph. A thesis testing only happy-path
 scenarios would have concluded combining adds no value at all, which is
-why S4 was constructed specifically to isolate this precondition.
+why S4 was constructed to isolate this precondition.
 
-\subsection*{\rqtwo: Scenario-Scoped Querying}
+\subsection*{\rqtwo: Guided Instrumentation}
 
-\textit{How can scenario-scoped querying of the static call graph focus
-reconstruction on only the behaviour relevant to a given scenario?}
+\textit{Does guiding trace collection with the static call graph remove
+reconstruction noise without losing scenario coverage?}
 
 Applying the scenario scope \emph{before} instrumentation, rather than
 filtering afterward, reduces retained nodes by 50\% and edges by 70\%
@@ -792,6 +783,28 @@ specifically on the scenario where scoped querying recovers evidence
 runtime tracing suppresses. The blinded expert rating confirms the
 structural improvement also translates into perceived usability.
 
+\subsection*{\rqthree: Sufficiency for Comprehension}
+
+\textit{How well does a reconstructed \sysml Interaction Model
+consolidate static and dynamic evidence into a single artefact sufficient
+for system-behaviour comprehension?}
+
+H3 (\cref{sec:h3}) answers this directly: the C5 diagram alone matches
+source+trace+diagram on every metric (component recall, interaction
+recall, completeness) across all four scenarios, including S4, where the
+other three conditions are held back by the same recurring failure:
+under-reporting an interaction the diagram states explicitly
+(\cref{sec:h3-holistic}). This establishes sufficiency rather than mere
+helpfulness: an agent given only the reconstructed model performs
+identically to one given the model plus full access to source and
+traces, so the model is not simply a convenient supplement to those
+sources on this task, but a replacement for them. The benefit traces to
+presentation rather than access: the diagram's flat, unranked interaction
+list removes the narrative pull toward the trace-confirmed path that
+source- and trace-grounded reasoning exhibits, the same mechanism
+\cref{sec:h1-c5}'s source-aware synthesis relies on to retain evidence a
+single source would drop.
+
 \section{Engineering Utility}\label{sec:utility}
 
 Beyond precision/recall, a tool development thesis's primary claim is
@@ -799,15 +812,17 @@ that the tool is useful to engineers. Three utility properties were
 observed during development.
 
 \paragraph{Pipeline automation.} The full path from \Cpp\ source to a
-\sysml sequence diagram runs by chaining eleven agent skills
-(\cref{tab:skills}), each stateless and producing an auditable
-intermediate artefact (\texttt{graph\_schema.txt}, a CSV, the final
-\texttt{.sysml} file). An engineer can inspect the CSV row, find the
+\sysml sequence diagram runs by chaining twelve agent skills
+(\cref{tab:skills}), only one of which (\texttt{agentic-synthesis}) departs
+from a fixed rule set (\cref{sec:pipeline-overview,sec:agentic-synthesis}).
+Every skill produces an auditable intermediate artefact
+(\texttt{graph\_schema.txt}, a CSV, the final \texttt{.sysml} file, or for
+\texttt{agentic-synthesis}, \texttt{elements.json}/\texttt{sequence.json})
+rather than acting invisibly. An engineer can inspect the CSV row, find the
 \texttt{sourceLineNumber} on the corresponding \texttt{CppCalls} edge,
-and verify or override it directly without rerunning extraction. Skills
-query the graph schema dynamically rather than hardcoding node labels,
-so the same skill set works on any Renaissance-analysed codebase
-unmodified.
+and verify or override it directly without rerunning extraction, since
+the skills work from the live schema rather than hardcoded labels
+(\cref{sec:skill-design}).
 
 \paragraph{Scale.} A single Cypher query extracted 2,574 ordered
 interactions from CPSCore, a task that would take an experienced

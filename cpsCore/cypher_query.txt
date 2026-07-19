@@ -4,3 +4,17 @@ CALL db.schema.nodeTypeProperties() YIELD nodeType, propertyName, propertyTypes 
 CALL db.schema.relTypeProperties() YIELD relType, propertyName, propertyTypes RETURN relType, propertyName, propertyTypes
 MATCH (s)-[r]->(t) RETURN DISTINCT labels(s) AS fromLabels, type(r) AS relType, labels(t) AS toLabels
 MATCH (n)-[r]-(m) RETURN n,r,m LIMIT 25
+
+-- All components (Source/Header/Other files) and their communications (cross-component function calls)
+MATCH (callerFunc:CppFunctionDefinition)-[:CppCalls]->(calleeFunc)
+MATCH (callerFunc)-[:Source]->(callerComponent)
+MATCH (calleeFunc)-[:Source]->(calleeComponent)
+WHERE callerComponent <> calleeComponent
+RETURN DISTINCT
+  labels(callerComponent) AS ClientComponentType,
+  callerComponent.name    AS ClientComponent,
+  callerFunc.name         AS ClientFunction,
+  labels(calleeComponent) AS ServerComponentType,
+  calleeComponent.name    AS ServerComponent,
+  calleeFunc.name         AS ServerFunction
+ORDER BY ClientComponent, ServerComponent

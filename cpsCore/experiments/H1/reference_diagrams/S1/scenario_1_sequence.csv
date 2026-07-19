@@ -1,0 +1,12 @@
+Sequence,EventName,ClientComponent,ClientFunction,ServerComponent,ServerFunction,RelationshipType,InterfaceNames
+1,Aggregator.getAll,Synchronization,AggregatableRunner.notifyAggregationOnUpdate,Aggregation,Aggregator.getAll,Command,Aggregator
+2,RAIILogStream.stream,Synchronization,SimpleRunner.runAllStages,Logging,RAIILogStream.stream,Command,RAIILogStream
+3,Aggregator.getAll,Synchronization,SimpleRunner.runStage,Aggregation,Aggregator.getAll,Command,Aggregator
+4,RAIILogStream.stream,Synchronization,SimpleRunner.runStage,Logging,RAIILogStream.stream,Command,RAIILogStream
+5,RAIILogStream.stream,Synchronization,SimpleRunner.runStages,Logging,RAIILogStream.stream,Command,RAIILogStream
+6,Aggregator.getAll,Synchronization,SynchronizedRunner.runSynchronized,Aggregation,Aggregator.getAll,Command,Aggregator
+7,CPSLogger.flush,Synchronization,SynchronizedRunner.runSynchronized,Logging,CPSLogger.flush,Command,CPSLogger
+8,CPSLogger.instance,Synchronization,SynchronizedRunner.runSynchronized,Logging,CPSLogger.instance,Command,CPSLogger
+9,RAIILogStream.stream,Synchronization,SynchronizedRunnerMaster.SynchronizedRunnerMaster,Logging,RAIILogStream.stream,Command,RAIILogStream
+10,RAIILogStream.stream,Synchronization,SynchronizedRunnerMaster.runAllStages,Logging,RAIILogStream.stream,Command,RAIILogStream
+11,RAIILogStream.stream,Synchronization,SynchronizedRunnerMaster.runStage,Logging,RAIILogStream.stream,Command,RAIILogStream

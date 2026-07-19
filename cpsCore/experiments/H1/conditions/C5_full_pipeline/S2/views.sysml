@@ -3,11 +3,11 @@ package Views {
     import CPScoreInteractionModels_S2::*;
 
     view s2structure : GeneralView {
-        expose ComponentModel_S2::System;
+        expose ComponentModel_S2::s2System;
     }
 
     view s2connections : InterconnectionView {
-        expose ComponentModel_S2::System;
+        expose ComponentModel_S2::s2System;
     }
 
     view s2Flow : SequenceView {

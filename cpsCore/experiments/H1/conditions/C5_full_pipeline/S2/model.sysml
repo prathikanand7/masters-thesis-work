@@ -10,12 +10,13 @@ package ComponentModel_S2 {
         port serverStream : Stream;
     }
 
-    part def System {
+    part def S2System {
         part configuration : Configuration;
         part logging : Logging;
 
         connect logging.serverStream to configuration.clientStream;
     }
+
 }
 
 package CPScoreInteractionModels_S2 {
@@ -37,43 +38,43 @@ package CPScoreInteractionModels_S2 {
         part configuration : Lifeline;
         part logging : Lifeline;
 
-        part m1 : SynchronousCall {
+        part m1_stream : SynchronousCall {
             ref from : Lifeline = configuration;
             ref to   : Lifeline = logging;
             attribute :>> label = "1. stream (from PropertyMapper.add)";
         }
 
-        part m2 : SynchronousCall {
+        part m2_stream : SynchronousCall {
             ref from : Lifeline = configuration;
             ref to   : Lifeline = logging;
             attribute :>> label = "2. stream (from PropertyMapper.add)";
         }
 
-        part m3 : SynchronousCall {
+        part m3_stream : SynchronousCall {
             ref from : Lifeline = configuration;
             ref to   : Lifeline = logging;
             attribute :>> label = "3. stream (from PropertyMapper.addEigen)";
         }
 
-        part m4 : SynchronousCall {
+        part m4_stream : SynchronousCall {
             ref from : Lifeline = configuration;
             ref to   : Lifeline = logging;
             attribute :>> label = "4. stream (from PropertyMapper.addEnum)";
         }
 
-        part m5 : SynchronousCall {
+        part m5_stream : SynchronousCall {
             ref from : Lifeline = configuration;
             ref to   : Lifeline = logging;
             attribute :>> label = "5. stream (from PropertyMapper.addVector)";
         }
 
-        part m6 : SynchronousCall {
+        part m6_stream : SynchronousCall {
             ref from : Lifeline = configuration;
             ref to   : Lifeline = logging;
             attribute :>> label = "6. stream (from PropertyMapper.getChild)";
         }
 
-        part m7 : SynchronousCall {
+        part m7_stream : SynchronousCall {
             ref from : Lifeline = configuration;
             ref to   : Lifeline = logging;
             attribute :>> label = "7. stream (from PropertyMapper.mandatoryCheck)";

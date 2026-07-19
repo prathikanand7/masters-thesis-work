@@ -178,3 +178,33 @@ TEST_CASE("Eigen Matrix test")
 
 	CPSLogger::instance()->setLogLevel(LogLevel::DEBUG);
 }
+
+TEST_CASE("Enum test")
+{
+	auto lvl = CPSLogger::LogLevelScope(LogLevel::NONE);
+	std::ifstream file(test_info::test_dir() + "Utilities/config/pm_test.json");
+	REQUIRE(file.is_open());
+	auto config = Configuration::parse(file);
+
+	PropertyMapper pm(config);
+	TestEnum e;
+	REQUIRE(pm.addEnum("single_enum", e, true));
+	CHECK(e == TestEnum::TEST2);
+
+	CPSLogger::instance()->setLogLevel(LogLevel::DEBUG);
+}
+
+TEST_CASE("Mandatory field missing")
+{
+	auto lvl = CPSLogger::LogLevelScope(LogLevel::NONE);
+	std::ifstream file(test_info::test_dir() + "Utilities/config/pm_test.json");
+	REQUIRE(file.is_open());
+	auto config = Configuration::parse(file);
+
+	PropertyMapper pm(config);
+	double val;
+	CHECK_FALSE(pm.add<double>("nonexistent_field", val, true));
+	CHECK_FALSE(pm.map());
+
+	CPSLogger::instance()->setLogLevel(LogLevel::DEBUG);
+}

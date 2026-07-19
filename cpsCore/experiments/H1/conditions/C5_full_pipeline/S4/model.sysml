@@ -16,7 +16,7 @@ package ComponentModel_S4 {
         port clientStream : Stream;
     }
 
-    part def System {
+    part def S4System {
         part aggregation : Aggregation;
         part logging : Logging;
         part synchronization : Synchronization;
@@ -24,6 +24,7 @@ package ComponentModel_S4 {
         connect aggregation.serverOnStageEvent to synchronization.clientOnStageEvent;
         connect logging.serverStream to synchronization.clientStream;
     }
+
 }
 
 package CPScoreInteractionModels_S4 {
@@ -46,13 +47,13 @@ package CPScoreInteractionModels_S4 {
         part aggregation : Lifeline;
         part logging : Lifeline;
 
-        part m1 : SynchronousCall {
+        part m1_onStageEvent : SynchronousCall {
             ref from : Lifeline = synchronization;
             ref to   : Lifeline = aggregation;
             attribute :>> label = "1. onStageEvent (indirect dispatch via boost::signals2 from StageEventBridge.publishStage; dynamic-only (no static call site))";
         }
 
-        part m2 : SynchronousCall {
+        part m2_stream : SynchronousCall {
             ref from : Lifeline = synchronization;
             ref to   : Lifeline = logging;
             attribute :>> label = "2. stream (fault-path inside StageEventBridge.publishStage when no listeners are attached; statically present but suppressed at runtime by LogLevel::NONE in the test)";

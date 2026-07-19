@@ -1,98 +1,112 @@
 from __future__ import annotations
 
 import csv
-from dataclasses import dataclass
-from datetime import datetime
+import os
+from datetime import datetime, timedelta
 from pathlib import Path
+
+from dotenv import load_dotenv
+from neo4j import GraphDatabase
 
 
 ROOT = Path(__file__).resolve().parents[4]
-TRACE_PATH = ROOT / "runtime_traces.txt"
 CSV_PATH = ROOT / "sequence_dependency_table.csv"
 QUERY_LOG_PATH = Path(__file__).resolve().parents[1] / "cypher_query.txt"
 
-
-@dataclass
-class TraceRow:
-    timestamp: str
-    event_name: str
-    client_component: str
-    client_function: str
-    server_component: str
-    server_function: str
-    relationship_type: str
-
-
-def _parse_timestamp(value: str) -> datetime:
-    text = value.strip().replace("Z", "+00:00")
-    return datetime.fromisoformat(text)
+DEPENDENCY_QUERY = """
+MATCH (caller)-[:CppCalls]->(callee)
+RETURN
+    caller.name   AS callerName,
+    caller.symbol AS callerSymbol,
+    callee.name   AS calleeName,
+    callee.symbol AS calleeSymbol
+ORDER BY callerName, calleeName
+""".strip()
 
 
-def _clean(value: str) -> str:
-    return value.strip()
+def _path_of(name: str) -> str:
+    """Extract the file path from a composite node id string.
+
+    Node ids look like `cpp_funcdec//include/cpsCore/Aggregation/Aggregator.h/Aggregator.getAll`
+    (kind, then path, then the qualified symbol as the final segment). Strip the
+    kind prefix and the trailing symbol segment, leaving the file path.
+    """
+    if "//" not in name:
+        return name
+    _, rest = name.split("//", 1)
+    if "/" not in rest:
+        return "/" + rest
+    path, _symbol = rest.rsplit("/", 1)
+    return "/" + path
+
+
+def _run_query(driver, cypher: str):
+    with driver.session(database="neo4j") as session:
+        return [record.data() for record in session.run(cypher)]
 
 
 def main() -> int:
-    if not TRACE_PATH.exists():
-        raise SystemExit(f"Missing runtime trace log: {TRACE_PATH}")
+    load_dotenv()
 
-    rows: list[TraceRow] = []
-    with TRACE_PATH.open("r", encoding="utf-8", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="|")
-        for record in reader:
-            rows.append(
-                TraceRow(
-                    timestamp=_clean(record.get("EventTimestamp", "")),
-                    event_name=_clean(record.get("EventName", "")),
-                    client_component=_clean(record.get("ClientComponent", "")),
-                    client_function=_clean(record.get("ClientFunction", "")),
-                    server_component=_clean(record.get("ServerComponent", "")),
-                    server_function=_clean(record.get("ServerFunction", "")),
-                    relationship_type=_clean(record.get("RelationshipType", "")),
+    uri = os.getenv("NEO4J_URI", os.getenv("NEO4J_BOLT_URI", "bolt://localhost:7687"))
+    username = os.getenv("NEO4J_USER", "neo4j")
+    password = os.getenv("NEO4J_PASSWORD")
+
+    if not password:
+        raise SystemExit("NEO4J_PASSWORD is not set in the environment")
+
+    driver = GraphDatabase.driver(uri, auth=(username, password))
+    try:
+        driver.verify_connectivity()
+
+        rows = _run_query(driver, DEPENDENCY_QUERY)
+
+        CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
+        # No execution actually happened -- this is the static call graph, not a
+        # runtime capture. EventTimestamp is a synthetic, strictly-increasing
+        # per-row counter kept only so the CSV satisfies the schema consumed by
+        # run_c2_static_only.py; it carries no real timing information.
+        base_time = datetime(2000, 1, 1)
+        with CSV_PATH.open("w", newline="", encoding="utf-8") as csv_file:
+            writer = csv.DictWriter(
+                csv_file,
+                fieldnames=[
+                    "Sequence",
+                    "EventName",
+                    "ClientComponent",
+                    "ClientFunction",
+                    "ServerComponent",
+                    "ServerFunction",
+                    "RelationshipType",
+                    "EventTimestamp",
+                ],
+            )
+            writer.writeheader()
+            for index, row in enumerate(rows, start=1):
+                caller_symbol = row.get("callerSymbol") or ""
+                callee_symbol = row.get("calleeSymbol") or ""
+                writer.writerow(
+                    {
+                        "Sequence": index,
+                        "EventName": callee_symbol,
+                        "ClientComponent": _path_of(row.get("callerName") or ""),
+                        "ClientFunction": caller_symbol,
+                        "ServerComponent": _path_of(row.get("calleeName") or ""),
+                        "ServerFunction": callee_symbol,
+                        "RelationshipType": "Command",
+                        "EventTimestamp": (base_time + timedelta(milliseconds=index)).isoformat() + "Z",
+                    }
                 )
-            )
 
-    rows.sort(key=lambda row: (_parse_timestamp(row.timestamp), row.client_component, row.client_function, row.server_component, row.server_function, row.event_name))
+        QUERY_LOG_PATH.write_text(DEPENDENCY_QUERY + "\n", encoding="utf-8")
 
-    CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with CSV_PATH.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(
-            handle,
-            fieldnames=[
-                "Sequence",
-                "EventName",
-                "ClientComponent",
-                "ClientFunction",
-                "ServerComponent",
-                "ServerFunction",
-                "RelationshipType",
-                "EventTimestamp",
-            ],
-        )
-        writer.writeheader()
-        for index, row in enumerate(rows, start=1):
-            writer.writerow(
-                {
-                    "Sequence": index,
-                    "EventName": row.event_name,
-                    "ClientComponent": row.client_component,
-                    "ClientFunction": row.client_function,
-                    "ServerComponent": row.server_component,
-                    "ServerFunction": row.server_function,
-                    "RelationshipType": row.relationship_type,
-                    "EventTimestamp": row.timestamp,
-                }
-            )
-
-    QUERY_LOG_PATH.write_text(
-        "Input source: runtime_traces.txt generated by get-runtime-traces\nNo direct Neo4j query is executed by this skill.\n",
-        encoding="utf-8",
-    )
-
-    print(f"Sequence rows written: {len(rows)}")
-    print(f"Sequence table written to: {CSV_PATH}")
-    print(f"Trace source note written to: {QUERY_LOG_PATH}")
-    return 0
+        print(f"Connected to: {uri} as {username}")
+        print(f"CppCalls edges found: {len(rows)}")
+        print(f"CSV written to: {CSV_PATH}")
+        print(f"Query log written to: {QUERY_LOG_PATH}")
+        return 0
+    finally:
+        driver.close()
 
 
 if __name__ == "__main__":

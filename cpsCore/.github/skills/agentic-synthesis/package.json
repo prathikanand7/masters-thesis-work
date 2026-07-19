@@ -1,0 +1,9 @@
+{
+  "contributes": {
+    "chatSkills": [
+      {
+        "path": "./skills/agentic-synthesis/SKILL.md"
+      }
+    ]
+  }
+}

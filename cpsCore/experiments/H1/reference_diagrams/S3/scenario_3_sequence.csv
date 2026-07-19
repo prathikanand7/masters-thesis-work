@@ -1,0 +1,7 @@
+Sequence,EventName,ClientComponent,ClientFunction,ServerComponent,ServerFunction,RelationshipType,InterfaceNames
+1,Aggregator.getAll,Synchronization,SimpleRunner.runStage,Aggregation,Aggregator.getAll,Command,Aggregator
+2,RAIILogStream.stream,Synchronization,SimpleRunner.runStage,Logging,RAIILogStream.stream,Command,RAIILogStream
+3,EnumMap.convert,Synchronization,SimpleRunner.runStage,Utilities,EnumMap.convert,Command,EnumMap
+4,RAIILogStream.stream,Synchronization,SimpleRunner.runStages,Logging,RAIILogStream.stream,Command,RAIILogStream
+5,EnumMap.convert,Synchronization,SimpleRunner.runStages,Utilities,EnumMap.convert,Command,EnumMap
+6,RAIILogStream.stream,Synchronization,SynchronizedRunnerMaster.runAllStages,Logging,RAIILogStream.stream,Command,RAIILogStream

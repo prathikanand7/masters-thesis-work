@@ -336,7 +336,7 @@ for nn, t, d in items:
 footer(s, n)
 note(s, """
 [0:30] Here's the roadmap. I'll start with the motivation and the concrete
-problem, state my two research questions, then walk through the approach —
+problem, state my three research questions, then walk through the approach —
 the pipeline and the shared property graph. After a quick look at the case
 study, CPSCore, I'll present the three experiments and their results, and close
 with contributions, limitations, and conclusions.
@@ -460,12 +460,12 @@ two-directional gap is the core problem.
 n = pg(); s = slide(); title_bar(s, "Research Questions & Hypotheses",
                        kicker="Objectives", num=n)
 data = [
-    ("RQ1", "How does combining static analysis and incomplete runtime traces "
-            "improve the accuracy and completeness of scenario-specific "
-            "interaction model reconstruction?", "H1"),
-    ("RQ2", "How can scenario-scoped querying of the static call graph "
-            "restrict reconstruction to only the behaviour relevant to a "
-            "given scenario?", "H2"),
+    ("RQ1", "What property-graph representation integrates static call graphs "
+            "and timestamped runtime events?", "Schema"),
+    ("RQ2", "How does combining static analysis and incomplete traces improve "
+            "reconstruction accuracy & completeness?", "H1"),
+    ("RQ3", "How can dependence-based slicing constrain output to only "
+            "scenario-relevant behaviour?", "H2"),
 ]
 y = Inches(1.5)
 for rq, q, ans in data:
@@ -485,12 +485,13 @@ textbox(s, Inches(0.8), y + Inches(0.12), Inches(12), Inches(0.7),
           "size": 15, "bold": True, "color": AMBER}], anchor=MSO_ANCHOR.MIDDLE)
 footer(s, n)
 note(s, """
-[1:30] Two research questions. RQ1 is about accuracy: does combining static
-analysis with incomplete traces actually improve reconstruction accuracy and
-completeness? RQ2 is about focus: can scenario-scoped querying of the static
-call graph restrict reconstruction to only scenario-relevant behaviour?
-Each RQ has a matching hypothesis and a dedicated experiment — H1 answers RQ1,
-H2 answers RQ2. And a downstream question, H3: is the reconstructed diagram
+[1:30] Three research questions. RQ1 is representational: what single property
+graph can hold both a static call graph and timestamped runtime events? RQ2 is
+about accuracy: does combining static analysis with incomplete traces actually
+improve reconstruction? RQ3 is about focus: can dependence-based slicing
+constrain the output to only scenario-relevant behaviour?
+Each RQ has a matching hypothesis and a dedicated experiment — H1 answers RQ2,
+H2 answers RQ3. And a downstream question, H3: is the reconstructed diagram
 actually useful to a consumer — here, an LLM agent doing scenario comprehension.
 """)
 
@@ -567,10 +568,10 @@ directions is the core contribution.
 n = pg(); s = slide(); title_bar(s, "The GDI Hybrid Pipeline", kicker="Approach", num=n)
 stages = [
     ("Static\nExtraction", "Renaissance\nC++ → graph", BLUE),
-    ("Property\nGraph", "Neo4j\n11 / 11 schema", NAVY),
+    ("Property\nGraph", "Neo4j\n13 / 13 schema", NAVY),
     ("Runtime\nTracing", "csp_matcher\nprobes", TEAL),
     ("Graph\nFusion", "static ∪ trace\n(provenance)", BLUE),
-    ("Scenario\nScoping", "scope-constrained\nCypher", NAVY),
+    ("Scenario\nSlicing", "scope-constrained\nCypher", NAVY),
     ("Agent\nSynthesis", "provenance-aware\npruning", TEAL),
     ("SysML v2 /\nMermaid", "scenario\ndiagram", AMBER),
 ]
@@ -596,7 +597,7 @@ for i, (t, sub, c) in enumerate(stages):
         ar.line.fill.background(); ar.shadow.inherit = False
     x += bw + gap
 textbox(s, Inches(0.5), Inches(1.5), Inches(11), Inches(0.6),
-        [{"text": "11 composable agent skills — each invocable by natural "
+        [{"text": "12 composable agent skills — each invocable by natural "
           "language, no code changes to the target system.", "size": 15,
           "bold": True, "color": NAVY}])
 textbox(s, Inches(0.5), Inches(1.92), Inches(12.3), Inches(0.35),
@@ -605,44 +606,44 @@ textbox(s, Inches(0.5), Inches(1.92), Inches(12.3), Inches(0.35),
           "italic": True, "color": GREY}])
 panel(s, Inches(0.5), Inches(4.5), Inches(6.05), Inches(1.7), fill=LIGHT)
 textbox(s, Inches(0.75), Inches(4.65), Inches(5.6), Inches(1.5),
-        [{"text": "Fusion (RQ1)", "size": 14, "bold": True, "color": BLUE,
+        [{"text": "Fusion (RQ2)", "size": 14, "bold": True, "color": BLUE,
           "space_after": 3},
          {"text": "Set union of static (CppCalls) and trace (TRACE_CALLS) edges, "
           "each tagged with which source observed it.", "size": 13.5,
           "color": DARK}])
 panel(s, Inches(6.7), Inches(4.5), Inches(6.05), Inches(1.7), fill=LIGHT)
 textbox(s, Inches(6.95), Inches(4.65), Inches(5.6), Inches(1.5),
-        [{"text": "Scoping (RQ2)", "size": 14, "bold": True, "color": TEAL,
+        [{"text": "Slicing (RQ3)", "size": 14, "bold": True, "color": TEAL,
           "space_after": 3},
-         {"text": "Scenario-scoped Cypher query: keep e where src ∈ "
-          "scenario.primary and tgt ∈ scenario.targets — identical over "
-          "static & trace edges.", "size": 13.5, "color": DARK}])
+         {"text": "Linear edge filter: keep e where src ∈ scenario.primary and "
+          "tgt ∈ scenario.targets — identical over static & trace edges.",
+          "size": 13.5, "color": DARK}])
 footer(s, n)
 note(s, """
-[2:30] This is the whole pipeline. It's implemented as eleven composable agent
+[2:30] This is the whole pipeline. It's implemented as twelve composable agent
 skills, each invocable in natural language, and — importantly — with no changes
 to the target system's own code.
 Left to right: static extraction with the Renaissance tool turns C++ into a
 graph; everything lands in a Neo4j property graph; csp_matcher inserts runtime
 trace probes; graph fusion takes the union of static and trace edges, tagging
-each with its provenance; scenario scoping filters that fused graph; an agent
+each with its provenance; scenario slicing filters that fused graph; an agent
 synthesis step prunes false positives using provenance; and finally we emit a
 SysML v2 or Mermaid diagram.
-The two conceptual cores are at the bottom: fusion answers RQ1, scoping answers
-RQ2. Scoping is just a scenario-scoped Cypher query that works identically over
-static and trace edges — I'll show why on the next slide.
+The two conceptual cores are at the bottom: fusion answers RQ2, slicing answers
+RQ3. Slicing is just a linear edge filter that works identically over static and
+trace edges — I'll show why on the next slide.
 """)
 
 # --------------------------------------------------------------------------- #
 #  SLIDE 7 — Property graph
 # --------------------------------------------------------------------------- #
 n = pg(); s = slide(); title_bar(s, "A Single Property Graph for Both Evidence Types",
-                       kicker="Approach · Foundations", num=n)
+                       kicker="Approach · RQ1", num=n)
 textbox(s, Inches(0.55), Inches(1.35), Inches(12), Inches(0.5),
         [{"text": "Static call graph and runtime trace live in one Neo4j graph — "
           "each interaction remembers which evidence produced it.",
           "size": 16, "bold": True, "color": NAVY}])
-mets = [("11", "node labels"), ("11", "relationship types"),
+mets = [("13", "node labels"), ("13", "relationship types"),
         ("2,574", "ordered static interactions"),
         ("121", "components"),
         ("27", "runtime trace events"),
@@ -658,10 +659,10 @@ for v, lbl in mets:
     y += Inches(0.72)
 panel(s, Inches(6.3), Inches(2.05), Inches(6.45), Inches(4.35), fill=NAVY)
 textbox(s, Inches(6.6), Inches(2.25), Inches(5.9), Inches(0.4),
-        [{"text": "FUSION & SCOPE, FORMALLY", "size": 13, "bold": True,
+        [{"text": "FUSION & SLICE, FORMALLY", "size": 13, "bold": True,
           "color": AMBER}])
 textbox(s, Inches(6.6), Inches(2.75), Inches(5.9), Inches(1.2),
-        [{"text": "Gσ = scope(G_static ∪ G_trace, σ)", "size": 17, "bold": True,
+        [{"text": "Gσ = slice(G_static ∪ G_trace, σ)", "size": 17, "bold": True,
           "color": WHITE, "align": PP_ALIGN.CENTER, "space_after": 6},
          {"text": "= { e ∈ Es ∪ Et  |  src(e) ∈ σ.primary  ∧  tgt(e) ∈ σ.targets }",
           "size": 14, "color": RGBColor(0xC9,0xD6,0xE2),
@@ -678,17 +679,16 @@ textbox(s, Inches(6.6), Inches(4.15), Inches(5.9), Inches(2.1),
           "bullet": True}])
 footer(s, n)
 note(s, """
-[2:00] This underlies both RQ1 and RQ2. The key design decision is that both
-evidence types live in one Neo4j property graph, and every interaction edge
-remembers which source produced it — its provenance. The schema has 11 node
-labels and 11 relationship types. On CPSCore the static side yields 2,574
-ordered interactions across 121 components; the trace side adds 27 events over
-26 unique pairs.
-On the right is the formal operation: the scenario graph is the scenario-scoped
-subset of the union of static and trace edges, keeping edges whose source is in
-the scenario's primary component and whose target is a declared participant.
-Because both edge types carry client/server component metadata, one linear
-filter works over both.
+[2:00] This answers RQ1. The key design decision is that both evidence types
+live in one Neo4j property graph, and every interaction edge remembers which
+source produced it — its provenance. The schema has 13 node labels and 13
+relationship types. On CPSCore the static side yields 2,574 ordered
+interactions across 121 components; the trace side adds 27 events over 26 unique
+pairs.
+On the right is the formal operation: the scenario graph is the slice of the
+union of static and trace edges, keeping edges whose source is in the scenario's
+primary component and whose target is a declared participant. Because both edge
+types carry client/server component metadata, one linear filter works over both.
 A schema-introspection skill reads the labels at runtime, so the pipeline is
 codebase-agnostic — and crucially, the graph lets us recover pub/sub wiring that
 plain call-graph analysis can't see.
@@ -846,7 +846,7 @@ found in the wild.
 #  SLIDE 12 — H1 setup
 # --------------------------------------------------------------------------- #
 n = pg(); s = slide(); title_bar(s, "H1 — Does Fusion Improve Accuracy?",
-                       kicker="Experiment · RQ1", num=n)
+                       kicker="Experiment · RQ2", num=n)
 textbox(s, Inches(0.55), Inches(1.35), Inches(12), Inches(0.5),
         [{"text": "Five conditions × four scenarios, scored against a manually "
           "source-read reference edge set (authored before scoring).",
@@ -887,7 +887,7 @@ textbox(s, Inches(8.5), Inches(2.75), Inches(4.0), Inches(3.3),
           "space_before": 8}])
 footer(s, n)
 note(s, """
-[1:30] H1 tests RQ1. I compare five conditions across the four scenarios. C1 is
+[1:30] H1 tests RQ2. I compare five conditions across the four scenarios. C1 is
 an LLM-only baseline with no code context. C2 is static-only, C3 is dynamic-only.
 C4 is the raw union of the two. C5 is the full pipeline — the union plus a
 provenance-aware agent step that prunes false positives.
@@ -901,7 +901,7 @@ scenario counts equally. S4 is reported as its own stratum.
 #  SLIDE 13 — H1 results (overall P/R/F1) — split part 1
 # --------------------------------------------------------------------------- #
 n = pg(); s = slide(); title_bar(s, "H1 Results — Overall Precision / Recall / F1",
-                       kicker="Results · RQ1  (S1–S4)", num=n)
+                       kicker="Results · RQ2  (S1–S4)", num=n)
 rows = [
     ["Condition", "Precision", "Recall", "F1"],
     ["C1  LLM-only", "0.13", "0.13", "0.13"],
@@ -935,7 +935,7 @@ recall is only 0.88 — it misses edges — which is exactly what fusion fixes. 
 #  SLIDE 14 — H1 results per-stratum F1 — split part 2
 # --------------------------------------------------------------------------- #
 n = pg(); s = slide(); title_bar(s, "H1 Results — Fusion Is Additive Only on S4",
-                       kicker="Results · RQ1  (per stratum, F1)", num=n)
+                       kicker="Results · RQ2  (per stratum, F1)", num=n)
 rows = [
     ["Condition", "Happy-path (S1–S3)", "Constructed (S4)", "Overall"],
     ["C1  LLM-only", "0.00", "0.50", "0.13"],
@@ -1028,9 +1028,9 @@ fixable limitation I'll return to.
 #  SLIDE 16 — H2
 # --------------------------------------------------------------------------- #
 n = pg(); s = slide(); title_bar(s, "H2 — Guided Instrumentation Improves Focus",
-                       kicker="Experiment · RQ2", num=n)
+                       kicker="Experiment · RQ3", num=n)
 textbox(s, Inches(0.55), Inches(1.35), Inches(12), Inches(0.5),
-        [{"text": "Full (probe everything, filter after) vs Guided (scope first, "
+        [{"text": "Full (probe everything, filter after) vs Guided (slice first, "
           "then probe only scenario-relevant call sites), on S1–S3.",
           "size": 15, "bold": True, "color": NAVY}])
 rows = [
@@ -1067,8 +1067,8 @@ textbox(s, Inches(0.8), Inches(5.5), Inches(11.9), Inches(1.3),
           "color": DARK, "bullet": True}])
 footer(s, n)
 note(s, """
-[2:30] H2 answers RQ2 — focus. I compare "full" instrumentation, which probes
-everything and filters afterwards, against "guided", which scopes first and only
+[2:30] H2 answers RQ3 — focus. I compare "full" instrumentation, which probes
+everything and filters afterwards, against "guided", which slices first and only
 probes the scenario-relevant call sites. The objective metrics on the left:
 guided cuts nodes by 50% and edges by 70%, drives measured noise from 0.70 to
 zero, and — critically — loses zero coverage. So it's not just smaller; nothing
@@ -1249,14 +1249,13 @@ n = pg(); s = slide(); title_bar(s, "Contributions", kicker="Summary", num=n)
 contribs = [
     ("i", "One property graph holding static call graph + runtime trace "
           "together, remembering each interaction's provenance."),
-    ("ii", "A scenario-scoping method, using plain scenario-scoped Cypher "
-           "queries, that trims the combined graph to just the interactions "
-           "relevant to one scenario."),
+    ("ii", "A slicing method that trims the combined graph to just the "
+           "interactions relevant to one scenario."),
     ("iii", "A way to recover publish-subscribe wiring that ordinary "
             "call-graph analysis cannot see."),
     ("iv", "csp_matcher — a small, reversible tool that inserts and removes "
            "trace probes automatically."),
-    ("v", "Eleven natural-language agent skills running the whole pipeline, "
+    ("v", "Twelve natural-language agent skills running the whole pipeline, "
           "source → SysML v2, on any codebase without code changes."),
     ("vi", "An evidence-based account of when combining static and dynamic "
            "analysis helps — and when it does not."),
@@ -1273,10 +1272,9 @@ footer(s, n)
 note(s, """
 [1:30] Six contributions. One: a single property graph that holds the static
 call graph and the runtime trace together, remembering each interaction's
-provenance. Two: a scenario-scoping method, built on plain scenario-scoped
-Cypher queries, that trims that combined graph to just one scenario. Three: a
-way to recover pub/sub wiring that call-graph analysis can't see. Four:
-csp_matcher, the small reversible instrumentation tool. Five: eleven
+provenance. Two: a slicing method that trims that combined graph to just one
+scenario. Three: a way to recover pub/sub wiring that call-graph analysis can't
+see. Four: csp_matcher, the small reversible instrumentation tool. Five: twelve
 natural-language agent skills that run the whole pipeline end-to-end, source to
 SysML v2, on any codebase with no code changes. And six — which I'd argue is the
 scientific contribution — a clear, evidence-based account of when combining
@@ -1344,18 +1342,20 @@ n = pg(); s = slide(); title_bar(s, "Conclusion", kicker="Wrap-up", num=n)
 panel(s, Inches(0.55), Inches(1.5), Inches(12.2), Inches(2.2), fill=NAVY)
 textbox(s, Inches(0.85), Inches(1.72), Inches(11.7), Inches(1.9),
         [{"text": "A hybrid pipeline fuses a static call graph with runtime "
-          "traces in one provenance-tagged property graph and scopes it to "
+          "traces in one provenance-tagged property graph and slices it to "
           "scenario-specific SysML v2 interaction diagrams.", "size": 18,
           "bold": True, "color": WHITE, "space_after": 8},
          {"text": "Fusion helps exactly where one source is blind (C5 macro-F1 "
-          "0.964); guided scoping removes 100% of noise at full coverage; the "
+          "0.964); guided slicing removes 100% of noise at full coverage; the "
           "diagram alone suffices for comprehension.", "size": 16,
           "color": RGBColor(0xC9,0xD6,0xE2)}])
 finals = [
-    ("RQ1", "Fusion is additive where sources disagree (S4), redundant "
-            "elsewhere — best macro-F1 0.964.", BLUE),
-    ("RQ2", "Scenario-scoped Cypher querying yields focused, noise-free "
-            "diagrams with zero coverage loss.", TEAL),
+    ("RQ1", "A 13/13 property-graph schema unifies static and dynamic evidence.",
+     BLUE),
+    ("RQ2", "Fusion is additive where sources disagree, protective elsewhere.",
+     TEAL),
+    ("RQ3", "Dependence-based slicing yields focused, noise-free diagrams.",
+     AMBER),
 ]
 y = Inches(4.0)
 for tag, txt, col in finals:
@@ -1368,13 +1368,13 @@ for tag, txt, col in finals:
 footer(s, n)
 note(s, """
 [1:00] To conclude: I built a hybrid pipeline that fuses a static call graph with
-runtime traces in one provenance-tagged property graph and scopes it to
+runtime traces in one provenance-tagged property graph and slices it to
 scenario-specific SysML v2 diagrams. Fusion helps exactly where one source is
-blind — best overall F1 of 0.96; guided scoping removes all noise at full
+blind — best overall F1 of 0.96; guided slicing removes all noise at full
 coverage; and the reconstructed diagram alone suffices for comprehension.
-Mapping back: RQ1 — fusion is additive where sources disagree, best F1 0.964.
-RQ2 — scenario-scoped querying yields focused, noise-free diagrams with zero
-coverage loss. Thank you — I'm happy to take questions.
+Mapping back: RQ1 — the 13/13 schema unifies both evidence types. RQ2 — fusion is
+additive where sources disagree and protective elsewhere. RQ3 — slicing yields
+focused, noise-free diagrams. Thank you — I'm happy to take questions.
 """)
 
 # --------------------------------------------------------------------------- #
@@ -1406,8 +1406,8 @@ case study — transferability is addressed by the exploratory second codebase.
 (2) Isn't S4 contrived — yes, deliberately, to isolate the additive regime that
 naturally-occurring virtual dispatch / plugins would trigger. (3) LLM
 reproducibility — the reference set was authored before scoring; provenance
-tagging keeps the synthesis auditable. (4) Scalability of scenario scoping —
-it's a linear Cypher edge filter. (5) Threats to validity in the expert panel — six raters, A/B
+tagging keeps the synthesis auditable. (4) Scalability of slicing — it's a linear
+edge filter. (5) Threats to validity in the expert panel — six raters, A/B
 randomised and blinded for the reused conditions.
 """)
 
@@ -1444,7 +1444,7 @@ rows = [
      "Renaissance + Neo4j for semantic-level extraction; ClangSharp (libclang) for validation"],
     ["Thousands of dependencies crash SysML toolchains",
      "Identifier quoting + relationship deduplication in the generation layer"],
-    ["Hardcoded scenario scoping is brittle",
+    ["Hardcoded scenario slicing is brittle",
      "Agent-skill architecture — scenario defined as a natural-language query"],
     ["Traces alone are incomplete",
      "Static reachability in the graph fills unobserved interactions — the core hybrid contribution"],
@@ -1457,7 +1457,7 @@ Backup slide for questions on engineering depth. Four concrete challenges and ho
 each was handled: C++ context-sensitivity forced semantic extraction via
 Renaissance and Neo4j, with a ClangSharp/libclang cross-check; large dependency
 counts that crash SysML tools were tamed with identifier quoting and relationship
-deduplication; brittle hardcoded scoping was replaced by the agent-skill
+deduplication; brittle hardcoded slicing was replaced by the agent-skill
 architecture where a scenario is just a natural-language query; and trace
 incompleteness is exactly what static reachability in the graph compensates for —
 the core hybrid contribution.

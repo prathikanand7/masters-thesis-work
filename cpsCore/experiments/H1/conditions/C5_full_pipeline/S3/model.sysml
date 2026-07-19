@@ -25,7 +25,7 @@ package ComponentModel_S3 {
         port serverConvert : Convert;
     }
 
-    part def System {
+    part def S3System {
         part aggregation : Aggregation;
         part logging : Logging;
         part synchronization : Synchronization;
@@ -36,6 +36,7 @@ package ComponentModel_S3 {
         connect logging.serverStream to synchronization.clientStream;
         connect utilities.serverConvert to synchronization.clientConvert;
     }
+
 }
 
 package CPScoreInteractionModels_S3 {
@@ -59,43 +60,43 @@ package CPScoreInteractionModels_S3 {
         part logging : Lifeline;
         part utilities : Lifeline;
 
-        part m1 : SynchronousCall {
+        part m1_getAll : SynchronousCall {
             ref from : Lifeline = synchronization;
             ref to   : Lifeline = aggregation;
             attribute :>> label = "1. getAll";
         }
 
-        part m2 : SynchronousCall {
+        part m2_stream : SynchronousCall {
             ref from : Lifeline = synchronization;
             ref to   : Lifeline = logging;
             attribute :>> label = "2. stream";
         }
 
-        part m3 : SynchronousCall {
+        part m3_convert : SynchronousCall {
             ref from : Lifeline = synchronization;
             ref to   : Lifeline = utilities;
             attribute :>> label = "3. convert";
         }
 
-        part m4 : SynchronousCall {
+        part m4_stream : SynchronousCall {
             ref from : Lifeline = synchronization;
             ref to   : Lifeline = logging;
             attribute :>> label = "4. stream";
         }
 
-        part m5 : SynchronousCall {
+        part m5_convert : SynchronousCall {
             ref from : Lifeline = synchronization;
             ref to   : Lifeline = utilities;
             attribute :>> label = "5. convert";
         }
 
-        part m6 : SynchronousCall {
+        part m6_stream : SynchronousCall {
             ref from : Lifeline = synchronization;
             ref to   : Lifeline = logging;
             attribute :>> label = "6. stream";
         }
 
-        part m7 : SynchronousCall {
+        part m7_flush : SynchronousCall {
             ref from : Lifeline = synchronization;
             ref to   : Lifeline = logging;
             attribute :>> label = "7. flush (static-only; suppressed at runtime (buffered logging; flush disabled/deferred))";

@@ -84,15 +84,19 @@ this thesis's contribution (\cref{sec:macro-resolution}).
 
 \section{Research Questions}
 
-This thesis is guided by two research questions:
+This thesis is guided by three research questions:
 
 \begin{description}
-  \item[\rqone] How does combining static analysis and incomplete runtime
-    traces improve the accuracy and completeness of scenario-specific
-    interaction model reconstruction?
+  \item[\rqone] Does combining a static call graph with runtime execution
+    traces reconstruct scenario-specific Interaction Models more
+    accurately than either source alone?
 
-  \item[\rqtwo] How can scenario-scoped querying of the static call graph
-  restrict reconstruction to only the behaviour relevant to a given scenario?
+  \item[\rqtwo] Does guiding trace collection with the static call graph
+    remove reconstruction noise without losing scenario coverage?
+
+  \item[\rqthree] How well does a reconstructed \sysml Interaction Model
+    consolidate static and dynamic evidence into a single artefact
+    sufficient for system-behaviour comprehension?
 \end{description}
 
 Each is paired with a testable hypothesis, answered by a dedicated
@@ -104,36 +108,42 @@ experiment (\cref{ch:experiments,ch:analysis}):
   \item[H2 (\rqtwo).] Code-graph-guided instrumentation improves scenario
     focus by suppressing irrelevant execution detail relative to full,
     unguided instrumentation.
-  \item[H3.] Reconstructed interaction models improve agent task performance
-    on scenario comprehension, relative to reasoning from raw source code
-    alone.
+  \item[H3 (\rqthree).] Reconstructed interaction models improve agent task
+    performance on scenario comprehension, relative to reasoning from raw
+    source code alone.
 \end{description}
 
-\rqone\ and \rqtwo\ are answered empirically by the H1 and H2 experiments
-on the CPSCore case study; H3 assesses whether the reconstructed models
-translate into a measurable downstream benefit
-(\cref{ch:experiments,ch:analysis}).
+\rqone, \rqtwo\ and \rqthree\ are answered empirically by the H1, H2 and
+H3 experiments on the CPSCore case study (\cref{ch:experiments,ch:analysis}).
 
 \section{Approach}
 
-The approach consists of four stages. First, \textbf{static extraction}:
-a call graph is extracted from the target system's \Cpp\ source and
-stored in a \neo \acl{GDB} using the schema in \cref{sec:pg-schema}; for
-pub-sub systems routing messages through callback registration, such as
-CPSCore's IDC layer, this stage additionally resolves the implicit
-routing topology (\cref{sec:macro-resolution}). Second, \textbf{trace
-collection}: probes are injected into the source by the instrumentation
-tool (\cref{sec:csp-matcher}), the instrumented program is run, and the
-emitted timestamped trace lines are stored in a sequence table; this
-dynamic pipeline is kept separate from the static property graph, and
-the two sources are combined only when the reconstructed models are
-compared during evaluation. Third, \textbf{scenario-scoped querying}:
-the static call graph is queried with scenario-scoped Cypher queries
-retaining only interactions whose caller and callee belong to the
-scenario's declared components, with the equivalent constraint applied
-to the trace-derived sequence table, narrowing both sources to the same
-scope. Fourth, \textbf{SysML v2 generation}: the scenario-scoped
-sequence table is projected into \sysml sequence diagrams by a
+The approach consists of six stages, implemented as a chain of
+composable agent skills. First, \textbf{static extraction}: a call graph
+is extracted from the target system's \Cpp\ source and stored in a \neo
+\acl{GDB} using the schema in \cref{sec:pg-schema}; for pub-sub systems
+routing messages through callback registration, such as CPSCore's IDC
+layer, this stage additionally resolves the implicit routing topology
+(\cref{sec:macro-resolution}). Second, \textbf{code graph query}: a
+scenario description is translated into a Cypher query and executed
+against the static property graph, retaining only the interactions whose
+caller and callee belong to the scenario's declared components. Third,
+\textbf{dependency matrix extraction}: the scenario-scoped subgraph is
+flattened into an ordered table of static call edges. Fourth,
+\textbf{trace instrumentation and runtime tracing}: probes are injected
+into the source by the instrumentation tool (\cref{sec:csp-matcher}), the
+instrumented program is run, and the emitted timestamped trace lines are
+normalised into the same table format; this dynamic pipeline is kept
+separate from the static property graph, and the two sources are
+combined only when the reconstructed models are compared during
+evaluation. Fifth, \textbf{agentic synthesis}: an \ac{LLM} is given the
+scenario-scoped static and dynamic evidence as two separately labelled,
+un-merged sources and weighs which single-source signals are genuine
+against which are noise to decide the final set of architecturally
+significant interactions (\cref{sec:agentic-synthesis}), the only stage
+in the pipeline that is not purely mechanical. Sixth, \textbf{SysML v2
+generation}: the synthesised
+interaction set is projected into \sysml sequence diagrams by a
 template-driven generator and written to a \texttt{.sysml} file.
 
 The approach is developed and validated on \emph{CPSCore}, an

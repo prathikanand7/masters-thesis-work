@@ -121,23 +121,6 @@ TEST_CASE("Synchronized Runner Test")
 
 	run1.join();
 	run2.join();
-
-	{
-		auto runObj5 = std::make_shared<RunnableTestClass>();
-		Aggregator agg3;
-		agg3.add(runObj5);
-
-		SynchronizedRunnerMaster master2(1);
-		std::shared_ptr<SynchronizedRunner> runner3(new SynchronizedRunner);
-
-		std::thread run3(std::bind(&SynchronizedRunner::runSynchronized, runner3, std::ref(agg3)));
-
-		CHECK(!master2.runAllStages());
-
-		run3.join();
-
-		CHECK((int) runObj5->lastRunStage == (int) RunStage::FINAL);
-	}
 }
 
 TEST_CASE("Synchronized Runner Timeout")

@@ -11,11 +11,13 @@ scenario-specific interaction models.
 
 The pipeline takes a \Cpp\ source tree and, optionally, a set of
 timestamped execution traces, and produces \sysml sequence diagrams
-scoped to a user-specified scenario. It is implemented as a chain of
-eleven composable agent skills, each invocable by natural-language query
-and backed by a shared \neo property graph. \Cref{fig:pipeline-overview}
-shows the pipeline stages and the skills that implement them, described
-in turn below.
+scoped to a user-specified scenario. It runs as six stages
+(\cref{fig:pipeline-overview}), each implemented as a composable agent
+skill invocable by natural-language query and backed by a shared \neo
+property graph. Five stages follow a fixed, deterministic rule set given
+their inputs; the sixth (Stage~5, Agentic Synthesis) is the one skill
+whose own instructions are reasoning guidance rather than a strict rule
+set which resists a fixed lookup.
 
 \begin{figure}[htb]
 \centering
@@ -26,81 +28,91 @@ in turn below.
                   align=center, font=\small},
   dyn/.style   = {stage, fill=blue!15},
   stat/.style  = {stage, fill=gray!12},
+  agentic/.style = {stage, fill=orange!20},
   arr/.style   = {-{Stealth[length=2.2mm]}, thick}
 ]
   \node[stat] (extract)  {1. Static\\Extraction};
-  \node[stat, right=of extract] (schema) {2. Schema\\Introspection};
-  \node[stat, right=of schema]  (seqtab) {3--4. Structural /\\Sequence Tables};
-  \node[dyn,  below=of seqtab]  (trace)  {5. Runtime\\Instrumentation};
-  \node[stat, left=of trace]    (scope)  {6. Graph Query\\\& Scenario Scoping};
-  \node[stat, left=of scope]    (sysml)  {7. Diagram\\Generation};
+  \node[stat, right=of extract] (query) {2. Code Graph\\Query};
+  \node[stat, right=of query]   (matrix) {3. Dependency\\Matrix Extraction};
+  \node[dyn,  below=of matrix]  (trace)  {4. Trace Instrumentation\\\& Runtime Tracing};
+  \node[agentic, left=of trace] (synth)  {5. Agentic\\Synthesis};
+  \node[stat, left=of synth]    (sysml)  {6. SysML~v2\\Generation};
 
-  \draw[arr] (extract) -- (schema);
-  \draw[arr] (schema)  -- (seqtab);
-  \draw[arr] (seqtab)  -- (trace);
-  \draw[arr] (trace)   -- (scope);
-  \draw[arr] (scope)   -- (sysml);
+  \draw[arr] (extract) -- (query);
+  \draw[arr] (query)   -- (matrix);
+  \draw[arr] (matrix)  -- (trace);
+  \draw[arr] (trace)   -- (synth);
+  \draw[arr] (synth)   -- (sysml);
 
   \begin{scope}[on background layer]
-    \node[draw, dashed, fit=(extract)(schema)(seqtab)(sysml),
-          inner sep=6mm, label={[font=\small]above:Static / structural path}] {};
+    \node[draw, dashed, fit=(extract)(query)(matrix),
+          inner sep=6mm, label={[font=\small]above:Static graph construction \& scoping}] {};
   \end{scope}
 \end{tikzpicture}
 \caption{Pipeline overview. Numbered stages correspond to the enumeration
-  below. Shaded box (Stage~5) is the only stage that reads dynamic
-  (runtime) information. All other stages operate on the static property
-  graph. The static graph and the trace-derived sequence table are kept
-  separate; the two evidence sources are combined only when the
-  reconstructed models are compared during evaluation
-  (\cref{sec:combine-scope}).}
+  below. Stage~4 (blue) is the only stage that reads dynamic (runtime)
+  information directly; the static graph and the trace-derived table
+  are kept separate up to this point and combined only here
+  (\cref{sec:combine-scope,sec:agentic-synthesis}).}
 \label{fig:pipeline-overview}
 \end{figure}
 
 \begin{enumerate}
   \item \textbf{Static extraction} (\cref{sec:static-impl}). The \Cpp\
     source is analysed by Renaissance, which populates the \neo graph
-    with 11 node labels and 11 relationship types (\cref{sec:pg-schema}).
+    with 11 node labels and 11 relationship types (\cref{sec:pg-schema});
+    the CPSCore case-study graph contains 67,104 nodes.
 
-  \item \textbf{Schema introspection} (\texttt{get-neo4j-schema}). The
-    graph schema is read dynamically, so downstream skills query the
-    live schema rather than hardcoding node labels and remain
-    codebase-agnostic.
+  \item \textbf{Code graph query} (\texttt{text-to-cypher}, built on
+    \texttt{get-neo4j-schema}; \texttt{cypher-to-output}). A
+    natural-language scenario description is translated into a
+    schema-aware Cypher query by \texttt{text-to-cypher} and executed by
+    \texttt{cypher-to-output} against the live graph, retaining only
+    interactions whose caller and callee belong to the scenario's
+    declared components (\cref{sec:scoping-impl}).
+    \texttt{get-neo4j-schema} is queried first so query generation
+    targets the live schema rather than hardcoded node labels, keeping
+    the pipeline codebase-agnostic.
 
-  \item \textbf{Structural dependency extraction}
-    (\texttt{get-interface-dependency-table}). All relationship types are
-    aggregated into a compact CSV table of interface dependencies between
-    components.
+  \item \textbf{Dependency matrix extraction}
+    (\texttt{get-interface-dependency-table},
+    \texttt{get-sequence-dependency-table}). The scenario-scoped subgraph
+    is flattened into an ordered CSV table, one row per \texttt{CppCalls}
+    edge, giving the static ground truth against which the runtime trace
+    is later checked.
 
-  \item \textbf{Sequence dependency extraction}
-    (\texttt{get-sequence-dependency-table}). \texttt{CppCalls} edges are
-    projected into an ordered sequence table with synthetic timestamps,
-    capturing static calling relationships across the codebase.
-
-  \item \textbf{Runtime instrumentation and trace collection}
+  \item \textbf{Trace instrumentation and runtime tracing}
     (\texttt{add-runtime-instrumentation}). Pattern-based code
-    transformation injects trace probes; runtime logs are collected and
-    normalised into the sequence table format.
+    transformation injects trace probes at the call sites named in the
+    dependency matrix; the instrumented binary is rebuilt and run, and
+    the emitted \texttt{[TRACE]} lines are normalised into the same table
+    schema.
 
-  \item \textbf{Graph query and scenario scoping}
-    (\texttt{text-to-cypher}, \texttt{cypher-to-output}).
-    Natural-language scenario queries are translated into Cypher
-    traversals over the static graph, retaining only interactions whose
-    caller and callee belong to the scenario's declared components. The
-    same constraint is applied to the trace-derived sequence table.
+  \item \textbf{Agentic synthesis} (\texttt{agentic-synthesis},
+    \cref{sec:agentic-synthesis}). An \ac{LLM} is given the static
+    dependency matrix and the runtime trace as two separately-labelled,
+    un-merged evidence sources and settles the final interaction set by
+    judgement rather than a fixed rule, writing the result to
+    \texttt{elements.json} and \texttt{sequence.json}.
 
-  \item \textbf{Diagram generation}
-    (\texttt{draw-sysml-sequence-model},
-     \texttt{draw-sysml-structural-model},
-     \texttt{draw-sequential-mermaid-general},
-     \texttt{draw-structural-mermaid}). The scenario-scoped table is
-    projected into \sysml textual notation or Mermaid syntax.
+  \item \textbf{SysML v2 generation} (\texttt{draw-sysml-sequence-model},
+    \texttt{draw-sysml-structural-model}). \texttt{elements.json} and
+    \texttt{sequence.json} are projected into \sysml textual notation.
 \end{enumerate}
+
+Two further skills, \texttt{draw-sequential-mermaid-general} and
+\texttt{draw-structural-mermaid}, offer a Mermaid-syntax visualisation of
+the same reconstruction; they read the Stage~3 dependency tables directly
+and are not part of this six-stage numbering, since they bypass agentic
+synthesis rather than consuming its output.
 
 Each skill is stateless and read-only with respect to the graph, except
 the instrumentation skill, which modifies source files. Every skill
 accepts a natural-language prompt and returns a structured artefact (CSV,
 Cypher query, or model file), which allows the chain to be reused on a
-new codebase without code changes.
+new codebase without code changes. The agentic synthesis skill is the
+one exception, per \cref{sec:pipeline-overview}: its judgement calls
+(\cref{sec:agentic-synthesis}) resist a deterministic procedure.
 
 \section{Property Graph Schema}\label{sec:pg-schema}
 
@@ -197,7 +209,7 @@ and the trace tends to under-count.
 
 \section{Agent Skill Architecture}\label{sec:skill-design}
 
-The pipeline is a set of eleven composable agent skills rather than a
+The pipeline is a set of twelve composable agent skills rather than a
 monolithic script. Each is defined by a declarative specification (name,
 description, input/output contracts, execution instructions) and
 invocable via natural-language prompt. This was chosen over a monolithic
@@ -219,8 +231,9 @@ implementation for three reasons:
     pattern at invocation time.
 \end{itemize}
 
-\Cref{tab:skills} summarises the eleven skills, their inputs, outputs,
-and role in the pipeline.
+\Cref{tab:skills} summarises all twelve skills, their inputs, outputs,
+and role in the pipeline; only the agentic synthesis skill departs from
+a fixed rule set (\cref{sec:pipeline-overview,sec:agentic-synthesis}).
 
 \begin{table}[htb]
 \centering
@@ -249,23 +262,27 @@ and role in the pipeline.
   & Interface CSV
   & Structural extraction \\
 \texttt{get-sequence-dependency-table}
-  & Trace log
+  & Neo4j graph
   & Sequence CSV
-  & Temporal extraction \\
+  & Sequence (\texttt{CppCalls}) extraction \\
 \texttt{add-runtime-instrumentation}
   & Source files + patterns
-  & Instrumented source
-  & Probe injection via csp\_matcher \\
-\texttt{draw-sysml-sequence}
-  & Sequence CSV
+  & Instrumented source + Trace CSV
+  & Probe injection via csp\_matcher, rebuild, run, and trace collection \\
+\texttt{agentic-synthesis}
+  & Static table + trace (CSV or JSON)
+  & \texttt{elements.json} + \texttt{sequence.json}
+  & Evidence adjudication (reasoning guidance, not a fixed rule set) \\
+\texttt{draw-sysml-sequence-model}
+  & Sequence CSV or \texttt{sequence.json}
   & \texttt{.sysml} file
   & Sequence diagram generation \\
-\texttt{draw-sysml-structural}
-  & Interface CSV
+\texttt{draw-sysml-structural-model}
+  & Interface CSV or \texttt{elements.json}
   & \texttt{.sysml} file
   & Structural diagram generation \\
-\texttt{draw-sequential-mermaid}
-  & Trace CSV
+\texttt{draw-sequential-mermaid-general}
+  & Sequence CSV
   & \texttt{.mmd} file
   & Mermaid sequence visualisation \\
 \texttt{draw-structural-mermaid}
@@ -348,10 +365,14 @@ the matcher runs.
 Once the probes are in place, the same skill rebuilds and runs the
 target (the CPSCore test suite, or a scenario-specific harness) and
 captures the emitted \texttt{[TRACE]} lines from \texttt{stderr}. This
-log is normalised into the sequence-table format consumed by
-\texttt{get-sequence-dependency-table} and rendered by the diagram
-skills, and its cross-component pairs can equally feed
-\texttt{get-interface-dependency-table}.
+log is normalised into the same schema as the static dependency matrix
+(\cref{sec:pipeline-overview}) so the two can later be compared
+edge-for-edge: it does not pass through
+\texttt{get-sequence-dependency-table}, which extracts static
+\texttt{CppCalls} edges from the property graph rather than reading
+trace output; the normalised trace log instead feeds the evidence
+combination and agentic synthesis stages directly
+(\cref{sec:combine-scope,sec:agentic-synthesis}).
 
 \subsection{Reversibility via Filter Functions}\label{sec:reversibility}
 
@@ -429,14 +450,18 @@ RETURN caller, callee
 
 The dynamic edge set is read from the real runtime trace, normalised
 into the same schema. The union of the two, tagged by which source each
-interaction came from, is what conditions C4 and C5 of the H1 experiment
-operate over --- a set operation over two separate artefacts computed at
-evaluation time.
+interaction came from, is what condition C4 of the H1 experiment operates
+over directly (\cref{ch:experiments}), a set operation over two separate
+artefacts computed at evaluation time. Condition C5, the full
+pipeline, takes this same tagged union as the input to the agentic
+synthesis stage (\cref{sec:agentic-synthesis}), which prunes it further
+before SysML generation rather than passing it through unchanged.
 
 \subsection{Scenario Scoping by Component Constraint}\label{sec:scoping-impl}
 
-Scenario scoping is a plain, scope-constrained Cypher query rather than a
-program-dependence-graph slice. A scenario's scope is a conjunction of a
+Scenario scoping is a plain, scope-constrained Cypher query rather than
+the program-dependence-graph slice described in \cref{sec:scenario-scoping}.
+A scenario's scope is a conjunction of a
 \emph{primary component} constraint (only edges whose caller belongs to
 it are retained), a \emph{target component set} (only edges whose callee
 belongs to a declared participant is retained), and optionally a
@@ -450,7 +475,7 @@ ServerComponent in {Aggregation, Logging}
 
 This is what \texttt{text-to-cypher} generates from a scenario
 description such as ``Using agent skills, show me Synchronization
-calling into Aggregation and Logging'' --- the explicit \emph{Using agent
+calling into Aggregation and Logging''. The explicit \emph{Using agent
 skills} prefix anchors the model to the skill invocation, preventing it
 from hallucinating an ad-hoc codebase inspection instead of generating a
 Cypher query.
@@ -481,20 +506,74 @@ calls are shallow (typically one hop through the IDC layer); multi-hop
 scoping is a straightforward extension via Cypher's variable-length path
 syntax.
 
+\section{Agentic Synthesis}\label{sec:agentic-synthesis}
+
+The tagged union $E_s \cup E_t$ (\cref{sec:combine-scope}) is not yet the
+final interaction set: a static edge with no trace corroboration is
+either a genuine over-approximation (a call the source code permits but
+this scenario never takes) or a real interaction that test coverage
+simply missed, and a dynamic edge outside the static scope may be a real
+indirect-dispatch interaction the call graph could not see
+(\cref{sec:macro-resolution}) rather than noise. Telling these apart
+requires judgement a set operation cannot make on its own, so the union
+is passed to an \ac{LLM} (GPT-5, invoked via Azure OpenAI) as the final
+pipeline stage before diagram generation.
+
+\subsection{Mechanism}
+
+The \ac{LLM} receives the static and dynamic evidence as two separately
+labelled, un-merged sources (it is never shown a pre-merged edge list)
+and reasons over three judgement categories:
+
+\begin{description}
+  \item[Corroboration.] An interaction present in both sources is kept
+    without further scrutiny.
+  \item[Suppression.] A static-only interaction is kept if it is
+    plausibly real but untested by this scenario's runtime coverage, and
+    dropped if it reads as a structural over-approximation.
+  \item[Indirect dispatch.] A dynamic-only interaction is kept if it
+    reflects a real call path the static graph could not resolve, such as
+    a \texttt{boost::signals2} connection made outside the \ac{IDC}
+    abstraction (S4, \cref{sec:h1-c4c3}).
+\end{description}
+
+The output is written to two files: \texttt{elements.json}, an array of
+deduplicated \texttt{(source, target, interaction)} triples forming the
+final structural element set, and \texttt{sequence.json}, the same
+interactions in execution order, each step optionally carrying a
+free-text \texttt{note} field. The \texttt{note} field is populated only
+when a step's evidence came from a single source rather than being
+corroborated both ways, so an empty \texttt{note} marks a trivial
+judgement call and a populated one marks a step where the agent actually
+exercised discretion.
+
+\subsection{Where the Judgement Is Trivial versus Non-Trivial}
+
+For scenario S1, every static edge in scope is corroborated by the trace
+and vice versa, so the agent's task reduces to relabelling an
+already-agreeing union: all steps carry an empty \texttt{note}. The
+harder cases are where Stage~5 has to do something non-trivial with the
+freedom it is given, for instance S4's suppressed fault-path log entry
+and the \texttt{boost::signals2} indirect-dispatch edge
+(\cref{sec:h1-c4c3}), where corroboration alone cannot resolve whether an
+edge belongs in the final model.
+
 \section{SysML v2 Generation}\label{sec:sysml-generation}
 
-The final stage projects the scenario-scoped, evidence-tagged sequence
-table into \sysml textual notation. The \texttt{draw-sysml-sequence-model}
-skill reads the CSV and generates a \texttt{.sysml} file following the
-SysML v2 Interaction Model constructs described in \cref{sec:sysml}:
-each unique component becomes a \texttt{part def} (lifeline); each row
-becomes an ordered message, typed as \texttt{SynchronousCall},
-\texttt{ReturnMessage}, or \texttt{AsynchronousMessage} from the
-\texttt{RelationshipType} column; message labels come from
-\texttt{EventName}, optionally annotated with \texttt{ClientFunction
-$\to$ ServerFunction}; and the sequence number preserves temporal
-ordering from the trace (dynamic edges) or the synthetic timestamp
-(static edges).
+The final stage projects Stage~5's output, \texttt{elements.json} and
+\texttt{sequence.json} (\cref{sec:agentic-synthesis}), into \sysml
+textual notation, using the SysML v2 constructs described in
+\cref{sec:sysml}. The \texttt{draw-sysml-structural-model} skill reads
+\texttt{elements.json}: each unique component becomes a \texttt{part
+def}, each interaction it sends or receives becomes a typed port on that
+part, and each \texttt{(source, target, interaction)} triple becomes a
+\texttt{connect} statement between the corresponding client and server
+ports. The \texttt{draw-sysml-sequence-model} skill reads
+\texttt{sequence.json}: each unique component becomes a lifeline
+(\texttt{part def}), and each step becomes an ordered, labelled
+\texttt{SynchronousCall} between the corresponding lifelines, with the
+step number preserving the execution order decided during agentic
+synthesis.
 
 Component names are derived algorithmically from file paths, not from a
 hardcoded mapping table, using a path-to-component resolution function

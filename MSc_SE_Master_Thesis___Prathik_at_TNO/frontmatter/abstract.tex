@@ -1,53 +1,75 @@
 Software systems in safety-critical domains such as medical imaging and
-industrial automation evolve rapidly, and their runtime behaviour quickly
-outgrows manual documentation. \sysml Interaction Models capture
-scenario-specific component interactions, but existing reconstruction
-techniques are each incomplete: static analysis is scenario-agnostic, while
-execution traces are inherently partial. This thesis investigates: (RQ1)
-whether combining a static call graph with runtime execution traces
-reconstructs scenario-specific Interaction Models more accurately than
-either source alone; (RQ2) whether guiding trace collection with the static
-call graph removes reconstruction noise without losing scenario coverage.
-It also further investigates whether the reconstructed diagram alone, without 
-any other further evidence, can match or exceed multi-source combinations in recall and
-completeness as a downstream benefit.
+industrial automation evolve continuously, making manually maintained
+behavioural documentation increasingly difficult to keep up to date.
+\sysml Interaction Models, structure and sequence diagrams that capture
+the components involved in a scenario and the interactions between them,
+are a natural target for automated reconstruction, but existing
+reconstruction approaches rely on partial information sources and
+therefore provide an incomplete view of system interactions: static
+analysis over-approximates possible behaviour and cannot by itself
+determine which interactions are exercised during a specific execution,
+while execution traces provide execution-specific information but only
+for behaviour exercised during the observed runs. This thesis
+investigates: (RQ1) whether combining a static call graph with runtime
+execution traces reconstructs scenario-specific Interaction Models more
+accurately than either source alone; (RQ2) whether guiding trace
+collection with the static call graph removes reconstruction noise
+without losing scenario coverage; and (RQ3) how well a reconstructed
+\sysml Interaction Model consolidates static and dynamic evidence into a
+single artefact sufficient for system-behaviour comprehension.
 
 \textbf{Methods:} A hybrid pipeline was built that synthesises Interaction
-Models for event-driven \Cpp\ systems by combining a static call graph,
-stored in a \neo property graph and timestamped runtime traces collected
-by a separate pipeline. The two evidence sources were kept as separate
-artefacts. The scenario-scoped Cypher queries isolated the static interactions relevant to
-a given scenario and combined as a set union of their interaction edges at the time of evaluation. 
-The pipeline was implemented as eleven composable,
-natural-language-invocable agent skills and evaluated on \emph{CPSCore}. It is an
-open-source event-driven framework, across four scenarios (three
-happy-path and one constructed) reconstructed under five conditions ranging
-from an \ac{LLM}-only baseline to the full pipeline. A blinded six-rater
-expert panel additionally compared guided and unguided trace output.
-The underlying static approach was further tested in a practitioner session on a
-second, larger industrial codebase.
+Models for event-driven \Cpp\ systems by combining a static call graph
+with timestamped runtime traces collected by a separate pipeline. Static
+and dynamic evidence were maintained as separate artefacts due to their
+different evolution rates and storage characteristics; the call graph,
+stored in a \neo property graph, contains only trace anchors, preserving
+traceability without embedding large execution traces. The scenario-scoped
+Cypher queries isolated the subset of static interactions associated with
+a given scenario, where relevance was established through trace analysis
+and corresponding static call-graph anchors. The pipeline was implemented
+as twelve composable, natural-language-invocable agent skills and
+evaluated on \emph{CPSCore}, an open-source event-driven framework, across
+four scenarios: three pre-existing test scenarios and one purpose-built
+scenario designed to assess a specific capability of the proposed
+approach. Each scenario was reconstructed under five conditions ranging
+from an \ac{LLM}-only baseline to the full combined pipeline. A blinded
+six-rater expert panel compared diagrams reconstructed from unfiltered
+trace output against diagrams reconstructed from trace output scoped
+using static call-graph analysis of the scenario. The underlying static
+approach was further tested in a practitioner session on a second, larger
+industrial codebase to assess industrial usefulness beyond reconstruction
+accuracy.
 
 \textbf{Results:} The full pipeline achieved the highest reconstruction
-accuracy of any condition tested (macro-F1~$=$~0.964, with perfect recall
-on every scenario); combining the two sources was strictly additive where
-static and dynamic analysis each missed a different interaction, and
-redundant where the static call graph was already complete.
-Code-graph-guided instrumentation eliminated all measured noise (50\%
-fewer nodes, 70\% fewer edges) without losing scenario coverage. It was also
-rated higher by the expert panel in 47 of 54 comparisons. The reconstructed
-diagram alone achieved perfect component recall, interaction recall and
-completeness on every scenario. It matched or exceeded all other evidence
-combinations. In the practitioner session, structural and dependency
-diagrams were rated consistently useful, while sequence-diagram message
-labelling was identified as the clearest area for improvement.
+accuracy of any evaluated condition (macro-F1~$=$~0.964) and achieved
+100\% interaction recall across all evaluated scenarios, meaning that all
+ground-truth interactions were recovered, although some scenarios still
+contained additional inferred interactions not present in the reference
+model. Combining the two sources improved reconstruction when either
+source missed interactions and had no effect when one source was already
+sufficient. Code-graph-guided instrumentation eliminated all noise (50\%
+fewer nodes, 70\% fewer edges) without losing scenario coverage, and was
+rated higher by the expert panel in 47 of 54 comparisons. The
+reconstructed diagram alone achieved complete component and interaction
+recall across all evaluated scenarios, and matched or outperformed all
+other evaluated conditions, including the \ac{LLM}-assisted variants.
+This suggests that the reconstructed model can serve as a sufficient
+representation for the evaluated comprehension task, whether performed by
+humans or an \ac{LLM}. In the practitioner session, structural and
+dependency diagrams were rated consistently useful, while sequence-diagram
+message labelling was identified as the clearest area for improvement.
 
 \textbf{Evaluation and Conclusion:} The three results converge on one
 pattern: additional evidence improves reconstruction or comprehension
-specifically when the primary evidence source is missing something, and is
-otherwise redundant. The thesis contributes a Hybrid static-plus-trace pipeline
-that tracks the provenance of each interaction edge. A scenario-scoping
-method built on plain Cypher queries, a way to recover publish-subscribe
-wiring invisible to ordinary call-graph analysis, a small reversible
-instrumentation tool (\texttt{csp\_matcher}), and a codebase-agnostic set
-of eleven natural-language agent skills that run the whole pipeline from
-source code to \sysml diagram.
+specifically when the primary evidence source is missing something, and
+is otherwise redundant. The thesis contributes an empirical assessment of
+hybrid static and dynamic analysis for reconstructing scenario-specific
+\sysml diagrams. The results show when combining static and dynamic
+evidence improves reconstruction, when scenario-guided instrumentation
+reduces reconstruction noise without sacrificing coverage, and to what
+extent reconstructed diagrams can replace the underlying evidence in
+program-comprehension tasks. The work further provides an implementation
+comprising a scenario-scoping method, a reversible instrumentation tool
+(\texttt{csp\_matcher}), and an automated workflow based on twelve
+natural-language agent skills.

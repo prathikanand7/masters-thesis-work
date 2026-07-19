@@ -2,7 +2,6 @@ bld
 .idea
 *build*
 .venv
-.vscode
 InstallationLog.txt
 __pycache__/
 %LOCALAPPDATA%/

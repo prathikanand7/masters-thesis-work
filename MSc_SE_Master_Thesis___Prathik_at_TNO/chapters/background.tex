@@ -25,9 +25,8 @@ are:
   \item[\texttt{part def}~$:>$~\texttt{InteractionScenario}] A named
     container for a scenario-specific interaction model, analogous to a
     \ac{UML} interaction.
-  \item[\texttt{Lifeline}] A participant in the interaction --- an
-    instance of a structural block along which message occurrences are
-    ordered.
+  \item[\texttt{Lifeline}] A participant in the interaction: an instance
+    of a structural block along which message occurrences are ordered.
   \item[\texttt{SynchronousCall} / \texttt{ReturnMessage} /
     \texttt{AsynchronousMessage}] Message stereotypes, specialising a
     common \texttt{Message} definition, modelling a call, its return and
@@ -90,8 +89,8 @@ by property keys from key set $\mathcal{K}$.
 \neo is the most widely deployed \ac{GDB} implementing the \ac{PG} model,
 queried via the Cypher declarative query language \cite{neo4j:cypher}. A
 \ac{PG} was chosen over a relational or document store because it lets
-heterogeneous analysis artefacts --- functions, files, modules and trace
-events --- be traversed efficiently along typed relationships.
+heterogeneous analysis artefacts (functions, files, modules and trace
+events) be traversed efficiently along typed relationships.
 
 \section{Static Call-Graph Analysis}\label{sec:static-analysis}
 
@@ -136,9 +135,12 @@ implementation (\cref{sec:idc,sec:pubsub-background}).
 An \emph{execution trace} is a temporally ordered sequence of events
 recorded at runtime, typically by instrumenting the system under
 analysis with logging or profiling statements \cite{zaidman:traces}. In
-this thesis, traces take the form of timestamped log entries recording
-function entry and exit events, each also carrying component identity
-and the topic name on the message bus.
+this thesis, traces take the form of timestamped log entries emitted at
+instrumented call sites rather than at function entry/exit
+(\cref{sec:csp-matcher}), so a trace records that a specific
+cross-component call executed, not merely that a function was entered;
+each entry carries the caller and callee component identity and the
+name of the interaction invoked.
 
 \subsection{Challenges with Incomplete Traces}
 
@@ -153,8 +155,9 @@ scenario specificity.
 
 Reconstructing a diagram for a single scenario requires narrowing a
 large call graph down to the interactions that belong to it. Rather than
-a formal program-slicing procedure over a program dependence graph, this
-thesis performs scenario scoping directly as a declarative graph query:
+a formal program-slicing procedure \cite{weiser:slicing} over a program
+dependence graph \cite{ferrante:pdg}, this thesis performs scenario
+scoping directly as a declarative graph query:
 a scenario's scope is expressed as a set of participating components
 (\eg \texttt{Synchronization} calling into \texttt{Aggregation} and
 \texttt{Logging}), and a scenario-scoped Cypher query retains only the

@@ -1,0 +1,2 @@
+Sequence,EventName,ClientComponent,ClientFunction,ServerComponent,ServerFunction,RelationshipType,InterfaceNames
+1,StageEventListener.onStageEvent,Synchronization,StageEventBridge.publishStage,Aggregation,StageEventListener.onStageEvent,Command,StageEventListener

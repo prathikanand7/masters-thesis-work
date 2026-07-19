@@ -55,15 +55,22 @@ def load_from_csv(scenario: str) -> set[Element]:
     return elements
 
 # ── Neo4j-based extraction (fallback) ───────────────────────────────────────
+# NOTE: nodes have no `path`/`simpleName` properties in the live schema --
+# only `name` (a composite id string with the file path embedded, e.g.
+# "cpp_funcdec//include/cpsCore/Synchronization/SimpleRunner.h/SimpleRunner.runStage")
+# and `symbol` (the bare function name, e.g. "runStage"). Verified against
+# db.schema.nodeTypeProperties() on the live DB -- the old .path/.simpleName
+# version silently matched zero rows (Cypher tolerates missing properties by
+# returning null), so this fallback has never actually run in practice.
 CYPHER = """
 MATCH (caller)-[:CppCalls]->(callee)
-WHERE (caller.path CONTAINS '/src/' OR caller.path CONTAINS '/include/cpsCore/')
-  AND (callee.path CONTAINS '/src/' OR callee.path CONTAINS '/include/cpsCore/')
+WHERE (caller.name CONTAINS '/src/' OR caller.name CONTAINS '/include/cpsCore/')
+  AND (callee.name CONTAINS '/src/' OR callee.name CONTAINS '/include/cpsCore/')
 RETURN DISTINCT
-    caller.path       AS callerPath,
-    caller.simpleName AS callerName,
-    callee.path       AS calleePath,
-    callee.simpleName AS calleeName
+    caller.name   AS callerName,
+    caller.symbol AS callerSymbol,
+    callee.name   AS calleeName,
+    callee.symbol AS calleeSymbol
 """
 
 def load_from_neo4j(scenario: str) -> set[Element]:
@@ -73,13 +80,13 @@ def load_from_neo4j(scenario: str) -> set[Element]:
     try:
         with driver.session() as session:
             for record in session.run(CYPHER):
-                src_comp = path_to_component(record["callerPath"] or "")
-                tgt_comp = path_to_component(record["calleePath"] or "")
+                src_comp = path_to_component(record["callerName"] or "")
+                tgt_comp = path_to_component(record["calleeName"] or "")
                 if not src_comp or not tgt_comp or src_comp == tgt_comp:
                     continue
                 if src_comp not in allowed or tgt_comp not in allowed:
                     continue
-                interaction = (record["calleeName"] or "").strip()
+                interaction = (record["calleeSymbol"] or "").strip()
                 if interaction:
                     elements.add(Element(src_comp, tgt_comp, interaction))
     finally:

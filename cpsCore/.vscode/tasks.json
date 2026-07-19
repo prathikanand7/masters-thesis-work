@@ -1,0 +1,53 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Configure+Build cpsCore (vcpkg local)",
+			"type": "shell",
+			"command": "C:\\Windows\\System32\\cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"call C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\Common7\\Tools\\VsDevCmd.bat -arch=amd64 && C:\\Users\\prathikak\\Downloads\\cpsCore\\extern\\vcpkg\\downloads\\tools\\cmake-3.31.10-windows\\cmake-3.31.10-windows-x86_64\\bin\\cmake.exe -S C:\\Users\\prathikak\\Downloads\\cpsCore -B C:\\Users\\prathikak\\Downloads\\cpsCore\\bld\\release -G Ninja -DCMAKE_MAKE_PROGRAM=C:\\Users\\prathikak\\Downloads\\cpsCore\\extern\\vcpkg\\downloads\\tools\\ninja-1.13.2-windows\\ninja.exe -DCMAKE_TOOLCHAIN_FILE=C:\\Users\\prathikak\\Downloads\\cpsCore\\extern\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake && C:\\Users\\prathikak\\Downloads\\cpsCore\\extern\\vcpkg\\downloads\\tools\\cmake-3.31.10-windows\\cmake-3.31.10-windows-x86_64\\bin\\cmake.exe --build C:\\Users\\prathikak\\Downloads\\cpsCore\\bld\\release --config Release"
+			],
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Configure+Build cpsCore (WSL)",
+			"type": "shell",
+			"command": "wsl",
+			"args": [
+				"-d",
+				"Ubuntu",
+				"--",
+				"bash",
+				"-lc",
+				"cd /mnt/c/Users/prathikak/Downloads/cpsCore && cmake -S . -B bld/wsl-release -G Ninja -DCMAKE_BUILD_TYPE=Release && cmake --build bld/wsl-release -j"
+			],
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build+Run cpsCore tests (WSL)",
+			"type": "shell",
+			"command": "wsl",
+			"args": [
+				"-d",
+				"Ubuntu",
+				"--",
+				"bash",
+				"-lc",
+				"cd /mnt/c/Users/prathikak/Downloads/cpsCore && cmake --build bld/wsl-release --target tests -j && ./bld/wsl-release/tests/tests"
+			],
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "test"
+		}
+	]
+}

@@ -12,13 +12,15 @@ call-graph querying together, or to target \sysml\ as the output
 formalism.
 
 The approach builds a static call graph in \neo, including
-topology-resolved IDC pub-sub edges, and separately collects timestamped
-execution traces. The two evidence sources are kept apart and combined
-only as a set union of interaction edges when the reconstructed models
-are compared at evaluation time. Scenario-scoped Cypher queries then
-narrow the static graph, and equivalently the trace-derived sequence
-table, to a single scenario's relevant interactions, which are projected
-into \sysml\ textual notation.
+topology-resolved IDC pub-sub edges. A scenario description is first
+translated into a Cypher query that narrows the static graph to that
+scenario's relevant components, before the scenario-scoped dependency
+matrix is extracted and execution traces are collected within that same
+scope. The two evidence sources are kept apart, tagged by origin, until an
+\ac{LLM} performs agentic synthesis, judging which single-source signals
+to keep and which to discard, rather than passing an unexamined union
+straight through. The synthesised interactions are then projected into \sysml\ textual
+notation.
 
 The approach was developed and evaluated on \emph{CPSCore}, an
 open-source event-driven \Cpp\ framework, across four scenarios: three
@@ -89,19 +91,16 @@ The pipeline lets an engineer working on an event-driven \Cpp\ system
 obtain a scenario-specific \sysml\ interaction diagram through
 natural-language queries against the property graph, rather than
 manually tracing call chains, cross-referencing headers and correlating
-log output over several working days.
-
-On CPSCore, static extraction populated 2,574 ordered interactions
-across 121 components in a single Cypher query. A further query
-identified the nine caller functions across five files to trace, and
-\texttt{add-runtime-instrumentation} then instrumented them with
-\texttt{csp\_matcher}, without any manual call-graph reading. Because the
-skills query the live schema rather than hardcoded labels, switching to
-a new target requires only re-running the static extractor. The
-practitioner session suggests this transfer cost is low in practice:
-four engineers on a much larger industrial codebase used the tool
-productively within a single session, and rated the structural and
-dependency diagrams consistently useful for architectural comprehension.
+log output over several working days. \Cref{sec:utility} quantifies this
+on CPSCore (2,574 interactions extracted in a single query, nine caller
+functions instrumented automatically, without any manual call-graph
+reading); switching to a new target requires only re-running the static
+extractor, since the skills query the live schema rather than hardcoded
+labels. The practitioner session (\cref{sec:practitioner}) suggests this
+transfer cost is low in practice: four engineers on a much larger
+industrial codebase used the tool productively within a single session,
+and rated the structural and dependency diagrams consistently useful for
+architectural comprehension.
 
 \section{Contributions}
 
@@ -131,9 +130,12 @@ dependency diagrams consistently useful for architectural comprehension.
     automatically, driven by a simple find/replace specification
     (\cref{sec:csp-matcher}).
 
-  \item A \textbf{set of eleven natural-language agent skills} that run
-    the whole pipeline, from source code to \sysml\ diagram, on any
-    codebase without code changes (\cref{sec:skill-design}).
+  \item A \textbf{set of twelve natural-language agent skills} that
+    together run the whole pipeline, from source code to \sysml\ diagram,
+    on any codebase without code changes; eleven follow a fixed rule set
+    given their inputs, and one (\texttt{agentic-synthesis}) is
+    deliberately specified as \ac{LLM} judgement guidance instead
+    (\cref{sec:skill-design,sec:agentic-synthesis}).
 
   \item A \textbf{way to recover publish-subscribe wiring} that ordinary
     call-graph analysis cannot see, by matching subscription and

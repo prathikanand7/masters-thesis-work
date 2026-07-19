@@ -57,11 +57,8 @@ default \texttt{RedisNetworkLayer} maps channel identifiers to
 \texttt{RedisSubscriber}/\texttt{RedisPublisher} objects backed by
 \texttt{cpp\_redis}, wired through a \texttt{boost::signals2} slot
 (\texttt{onPacket\_.connect(slot)}) that fires when a Redis message
-arrives. A static call graph built from call sites alone therefore
-contains edges into the IDC layer but cannot reveal which component
-receives a given packet. Recovering that topology is what
-\cref{sec:macro-resolution} does, and is necessary for meaningful
-sequence diagram reconstruction.
+arrives -- the concrete instance of the call-site blind spot that
+\cref{sec:macro-resolution} resolves.
 
 \section{Stage 1: Static Analysis and Graph Population}\label{sec:static-impl}
 
@@ -71,9 +68,12 @@ CPSCore's source tree was analysed by Renaissance, which resolves the
 full \ac{AST} (template instantiations, overload candidates, macro
 expansions) and emits the property graph schema in
 \cref{tab:node-types,tab:edge-types}: 11 node labels and 11 relationship
-types, all from static analysis. Runtime traces are processed
-separately into a sequence table and combined with the static edge set
-only at evaluation time (\cref{sec:combine-scope}).
+types, all from static analysis, populating a graph of 67,104 nodes.
+Runtime traces are processed separately into a sequence table and
+combined with the static edge set only at evaluation time
+(\cref{sec:combine-scope}).
+
+\section{Stage 2: Code Graph Query}\label{sec:query-impl}
 
 \subsection{Schema Introspection Skill}
 
@@ -98,6 +98,34 @@ RETURN DISTINCT labels(s) AS fromLabels,
                 type(r)   AS relType,
                 labels(t) AS toLabels;
 \end{minted}
+
+\subsection{Scenario-Scoped Query}\label{sec:scenario-query-impl}
+
+For a given scenario, \texttt{text-to-cypher} translates the scenario
+description into a schema-aware Cypher query and \texttt{cypher-to-output}
+executes it against the live graph, returning the scenario-scoped
+subgraph consumed by Stage~3. For S1 (``Using agent skills, show me
+Synchronization calling into Aggregation and Logging''):
+
+\begin{minted}{cypher}
+// scoped to S1: Synchronization / Aggregation / Logging
+MATCH (caller)-[:CppCalls]->(callee)
+WHERE (caller.name CONTAINS '/src/Synchronization/'
+    OR caller.name CONTAINS '/include/cpsCore/Synchronization/')
+  AND (callee.name CONTAINS '/Aggregation/' OR callee.name CONTAINS '/Logging/')
+RETURN DISTINCT
+    caller.name AS callerName, caller.symbol AS callerSymbol,
+    callee.name AS calleeName, callee.symbol AS calleeSymbol
+\end{minted}
+
+Before this query runs, the running example edge
+\texttt{SynchronizedRunner.runSynchronized}~$\to$~\texttt{CPSLogger.instance}
+exists in the graph only as a raw \texttt{CppCalls} relationship among
+67,104 undifferentiated nodes, with a near-identical sibling edge to
+\texttt{CPSLogger.flush} fired from the same call site; this query is
+what carves the S1-scoped subgraph out of the rest of the graph.
+
+\section{Stage 3: Dependency Matrix Extraction}\label{sec:matrix-impl}
 
 \subsection{Interface Dependency Table}\label{sec:idt}
 
@@ -140,14 +168,16 @@ table for CPSCore.
 \end{tabularx}
 \end{table}
 
-\section{Stage 2: Sequence Dependency Table}\label{sec:seq-table}
+\subsection{Sequence Dependency Table}\label{sec:seq-table}
 
-The \texttt{get-sequence-dependency-table} skill reads the runtime trace
-log (the \texttt{[TRACE]} lines from instrumentation,
-\cref{sec:trace-impl}) and normalises it into an ordered sequence CSV.
-It is read-only with respect to the graph, preserves trace execution
-order (sorting by \texttt{EventTimestamp} where needed), and assigns a
-1-based \texttt{Sequence} number to each interaction. Row format:
+The \texttt{get-sequence-dependency-table} skill queries the \neo
+property graph for \texttt{CppCalls} edges (\cref{sec:seq-table}) and
+normalises them into an ordered sequence CSV, distinct from the real
+\texttt{[TRACE]}-derived log produced later by instrumentation
+(\cref{sec:trace-impl}). It is read-only with respect to the graph,
+assigns a synthetic, monotonically increasing \texttt{EventTimestamp}
+and a 1-based \texttt{Sequence} number to each interaction in graph
+traversal order. Row format:
 
 \begin{minted}{text}
 Sequence | EventName | ClientComponent | ClientFunction
@@ -181,7 +211,7 @@ the per-scenario dynamic traces used as C3 evidence
 (\cref{sec:trace-impl}) are, by contrast, real captures with true
 wall-clock timestamps.
 
-\section{Stage 3: Runtime Trace Collection}\label{sec:trace-impl}
+\section{Stage 4: Trace Instrumentation \& Runtime Tracing}\label{sec:trace-impl}
 
 \subsection{Probe Insertion via csp\_matcher}\label{sec:trace-probe-insertion}
 
@@ -231,14 +261,45 @@ Example events:
   Logging | CPSLogger.flush | Command | CPSLogger
 \end{minted}
 
-The full test run passed all 1,425 assertions across 61 test cases,
+The full test run passed all 1,425 assertions (\cref{sec:cpscoreintro}),
 confirming instrumentation did not alter runtime behaviour.
 
-\section{Stage 4: SysML v2 Generation}\label{sec:sysml-impl}
+\section{Stage 5: Agentic Synthesis}\label{sec:agentic-synthesis-impl}
 
-\texttt{gen\_sysml\_from\_csv.py} reads the sequence dependency table and
-renders each scenario as a \sysml \texttt{interaction} definition. The
-generated package declares shared stereotypes
+For each of S1--S4, the scenario-scoped static edges (Stage 3) and the
+scenario-scoped runtime trace (Stage 4) are given to the
+\texttt{agentic-synthesis} skill as two separately-labelled evidence
+sources, following the mechanism described in
+\cref{sec:agentic-synthesis}. On the running edge
+\texttt{SynchronizedRunner.runSynchronized}~$\to$~\texttt{CPSLogger.instance},
+the static and dynamic sources agree: the interaction (and its sibling,
+\texttt{CPSLogger.flush}) is present in both, so the agent's judgement
+reduces to relabelling an already-corroborated edge, written to
+\texttt{elements.json} and to \texttt{sequence.json} with an empty
+\texttt{note} field. This holds throughout S1: all 11 scenario-scoped
+interaction steps corroborate in both directions, so every step in
+S1's \texttt{sequence.json} carries an empty \texttt{note}. S3 and S4
+are where the agent's freedom is exercised non-trivially: S3's static
+edge set contains two call-site false positives
+(\texttt{flush}, \texttt{instance}) that the trace never corroborates
+and synthesis prunes (\cref{sec:h1-c4c2}); S4's suppressed fault-path log
+and \texttt{boost::signals2} indirect-dispatch edge each appear in only
+one evidence source, and synthesis must decide, per interaction, whether
+that is noise or a real edge the other source missed
+(\cref{sec:h1-c4c3}).
+
+\section{Stage 6: SysML v2 Generation}\label{sec:sysml-impl}
+
+For S1--S4, the \texttt{draw-sysml-sequence-model} and
+\texttt{draw-sysml-structural-model} skills read the \texttt{sequence.json}
+and \texttt{elements.json} files written by Stage 5 and render each
+scenario as a \sysml \texttt{interaction} definition, following the
+schemas in \cref{sec:sysml-generation}. The broader, whole-codebase set
+of 14 auto-generated scenarios described below is a separate, bulk
+visualisation: it is generated directly from the unscoped Stage~3 CSV
+tables, bypassing scenario scoping and agentic synthesis entirely, and
+serves to illustrate coverage across CPSCore rather than to feed the H1/H2
+evaluation. The generated package declares shared stereotypes
 (\texttt{SynchronousCall}, \texttt{ReturnMessage},
 \texttt{AsynchronousMessage}) and one \texttt{part def} per scenario. An
 excerpt from the generated \texttt{TestExecution} scenario:
@@ -332,8 +393,10 @@ dynamic evidence each miss a different interaction. S4 introduces one.
     Logging. Fan-out from \texttt{SimpleRunner.runStage} to multiple
     independent subsystems at once. The hardest case for static analysis:
     call targets resolved at runtime via template/virtual dispatch produce
-    two false-positive static edges (\texttt{flush}, \texttt{instance})
-    that C5 synthesis eliminates. \emph{Reference interactions:} 3
+    two false-positive static edges (\texttt{flush}, \texttt{instance});
+    agentic synthesis (C5) corrects one (\texttt{instance}) but retains
+    \texttt{flush} as a disclosed residual imprecision
+    (\cref{sec:h1-c5}). \emph{Reference interactions:} 3
     (getAll, stream, convert).
 
   \item[S4: Stage event pub-sub bridge (constructed).]
@@ -359,8 +422,15 @@ dynamic trace, like S1--S3's, is a real \texttt{csp\_matcher} capture from
 running the accompanying Catch2 test under instrumentation; none of
 the S1--S4 traces are synthetic. It is reported and stratified
 separately from S1--S3 throughout \cref{sec:h1} for this reason, never
-folded silently into the happy-path numbers. The full \sysml reference
-diagrams for S1--S3 are reproduced in \cref{sec:appendix-groundtruth}.
+folded silently into the happy-path numbers.
+
+Each scenario's ground truth was first drawn by hand from direct source
+inspection: the relevant directories, classes and call sites, together
+with the test case that exercises them, and only then transcribed into
+the \sysml textual reference diagrams used for scoring. \Cref{sec:h1-corrections}
+explains why this independence from the pipeline's own output mattered.
+Both forms, for all four scenarios, are reproduced in
+\cref{sec:appendix-groundtruth}.
 
 \subsection{Five-Condition Design (C1--C5)}\label{sec:conditions}
 
@@ -374,17 +444,24 @@ Each scenario was reconstructed independently under five conditions:
     \texttt{CppCalls} edges alone (\cref{sec:seq-table}).
   \item[C3: Dynamic-only.] The real runtime trace from \texttt{csp\_matcher}
     instrumentation alone (\cref{sec:trace-impl}).
-  \item[C4: Static + Dynamic (combined).] The union of the static and
-    trace artefacts, with no scenario-scoped querying applied.
-  \item[C5: Full pipeline.] C4 followed by scenario-scoped querying from
-    the scenario's declared components, the complete approach
-    proposed in this thesis.
+  \item[C4: Static + Dynamic (combined).] The raw, scenario-scoped union
+    of the static and trace artefacts (both already scoped to the
+    scenario's declared components at Stage~2, \cref{sec:query-impl}),
+    tagged by source but otherwise unpruned.
+  \item[C5: Full pipeline.] C4 passed through agentic synthesis
+    (\cref{sec:agentic-synthesis,sec:agentic-synthesis-impl}), which
+    prunes over-approximated static edges and adjudicates single-source
+    interactions by corroboration, suppression and indirect dispatch;
+    the complete approach proposed in this thesis.
 \end{description}
 
 C1--C4 test \hyperref[sec:h1]{H1} (whether combining sources improves
-reconstruction accuracy over any single source); C5 versus C4 tests
-\hyperref[sec:h2]{H2} (whether code-graph-guided filtering improves
-scenario focus over the unfiltered combination).
+reconstruction accuracy over any single source); C4 versus C5 shows what
+agentic synthesis contributes on top of the raw union, namely pruning
+false positives without losing true positives (\cref{sec:h1-results}).
+\hyperref[sec:h2]{H2} is tested separately, by the guided-versus-full
+instrumentation comparison below (\cref{sec:guided-vs-full}), not by any
+pair of the five conditions above.
 
 \subsection{Guided versus Full Instrumentation}\label{sec:guided-vs-full}
 
@@ -421,7 +498,7 @@ Unique client$\to$server function pairs (static) & 2,169 \\
 Distinct components in sequence table        & 121 \\
 Instrumentation targets (functions)          & 9 \\
 Source files instrumented                    & 5 \\
-Real trace events (csp\_matcher)             & 27 \\
+Total trace events (csp\_matcher)             & 27 \\
 Unique client$\to$server pairs (trace)        & 26 \\
 SysML v2 scenarios generated                 & 14 \\
 Test assertions passing post-instrumentation & 1,425 / 1,425 \\

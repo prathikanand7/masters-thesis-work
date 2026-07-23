@@ -169,15 +169,12 @@ reachability filter, not the instrumentation strategy: replacing guided
 with full-trace instrumentation while keeping the filter (C6~vs.~C5)
 leaves every score unchanged.
 
-The mechanism is straightforward. \texttt{trace\_slice.txt} probes fire
-whenever an instrumented function is called --- including during
-test-fixture setup before the scenario logic starts. Without the filter
-(C4), \texttt{Aggregator.add}~$\to$~\texttt{RAIILogStream.stream} events
-appear for S1a and S1b because those sites fire during setup. The
-reachability filter keeps only events whose caller is reachable from the
-scenario entry point via \texttt{CppCalls*0..8}: setup-phase callers are
-not reachable, so their events are dropped. This eliminates C4's two
-remaining false positives on S1a and S1b, yielding perfect scores.
+C4's two false positives on S1a and S1b are setup-phase events
+(\texttt{Aggregator.add}~$\to$~\texttt{RAIILogStream.stream}) that fire
+before the scenario entry point; their callers are not in the
+Phase~1 reachable function set, so the reachability filter drops them
+(\cref{sec:evidence-synthesis}), eliminating C4's remaining false
+positives and yielding perfect scores.
 
 S2 and S3 have no setup-phase noise in \texttt{trace\_slice.txt}, so C4
 already achieves F1~$=$~1.000 there; C5 matches it. The filter adds

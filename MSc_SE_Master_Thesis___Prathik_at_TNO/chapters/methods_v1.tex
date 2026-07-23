@@ -174,11 +174,13 @@ and the trace tends to under-count.
 
 \section{Agent Skill Architecture}\label{sec:skill-design}
 
-The pipeline is a set of twelve composable agent skills rather than a
-monolithic script. Each is defined by a declarative specification (name,
-description, input/output contracts, execution instructions) and
-invocable via natural-language prompt. This was chosen over a monolithic
-implementation for three reasons:
+The four-phase pipeline is also exposed as twelve composable agent
+skills invocable via natural-language prompt, providing a
+practitioner-facing interactive interface for applying the pipeline to
+a new codebase. The H1, H2, and H3 evaluations run the pipeline
+through the underlying Python scripts directly, not through the skill
+layer. The skill layer was chosen over a monolithic implementation for
+three reasons:
 
 \begin{itemize}
   \item \textbf{Codebase agnosticism.} Skills query the graph schema
@@ -197,8 +199,11 @@ implementation for three reasons:
 \end{itemize}
 
 \Cref{tab:skills} summarises all twelve skills, their inputs, outputs,
-and role in the pipeline; every skill follows a fixed rule set given its
-inputs (\cref{sec:pipeline-overview,sec:evidence-synthesis}).
+and role in the pipeline. Deterministic skills (instrumentation,
+synthesis, and diagram generation) follow a fixed rule set given their
+inputs; query-generation skills (\texttt{text-to-cypher},
+\texttt{cypher-to-output}, \texttt{get-cypher}) use an LLM and may
+produce varied output for the same input.
 
 \begin{table}[htb]
 \centering

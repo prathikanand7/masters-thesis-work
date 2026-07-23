@@ -137,44 +137,12 @@ what carves the S1a/S1b-scoped subgraph out of the rest of the graph.
 
 \subsection{Dependency Table Extraction}\label{sec:idt}
 
-The \texttt{get-interface-dependency-table} skill aggregates the 11
-static relationship types into a compact table characterising the
-codebase's structural connectivity. \Cref{tab:idt} reproduces the full
-table for CPSCore.
-
-\begin{table}[htb]
-\centering
-\caption{Interface dependency table for CPSCore: all 11 static relationship
-  types with their permitted source and target node labels.}
-\label{tab:idt}
-\small
-\begin{tabularx}{\textwidth}{@{} >{\ttfamily}p{0.3\textwidth} p{0.33\textwidth}>{\raggedright\arraybackslash}X @{}}
-\toprule
-\textbf{Interface} & \textbf{Server (target)} & \textbf{Client (source)} \\
-\midrule
-\texttt{CppAlias}       & \texttt{CppDeclaration} & \texttt{CppDeclaration} \\
-\texttt{CppCalls}       & \texttt{CppFunctionDeclaration; CppFunctionDefinition}
-                        & \texttt{CppFunctionDefinition} \\
-\texttt{CppContains}    & \texttt{CppDeclaration; CppFunctionDecl.; CppFunctionDef.}
-                        & \texttt{CppDeclaration} \\
-\texttt{CppImplements}  & \texttt{CppFunctionDeclaration; CppFunctionDefinition}
-                        & \texttt{CppFunctionDefinition} \\
-\texttt{CppInherits}    & \texttt{CppDeclaration; CppForwardDeclaration}
-                        & \texttt{CppDeclaration} \\
-\texttt{CppUses}        & \texttt{CppDecl.; CppForwardDecl.; CppFunctionDecl.;} \newline
-                          \texttt{CppFunctionDef.; CppMacroDef.}
-                        & \texttt{HeaderFile; OtherFile; SourceFile} \\
-\texttt{Include}        & \texttt{HeaderFile; OtherFile}
-                        & \texttt{HeaderFile; OtherFile; SourceFile} \\
-\texttt{Name}           & \texttt{Symbol}
-                        & \texttt{Cpp*} nodes \\
-\texttt{ParentFolder}   & \texttt{Folder}
-                        & File and target nodes \\
-\texttt{ProjectCompilesNested} & File nodes & \texttt{ProjectCOrCpp} \\
-\texttt{Source}         & File nodes & \texttt{Cpp*} nodes \\
-\bottomrule
-\end{tabularx}
-\end{table}
+The \texttt{get-interface-dependency-table} skill queries Neo4j for all
+11 relationship types and their permitted node-label pairs, producing a
+compact schema summary used to ground the \texttt{text-to-cypher} skill
+so that generated Cypher queries reference only valid edge types. The
+resulting architectural dependency diagram was also presented to the
+expert panel in the H3 evaluation (\cref{sec:h3-results}).
 
 \section{Phase 2 --- Guided Instrumentation}\label{sec:trace-impl}
 
@@ -231,26 +199,19 @@ confirming instrumentation did not alter runtime behaviour.
 
 \section{Phase 3 --- Neo4j-Based Reachability Filter}\label{sec:synthesis-impl}
 
-For C5, the synthesis step applies a Neo4j-based reachability filter to
-\texttt{trace\_slice.txt}: only events whose \texttt{ClientFunction} is
-reachable from the scenario entry points via \texttt{CppCalls*0..8}
-traversal are retained. This removes setup-phase boilerplate (e.g.\
-\texttt{Aggregator.add} firing before any runner starts) that the
-guided instrumentation sites fire unconditionally.
-For C6, the same filter is applied to \texttt{full\_trace.txt}.
-C4 reads \texttt{trace\_slice.txt} without the reachability filter.
-C7--C9 pass C2, C3, and C4 candidate lists to a two-prompt \ac{LLM}
-chain.
+Phase~3 applies the Neo4j-based reachability filter
+(\cref{sec:evidence-synthesis}) to each condition's trace input:
+C5 filters \texttt{trace\_slice.txt}, C6 filters
+\texttt{full\_trace.txt}, C4 reads \texttt{trace\_slice.txt} without
+the filter, and C7--C9 pass C2, C3, and C4 candidate lists to a
+two-prompt \ac{LLM} chain.
 
-On the running edge
-\texttt{SynchronizedRunner.runSynchronized}~$\to$~\texttt{Aggregator.getAll},
-the guided trace (\texttt{trace\_slice.txt}) captures this interaction
-because its probe site fires during the scenario-entry-point call.
-For S1a, all 8 sequence events and both interaction edges in the ground
-truth are present in \texttt{trace\_slice.txt}; for S1b, all 5 sequence
-events and 3 interaction edges are captured (8 in S1a, 5 in S1b).
-After the reachability filter (C5), setup-phase events are removed and
-only scenario-logic events remain, yielding perfect F1 on both scenarios.
+For CPSCore, \texttt{trace\_slice.txt} contains 8 sequence events and
+both ground-truth interaction edges for S1a, and 5 sequence events and
+3 interaction edges for S1b. Setup-phase events
+(\texttt{Aggregator.add} firing before either runner starts) are
+present in both traces and are removed by the C5 filter; S2 and S3
+contain no setup-phase noise.
 
 \section{Phase 4 --- SysML v2 Generation}\label{sec:sysml-impl}
 

@@ -11,17 +11,10 @@ to address publish-subscribe topology recovery and scenario-scoped
 call-graph querying together, or to target \sysml\ as the output
 formalism.
 
-The approach builds a static call graph in \neo, including
-topology-resolved IDC pub-sub edges. A scenario description is first
-translated into a Cypher query that narrows the static graph to that
-scenario's relevant components, producing both a static dependency table
-and a reachable function set. Guided instrumentation then captures
-\texttt{trace\_slice.txt} at the architecture-level call sites. A
-Neo4j-based reachability filter (Phase~3, condition~C5) scopes the trace to
-events whose caller is in the reachable function set, removing
-setup-phase boilerplate and writing \texttt{interactions.json} and
-\texttt{sequence.json}. The resulting interactions are then projected
-into \sysml\ textual notation.
+The approach (\cref{ch:methods}) combines a static Neo4j call graph
+with a scenario-scoped runtime trace, filters the trace through a
+Neo4j-based reachability filter (condition~C5), and projects the
+result into \sysml\ interaction diagrams.
 
 The approach was developed and evaluated on \emph{CPSCore}, an
 open-source event-driven \Cpp\ framework, across four found-in-the-wild

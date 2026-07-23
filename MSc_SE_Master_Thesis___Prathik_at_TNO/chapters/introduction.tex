@@ -34,6 +34,13 @@ proposed changes, which is why industry needs accurate,
 scenario-specific interaction models reflecting how a system actually
 behaves under concrete execution scenarios \cite{egyed:scenario}.
 
+A concrete illustration of this problem surfaced during this project: a
+real, previously-resolved defect in a large industrial \Cpp\ system
+(\cref{sec:scenario-exercise}). A stale proxy object was never freed
+because a reset call was missing from the connection-handling code, and
+the system silently stopped delivering change-notification events after
+a service restart.
+
 The \ac{GDI} project at \ac{TNO}-\ac{ESI} addresses this problem using
 graph-based program analysis to support automatic extraction and
 maintenance of software architecture models. This thesis contributes a
@@ -112,20 +119,15 @@ H3 experiments on the CPSCore case study (\cref{ch:experiments,ch:analysis}).
 \section{Approach}
 
 The approach consists of five stages, implemented as a chain of
-composable agent skills and tools (\cref{sec:skill-design}): a
-preparatory static-analysis tool populates the graph once per codebase,
-after which natural-language-invocable skills query, instrument and
-render from it. First, \textbf{static extraction}: a call graph is
-extracted from the target system's \Cpp\ source by \emph{Renaissance}, a
-semantic-level \Cpp\ analyser (\cref{sec:static-analysis}), and stored in
-a \neo \acl{GDB} using the schema in \cref{sec:pg-schema}; for pub-sub
-systems routing messages through callback registration, such as
-CPSCore's IDC layer, this stage additionally resolves the implicit
-routing topology (\cref{sec:macro-resolution}). Second, \textbf{code
-graph query} (the \texttt{text-to-cypher} skill): a scenario description
-is translated into a Cypher query and executed against the static
-property graph, retaining only the interactions whose caller and callee
-belong to the scenario's declared components. Third,
+composable agent skills. First, \textbf{static extraction}: a call graph
+is extracted from the target system's \Cpp\ source and stored in a \neo
+\acl{GDB} using the schema in \cref{sec:pg-schema}; for pub-sub systems
+routing messages through callback registration, such as CPSCore's IDC
+layer, this stage additionally resolves the implicit routing topology
+(\cref{sec:macro-resolution}). Second, \textbf{code graph query}: a
+scenario description is translated into a Cypher query and executed
+against the static property graph, retaining only the interactions whose
+caller and callee belong to the scenario's declared components. Third,
 \textbf{dependency matrix extraction}: the scenario-scoped subgraph is
 flattened into an ordered table of static call edges. Fourth,
 \textbf{trace instrumentation and runtime tracing}: probes are injected

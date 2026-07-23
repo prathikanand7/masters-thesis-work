@@ -27,9 +27,7 @@ stored in a \neo property graph, contains only trace anchors, preserving
 traceability without embedding large execution traces. The scenario-scoped
 Cypher queries isolated the subset of static interactions associated with
 a given scenario, where relevance was established through trace analysis
-and corresponding static call-graph anchors. The pipeline was implemented
-as twelve composable, natural-language-invocable agent skills and
-evaluated on \emph{CPSCore}, an open-source event-driven framework, across
+and corresponding static call-graph anchors. The pipeline was implemented using tools that, if required, can be invoked via twelve composable, natural-language-invocable agent skills. The tool was evaluated on \emph{CPSCore}, an open-source event-driven framework, across
 four found-in-the-wild scenarios drawn from its existing test suite. Each
 scenario was reconstructed under nine conditions (C1--C9), five of them
 fully deterministic and reproducible (C2--C6): an \ac{LLM}-only baseline

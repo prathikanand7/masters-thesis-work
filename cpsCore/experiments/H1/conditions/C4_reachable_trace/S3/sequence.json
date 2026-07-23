@@ -1,0 +1,80 @@
+[
+  {
+    "order": 9,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 16,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "order": 22,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 24,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "order": 26,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 39,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 41,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 42,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 43,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 44,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 45,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 46,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 47,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  }
+]

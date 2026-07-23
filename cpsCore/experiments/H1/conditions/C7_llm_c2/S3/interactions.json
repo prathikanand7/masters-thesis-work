@@ -1,0 +1,32 @@
+[
+  {
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "source": "Aggregation",
+    "target": "Synchronization",
+    "interaction": "AggregatableRunner.notifyAggregationOnUpdate"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "Aggregator.getAll"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Utilities",
+    "interaction": "MultiThreadingScheduler.run"
+  },
+  {
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush"
+  },
+  {
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  }
+]

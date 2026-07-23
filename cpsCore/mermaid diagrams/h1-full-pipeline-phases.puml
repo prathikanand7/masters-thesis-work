@@ -1,0 +1,87 @@
+@startuml h1-full-pipeline-phases
+skinparam backgroundColor transparent
+skinparam defaultFontName Arial
+skinparam ArrowColor #444444
+skinparam rectangleFontSize 12
+
+skinparam rectangle<<tool>> {
+    BackgroundColor #D6EAF8
+    BorderColor #2980B9
+    FontColor #1A5276
+}
+skinparam rectangle<<artifact>> {
+    BackgroundColor #FDFEFE
+    BorderColor #888888
+    FontStyle italic
+}
+skinparam rectangle<<query>> {
+    BackgroundColor #FEF9E7
+    BorderColor #F39C12
+    FontColor #7D6608
+}
+skinparam rectangle<<sysml>> {
+    BackgroundColor #FDFEFE
+    BorderColor #888888
+    FontStyle italic
+}
+
+top to bottom direction
+
+rectangle "C++ source" <<artifact>> as CPP
+rectangle "C++ code snippets" <<artifact>> as SRC
+
+' ── Phase 1: Renaissance ─────────────────────────────────────────────────
+package "Phase 1 — Static Analysis (Renaissance)" #FEF9E7 {
+    rectangle "Renaissance" <<tool>> as REN
+    database "Neo4j\ncode graph" as NEO
+    rectangle "Cypher: global\ncross-component CppCalls" <<query>> as CYPHER
+    rectangle "Cypher: scenario-scoped\nCppCalls* 1..6 hops from entry" <<query>> as TRAV
+}
+    rectangle "Static interactions" <<artifact>> as C2OUT
+
+' ── Phase 2: Guided Instrumentation ──────────────────────────────────────
+package "Phase 2 — Guided Instrumentation (clang-exp)" #E8F8F5 {
+    rectangle "Guided instrumentation\n(clang-exp)" <<tool>> as CLANGEXP
+}
+    rectangle "Guided trace" <<artifact>> as SLICE
+
+' ── Phase 3: LLM Synthesis ───────────────────────────────────────────────
+package "Phase 3 — LLM Synthesis" #FDF2F8 {
+    rectangle "Union and tagging" <<tool>> as TAG
+    rectangle "LLM synthesis\n(Azure OpenAI)" <<tool>> as LLM
+    }
+rectangle "interactions.json" <<artifact>> as INTR
+rectangle "sequence.json" <<artifact>> as SEQ
+
+' ── Phase 4: SysML v2 Generation ─────────────────────────────────────────
+package "Phase 4 — SysML v2 \nGeneration" #EBF5FB {
+    rectangle "gen_sysml.py" <<tool>> as GENSYSML
+  }
+rectangle "interactions.sysml" <<sysml>> as ISYSML
+rectangle "sequence.sysml" <<sysml>> as SSYSML
+rectangle "views.sysml" <<sysml>> as VSYSML
+
+' ── Arrows ────────────────────────────────────────────────────────────────
+CPP -right-> REN
+REN -right-> NEO
+NEO -right-> CYPHER : "all arch pairs"
+NEO -down-> TRAV : "scenario scoped"
+TRAV -right-> C2OUT
+
+CYPHER -right-> CLANGEXP
+CLANGEXP -right-> SLICE
+
+C2OUT -left-> TAG
+SLICE -right-> TAG
+TAG -right-> LLM
+SRC -down-> LLM
+LLM -right-> INTR
+LLM -down-> SEQ
+
+INTR -right-> GENSYSML
+SEQ -down-> GENSYSML
+GENSYSML -down-> ISYSML
+GENSYSML -right-> SSYSML
+GENSYSML -down-> VSYSML
+
+@enduml

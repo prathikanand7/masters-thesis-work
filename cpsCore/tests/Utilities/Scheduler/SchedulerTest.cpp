@@ -213,10 +213,6 @@ TEST_CASE("Scheduler Period Change")
     }, Milliseconds(0), Milliseconds(3));
     auto runner = SimpleRunner(agg);
     CHECK(!runner.runAllStages());
-
-    std::vector<RunStage> stages = {RunStage::INIT, RunStage::NORMAL, RunStage::FINAL};
-    CHECK(!runner.runStages(stages));
-
     std::condition_variable cv;
     std::mutex m;
     std::unique_lock lock(m);

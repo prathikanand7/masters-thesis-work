@@ -4,35 +4,17 @@
  * See include/cpsCore/Aggregation/StageEventListener.h for design rationale.
  */
 
+#ifdef __linux__
+#  include "/mnt/c/Code/clang-exp/examples/cpscore_tracing/csp_trace.h"
+#else
+#  include "csp_trace.h"
+#endif
 #include "cpsCore/Aggregation/StageEventListener.h"
 #include "cpsCore/Synchronization/StageEventBridge.h"
 #include "cpsCore/Logging/CPSLogger.h"
 
 #include <functional>
 
-// --- TEMPORARY H1/S4 trace instrumentation --------------------------------
-// See src/Synchronization/StageEventBridge.cpp for rationale. This edge
-// (signal -> slot delivery) has no suppression mechanism, so it is traced
-// unconditionally whenever the slot actually executes.
-#include <chrono>
-#include <cstdio>
-namespace
-{
-std::string
-s4TraceTimestampListener()
-{
-	using namespace std::chrono;
-	auto now = system_clock::now();
-	auto us  = duration_cast<microseconds>(now.time_since_epoch()).count() % 1000000;
-	std::time_t t = system_clock::to_time_t(now);
-	char buf[32];
-	std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", std::gmtime(&t));
-	char out[48];
-	std::snprintf(out, sizeof(out), "%s.%06lldZ", buf, (long long) us);
-	return out;
-}
-}
-// --- end temporary instrumentation header ---------------------------------
 
 void
 StageEventListener::attachTo(StageEventBridge& bridge)
@@ -45,9 +27,5 @@ void
 StageEventListener::onStageEvent(RunStage stage)
 {
 	lastStage_ = stage;
-	std::fprintf(stderr, "[S4TRACE]%s|StageEventListener.onStageEvent|Synchronization|"
-				 "StageEventBridge.publishStage|Aggregation|StageEventListener.onStageEvent|Command|StageEventListener\n",
-				 s4TraceTimestampListener().c_str());
-	CPSLOG_DEBUG << "StageEventListener received stage " << EnumMap<RunStage>::convert(stage);
+	CPSLOG_DEBUG << "StageEventListener received stage " << (std::fprintf(stderr, "[TRACE] %s, onStageEvent, %s, EnumMap.convert, Utilities, StageEventListener, %s\n", cspTraceTimestamp().c_str(), cspTraceCallerComponent(__FILE__).c_str(), cspTraceLocation(__FILE__, __LINE__).c_str()), EnumMap<RunStage>::convert(stage));
 }
-

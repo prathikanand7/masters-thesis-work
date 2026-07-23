@@ -1,0 +1,12 @@
+[
+  {
+    "source": "Configuration",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "source": "Utilities",
+    "target": "Utilities",
+    "interaction": "getInstance"
+  }
+]

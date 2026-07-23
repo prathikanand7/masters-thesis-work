@@ -1,0 +1,23 @@
+[
+  {
+    "order": 0,
+    "source": "Aggregation",
+    "target": "Synchronization",
+    "interaction": "StageEventBridge.subscribeStage",
+    "note": "StageEventListener.attachTo calls bridge.subscribeStage to connect its slot"
+  },
+  {
+    "order": 1,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "StageEventListener.onStageEvent",
+    "note": "bridge.publishStage(RunStage::NORMAL) emits the signal which invokes the listener's onStageEvent"
+  },
+  {
+    "order": 2,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "Inside StageEventListener.onStageEvent, CPSLOG_DEBUG streams the received stage message"
+  }
+]

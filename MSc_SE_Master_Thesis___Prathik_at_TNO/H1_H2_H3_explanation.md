@@ -17,7 +17,7 @@ The combination of both produces models that are both **scenario-specific** (fro
 
 ### The Target System: CPSCore
 
-CPSCore is an open-source modular C++ framework for cyber-physical systems (~13,000 LOC across 154 files) with 5 modules: **Aggregation**, **Configuration**, **Synchronization**, **Logging**, and **Utilities**. It uses event-driven pub/sub via `boost::signals2` and Redis, making many interactions invisible to naive static call-graph extraction.
+CPSCore is an open-source modular C++ framework for cyber-physical systems (~13,000 LOC across 154 files) with 5 modules: **Aggregation**, **Configuration**, **Synchronization**, **Logging**, and **Utilities**. It uses event-driven pub/sub via `boost::signals2` and Redis, making many interactions invisible to raw static call-graph extraction.
 
 **Key structural property:** CPSCore uses template-based static polymorphism extensively (~470 template occurrences) and declares only 32 virtual method signatures, all residing within a single module (Utilities: `INetworkLayer`, `IScheduler`, etc.) or at configuration boundaries. **No cross-module call is dispatched through a virtual table** — inter-module calls resolve statically through concrete class references or `boost::signals2` connections. This means the static call graph is reachability-complete with respect to the trace on the found-in-the-wild scenarios, which directly explains why C4 = C2 on the happy-path scenarios (S1–S3) in the H1 results (the constructed S4 deliberately breaks this, giving C4 > C2).
 

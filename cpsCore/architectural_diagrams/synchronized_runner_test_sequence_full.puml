@@ -1,0 +1,124 @@
+@startuml
+title Synchronized Runner Test — full call sequence
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+participant "TEST_CASE" as TEST
+participant "SynchronizedRunnerMaster" as MASTER
+participant "Synchronizer\n(shared memory)" as SHM
+participant "SynchronizedRunner1\n(thread 1)" as R1
+participant "SynchronizedRunner2\n(thread 2)" as R2
+participant "Aggregator1" as A1
+participant "Aggregator2" as A2
+participant "RunnableTestClass\n(runObj1/2)" as OBJ12
+participant "RunnableTestClass\n(runObj3/4)" as OBJ34
+
+== Setup ==
+
+TEST -> A1 : add(runObj1)
+TEST -> A1 : add(runObj2)
+TEST -> A2 : add(runObj3)
+TEST -> A2 : add(runObj4)
+
+TEST -> MASTER : SynchronizedRunnerMaster(numOfRunners=2)
+activate MASTER
+MASTER -> SHM : create_only("sync_run")\n+ truncate(sizeof(Synchronizer))
+note right of SHM : runStage = SYNCHRONIZE\nfinishedStage semaphore = 0
+deactivate MASTER
+
+TEST -> R1 : new SynchronizedRunner()
+R1 -> SHM : open_only("sync_run", read_write)
+
+TEST -> R2 : new SynchronizedRunner()
+R2 -> SHM : open_only("sync_run", read_write)
+
+== Threads start (async) ==
+
+TEST ->> R1 : [thread 1] runSynchronized(agg1)
+activate R1
+R1 -> A1 : getAll<IRunnableObject>()
+A1 --> R1 : [runObj1, runObj2]
+R1 -> SHM : lock(runStageMutex)
+note right of R1 : runStage == SYNCHRONIZE == lastRunStage\n→ wait on runStageChanged
+
+TEST ->> R2 : [thread 2] runSynchronized(agg2)
+activate R2
+R2 -> A2 : getAll<IRunnableObject>()
+A2 --> R2 : [runObj3, runObj4]
+R2 -> SHM : lock(runStageMutex)
+note right of R2 : runStage == SYNCHRONIZE == lastRunStage\n→ wait on runStageChanged
+
+== Stage INIT ==
+
+TEST -> MASTER : runStage(INIT)
+activate MASTER
+MASTER -> SHM : lock(runStageMutex)\nrunStage = INIT\nnotify_all()
+note right of SHM : wakes up R1 and R2
+
+SHM -->> R1 : runStageChanged (woken up)
+R1 -> SHM : unlock, read runStage = INIT
+R1 -> OBJ12 : run(INIT)
+OBJ12 --> R1 : lastRunStage = INIT, return false
+R1 -> SHM : finishedStage.post()
+
+SHM -->> R2 : runStageChanged (woken up)
+R2 -> SHM : unlock, read runStage = INIT
+R2 -> OBJ34 : run(INIT)
+OBJ34 --> R2 : lastRunStage = INIT, return false
+R2 -> SHM : finishedStage.post()
+
+MASTER -> SHM : finishedStage.wait() [x2 - one per runner]
+MASTER --> TEST : return false (no failure)
+deactivate MASTER
+
+== Stage NORMAL ==
+
+TEST -> MASTER : runStage(NORMAL)
+activate MASTER
+MASTER -> SHM : runStage = NORMAL\nnotify_all()
+
+SHM -->> R1 : woken up
+R1 -> OBJ12 : run(NORMAL)
+OBJ12 --> R1 : return false
+R1 -> SHM : finishedStage.post()
+
+SHM -->> R2 : woken up
+R2 -> OBJ34 : run(NORMAL)
+OBJ34 --> R2 : return false
+R2 -> SHM : finishedStage.post()
+
+MASTER -> SHM : finishedStage.wait() [x2]
+MASTER --> TEST : return false
+deactivate MASTER
+
+== Stage FINAL ==
+
+TEST -> MASTER : runStage(FINAL)
+activate MASTER
+MASTER -> SHM : runStage = FINAL\nnotify_all()
+
+SHM -->> R1 : woken up
+R1 -> OBJ12 : run(FINAL)
+OBJ12 --> R1 : return false
+R1 -> SHM : finishedStage.post()
+note right of R1 : lastRunStage == FINAL\n→ exits while loop → returns false
+deactivate R1
+
+SHM -->> R2 : woken up
+R2 -> OBJ34 : run(FINAL)
+OBJ34 --> R2 : return false
+R2 -> SHM : finishedStage.post()
+deactivate R2
+
+MASTER -> SHM : finishedStage.wait() [x2]
+MASTER --> TEST : return false
+deactivate MASTER
+
+== Teardown ==
+
+TEST -> R1 : thread1.join()
+TEST -> R2 : thread2.join()
+TEST -> MASTER : ~SynchronizedRunnerMaster()\ncleanUp() removes "sync_run"
+
+@enduml

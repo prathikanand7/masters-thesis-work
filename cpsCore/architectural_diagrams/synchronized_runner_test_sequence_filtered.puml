@@ -1,0 +1,77 @@
+@startuml
+title (filtered — only package-level calls from cpsCore_packages_annotated.puml)
+
+actor "Test" as TEST
+participant "Synchronization" as Synchronization
+participant "Aggregation" as Aggregation
+
+
+
+
+== Setup ==
+
+TEST -> Aggregation : add(runObj1)
+TEST -> Aggregation : add(runObj2)
+TEST -> Aggregation : add(runObj3)
+TEST -> Aggregation : add(runObj4)
+
+TEST -> Synchronization : SynchronizedRunnerMaster(numOfRunners=2)
+activate Synchronization
+deactivate Synchronization
+
+TEST -> Synchronization : new SynchronizedRunner()
+
+TEST -> Synchronization : new SynchronizedRunner()
+
+== Threads start (async) ==
+
+TEST ->> Synchronization : [thread 1] runSynchronized(agg1)
+activate Synchronization
+Synchronization -> Aggregation : getAll<IRunnableObject>()
+note right of Synchronization : runStage == SYNCHRONIZE == lastRunStage\n→ wait on runStageChanged
+
+TEST ->> Synchronization : [thread 2] runSynchronized(agg2)
+activate Synchronization
+Synchronization -> Aggregation : getAll<IRunnableObject>()
+note right of Synchronization : runStage == SYNCHRONIZE == lastRunStage\n→ wait on runStageChanged
+
+== Stage INIT ==
+
+TEST -> Synchronization : runStage(INIT)
+activate Synchronization
+
+
+
+Synchronization --> TEST : return false (no failure)
+deactivate Synchronization
+
+== Stage NORMAL ==
+
+TEST -> Synchronization : runStage(NORMAL)
+activate Synchronization
+
+
+
+Synchronization --> TEST : return false
+deactivate Synchronization
+
+== Stage FINAL ==
+
+TEST -> Synchronization : runStage(FINAL)
+activate Synchronization
+
+note right of Synchronization : lastRunStage == FINAL\n→ exits while loop → returns false
+deactivate Synchronization
+
+deactivate Synchronization
+
+Synchronization --> TEST : return false
+deactivate Synchronization
+
+== Teardown ==
+
+TEST -> Synchronization : thread1.join()
+TEST -> Synchronization : thread2.join()
+TEST -> Synchronization : ~SynchronizedRunnerMaster()\ncleanUp() removes "sync_run"
+
+@enduml

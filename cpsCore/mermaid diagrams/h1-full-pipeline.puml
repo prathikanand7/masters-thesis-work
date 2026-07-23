@@ -1,0 +1,61 @@
+@startuml h1-full-pipeline
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ArrowColor #444444
+skinparam rectangleFontSize 12
+
+skinparam rectangle<<tool>> {
+    BackgroundColor #D6EAF8
+    BorderColor #2980B9
+    FontColor #1A5276
+}
+skinparam rectangle<<artifact>> {
+    BackgroundColor #FDFEFE
+    BorderColor #888888
+    FontStyle italic
+}
+skinparam rectangle<<query>> {
+    BackgroundColor #FEF9E7
+    BorderColor #F39C12
+    FontColor #7D6608
+}
+
+top to bottom direction
+
+rectangle "C++ source" <<artifact>> as CPP
+rectangle "Renaissance" <<tool>> as REN
+
+database "Neo4j\ncode graph" as NEO
+rectangle "Cypher: global\ncross-component CppCalls" <<query>> as CYPHER
+rectangle "Cypher: scenario-scoped\nCppCalls* 1..6 hops from entry" <<query>> as TRAV
+
+rectangle "Static interactions" <<artifact>> as C2OUT
+
+rectangle "Guided instrumentation\n(clang-renaissance)" <<tool>> as CLANGEXP
+rectangle "Guided trace" <<artifact>> as SLICE
+
+rectangle "Union and tagging\nboth/static-only/dynamic-only" <<tool>> as TAG
+rectangle "C++ code snippets" <<artifact>> as SRC
+rectangle "LLM synthesis" <<tool>> as LLM
+rectangle "Interactions" <<artifact>> as INTR
+rectangle "Sequence" <<artifact>> as SEQ
+
+CPP -right-> REN
+REN -right-> NEO
+NEO -down-> CYPHER: "all arch pairs"
+NEO -down-> TRAV : "scenario scoped"
+
+TRAV -down-> C2OUT
+
+TAG -down-> LLM
+SRC -right-> LLM
+LLM --> INTR
+LLM --> SEQ
+
+CYPHER -down-> CLANGEXP 
+CLANGEXP -right-> SLICE
+
+SLICE -down-> TAG
+C2OUT -down-> TAG
+
+@enduml

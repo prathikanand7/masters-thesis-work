@@ -1,0 +1,57 @@
+@startuml gt-derivation-simple
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ArrowColor #444444
+skinparam rectangleFontSize 12
+skinparam noteFontSize 11
+
+skinparam rectangle<<tool>> {
+    BackgroundColor #D6EAF8
+    BorderColor #2980B9
+    FontColor #1A5276
+}
+skinparam rectangle<<artifact>> {
+    BackgroundColor #FDFEFE
+    BorderColor #888888
+    FontStyle italic
+}
+skinparam rectangle<<config>> {
+    BackgroundColor #F9EBEA
+    BorderColor #C0392B
+    FontColor #641E16
+    FontStyle italic
+}
+skinparam rectangle<<python>> {
+    BackgroundColor #D5F5E3
+    BorderColor #1E8449
+    FontColor #1A5276
+}
+
+top to bottom direction
+
+    rectangle "C++ source" <<artifact>> as CPP
+    rectangle "Renaissance\n(+ clang-exp)" <<tool>> as REN
+    actor "Architect" as Human
+    rectangle "Excalidraw diagrams" <<artifact>> as EXCAL
+    rectangle "arch_filters.py\n(SCENARIO_ENTRY)" <<config>> as CONFIG
+
+    rectangle "trace_slice.txt\n(runtime events at arch sites)" <<artifact>> as TRACE
+    rectangle "derive_gt_arch.py\n(Neo4j-free)" <<python>> as DERIVE
+
+    rectangle "gt_interactions.json" <<artifact>> as GTIN
+    rectangle "gt_sequence.json" <<artifact>> as GTSEQ
+
+CPP -down-> REN
+CPP .left.> Human
+Human -down-> EXCAL
+EXCAL -right-> REN : "arch call sites"
+EXCAL -down-> CONFIG
+REN -down-> TRACE : "instrumented\ntest run"
+
+TRACE -down-> DERIVE
+CONFIG -right-> DERIVE
+
+DERIVE -down-> GTIN
+DERIVE -right-> GTSEQ
+
+@enduml

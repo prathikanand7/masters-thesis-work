@@ -1,0 +1,9 @@
+condition,scenario,comp_found,comp_total,comp_recall,intr_found,intr_total,intr_recall,completeness
+A,S1a,3,3,1.0,3,3,1.0,<manual>
+A,S2,2,2,1.0,1,1,1.0,<manual>
+A,S3,4,4,1.0,3,3,1.0,<manual>
+A,S4,2,3,0.667,1,2,0.5,<manual>
+B,S1a,3,3,1.0,3,3,1.0,<manual>
+B,S2,2,2,1.0,1,1,1.0,<manual>
+B,S3,4,4,1.0,3,3,1.0,<manual>
+B,S4,3,3,1.0,2,2,1.0,<manual>

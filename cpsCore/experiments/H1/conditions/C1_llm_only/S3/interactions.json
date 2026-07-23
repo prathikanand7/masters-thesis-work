@@ -1,0 +1,22 @@
+[
+  {
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "Aggregator.getAll"
+  },
+  {
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush"
+  },
+  {
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  }
+]

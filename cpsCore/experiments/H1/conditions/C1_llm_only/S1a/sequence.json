@@ -1,0 +1,58 @@
+[
+  {
+    "order": 0,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "Aggregator.getAll",
+    "note": "runner1: SynchronizedRunner::runSynchronized(agg1) obtains runnable objects before stage loop"
+  },
+  {
+    "order": 1,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "Aggregator.getAll",
+    "note": "runner2: SynchronizedRunner::runSynchronized(agg2) obtains runnable objects before stage loop"
+  },
+  {
+    "order": 2,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "runner1: after processing stage INIT in SynchronizedRunner::runSynchronized"
+  },
+  {
+    "order": 3,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "runner2: after processing stage INIT in SynchronizedRunner::runSynchronized"
+  },
+  {
+    "order": 4,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "runner1: after processing stage NORMAL in SynchronizedRunner::runSynchronized"
+  },
+  {
+    "order": 5,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "runner2: after processing stage NORMAL in SynchronizedRunner::runSynchronized"
+  },
+  {
+    "order": 6,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "runner1: after processing stage FINAL in SynchronizedRunner::runSynchronized"
+  },
+  {
+    "order": 7,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "runner2: after processing stage FINAL in SynchronizedRunner::runSynchronized"
+  }
+]

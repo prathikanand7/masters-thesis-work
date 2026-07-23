@@ -1,0 +1,7 @@
+[
+  {
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  }
+]

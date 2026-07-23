@@ -1,0 +1,148 @@
+\chapter{Introduction}\label{ch:introduction}
+
+\section{Context}
+
+Large-scale software-intensive systems maintained by industrial research
+organisations are typically mission-critical, long-lived and subject to
+continuous evolution \cite{systa:reverse}. Many operate in
+safety-critical or performance-sensitive domains such as medical imaging
+and industrial automation, where an incorrect change or a poorly
+informed architectural decision carries real technical and economic
+consequences. An accurate understanding of system behaviour is therefore
+needed before any refactoring, modernisation or architectural
+restructuring.
+
+This understanding is captured by the \emph{Interaction Model}: a
+formal, scenario-specific description of the message exchanges between
+components, most commonly expressed as sequence diagrams in \ac{UML} or,
+more recently, \sysml. In practice, Interaction Models rarely stay
+current with the source code they describe. Complexity accumulates
+from evolving requirements, heterogeneous technologies and concurrency
+\cite{systa:reverse}, and diagrams accurate when drawn drift out of sync
+as the system changes. Engineers are consequently left to reconstruct
+system behaviour directly from source code and limited runtime
+observations, a process that is time-consuming, error-prone and heavily
+dependent on individual expertise \cite{systa:reverse}.
+
+The problem is worse in event-driven systems, where asynchronous
+message passing, callbacks and indirect control flow obscure how
+components relate to one another \cite{cornelissen:systematic}.
+Determining which components interact, in what order and under what
+conditions, is non-trivial, yet essential for identifying architectural
+bottlenecks, isolating faulty behaviour and assessing the impact of
+proposed changes, which is why industry needs accurate,
+scenario-specific interaction models reflecting how a system actually
+behaves under concrete execution scenarios \cite{egyed:scenario}.
+
+A concrete illustration of this problem surfaced during this project: a
+real, previously-resolved defect in a large industrial \Cpp\ system
+(\cref{sec:scenario-exercise}). A stale proxy object was never freed
+because a reset call was missing from the connection-handling code, and
+the system silently stopped delivering change-notification events after
+a service restart.
+
+The \ac{GDI} project at \ac{TNO}-\ac{ESI} addresses this problem using
+graph-based program analysis to support automatic extraction and
+maintenance of software architecture models. This thesis contributes a
+hybrid approach combining two complementary sources of evidence: a
+static call graph extracted from source code, and timestamped execution
+traces captured at runtime.
+
+\section{Problem Statement}
+
+Static analysis reveals call dependencies and structural relationships,
+giving a complete view of potential interactions, but it typically
+over-approximates behaviour and cannot distinguish interactions specific
+to one scenario from those occurring in every other scenario
+\cite{systa:reverse}. Trace-based analysis is scenario-specific by
+construction, but inherently incomplete \cite{cornelissen:systematic}:
+in industrial systems, traces are often sparse or noisy due to limited
+logging, instrumentation overhead, or execution paths simply not
+exercised during recording.
+
+Hybrid static-dynamic approaches have been proposed
+\cite{labiche:hybrid, cornelissen:systematic}, but existing methods
+primarily use static structure to organise or contextualise an
+already-observed trace (\cref{ch:related}); they do not actively infer
+interactions the trace never captured. No existing approach
+systematically combines the two directions at once: using static
+structure to recover what a trace missed, and the trace to trim an
+over-approximate static graph down to what is relevant to the scenario
+at hand. Closing that gap in both directions is the core problem this
+thesis addresses.
+
+A further complication comes from the publish-subscribe indirection
+common in event-driven \Cpp\ systems. \emph{CPSCore}, the open-source
+framework used as the case study, routes inter-component communication
+through an \ac{IDC} abstraction layer backed by \texttt{boost::signals2}
+callbacks and Redis channels. A static call graph built from function
+call sites alone contains edges \emph{into} the IDC layer, but cannot
+reveal which component receives each published packet, since the
+subscription topology is implicit in callback registrations rather than
+explicit in call sites. Recovering that missing structure is part of
+this thesis's contribution (\cref{sec:macro-resolution}).
+
+\section{Research Questions}
+
+This thesis is guided by three research questions:
+
+\begin{description}
+  \item[\rqone] Does combining a static call graph with runtime execution
+    traces reconstruct scenario-specific Interaction Models more
+    accurately than either source alone?
+
+  \item[\rqtwo] Does guiding trace collection with the static call graph
+    remove reconstruction noise without losing scenario coverage?
+
+  \item[\rqthree] How well does a reconstructed \sysml Interaction Model
+    consolidate static and dynamic evidence into a single artefact
+    sufficient for system-behaviour comprehension?
+\end{description}
+
+Each is paired with a testable hypothesis, answered by a dedicated
+experiment (\cref{ch:experiments,ch:analysis}):
+
+\begin{description}
+  \item[H1 (\rqone).] Combining static analysis and dynamic instrumentation
+    improves reconstruction accuracy over either source alone.
+  \item[H2 (\rqtwo).] Code-graph-guided instrumentation improves scenario
+    focus by suppressing irrelevant execution detail relative to full,
+    unguided instrumentation.
+  \item[H3 (\rqthree).] Reconstructed interaction models improve agent task
+    performance on scenario comprehension, relative to reasoning from raw
+    source code alone.
+\end{description}
+
+\rqone, \rqtwo\ and \rqthree\ are answered empirically by the H1, H2 and
+H3 experiments on the CPSCore case study (\cref{ch:experiments,ch:analysis}).
+
+\section{Approach}
+
+The approach runs as four phases (\cref{sec:pipeline-overview}):
+static call-graph analysis using Renaissance and Neo4j, which yields
+a reachable function set and a static dependency table
+(Phase~1); guided instrumentation at architecture-level call sites,
+producing a scenario-scoped runtime trace (Phase~2); a Neo4j-based
+reachability filter that scopes the trace to scenario-relevant events
+(Phase~3, condition~C5); and SysML~v2 generation from the filtered
+interaction set (Phase~4).
+
+The approach is developed and validated on \emph{CPSCore}, an
+open-source event-driven \Cpp\ framework, across four found-in-the-wild
+scenarios spanning a linear happy-path case to a multi-component
+indirect-dispatch case (\cref{ch:experiments,ch:analysis}).
+
+\section{Outline}
+
+\Cref{ch:background} introduces the technical concepts underpinning the
+approach: \sysml Interaction Models, property graphs, static call-graph
+analysis, execution tracing and scenario-scoped querying.
+\Cref{ch:related} surveys existing work on program comprehension,
+architecture recovery and trace-based diagram synthesis. \Cref{ch:methods}
+details the design: the property graph schema, the trace-collection
+pipeline and the Neo4j-based reachability filter. \Cref{ch:experiments}
+presents the implementation and results on the CPSCore case study.
+\Cref{ch:analysis} analyses those results against the research questions
+and hypotheses, and discusses threats to validity. \Cref{ch:conclusion}
+summarises the contributions, discusses future work and concludes the
+thesis.

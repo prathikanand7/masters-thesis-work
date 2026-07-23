@@ -1,0 +1,12 @@
+1. Components:
+- Synchronization
+- Aggregation
+- Logging
+
+2. Interactions:
+- Synchronization → Aggregation : getAll<IRunnableObject>
+- Synchronization → Logging : instance
+- Synchronization → Logging : flush
+
+3. Execution flow:
+SynchronizedRunner::runSynchronized retrieves all IRunnableObject instances from the Aggregation component via Aggregator::getAll<IRunnableObject>(). It then loops through synchronization stages until reaching FINAL, invoking run(stage) on each retrieved object and returning true immediately if any call reports success. After completing each stage, it updates the last stage, flushes the Logging component (CPSLogger::instance()->flush()), and posts a finished-stage signal before proceeding. If no run call returns true by the time FINAL is reached, the function returns false.

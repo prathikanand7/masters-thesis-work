@@ -30,35 +30,45 @@ a given scenario, where relevance was established through trace analysis
 and corresponding static call-graph anchors. The pipeline was implemented
 as twelve composable, natural-language-invocable agent skills and
 evaluated on \emph{CPSCore}, an open-source event-driven framework, across
-four scenarios: three pre-existing test scenarios and one purpose-built
-scenario designed to assess a specific capability of the proposed
-approach. Each scenario was reconstructed under five conditions ranging
-from an \ac{LLM}-only baseline to the full combined pipeline. A blinded
-six-rater expert panel compared diagrams reconstructed from unfiltered
-trace output against diagrams reconstructed from trace output scoped
-using static call-graph analysis of the scenario. The underlying static
-approach was further tested in a practitioner session on a second, larger
-industrial codebase to assess industrial usefulness beyond reconstruction
-accuracy.
+four found-in-the-wild scenarios drawn from its existing test suite. Each
+scenario was reconstructed under five conditions, four of them
+deterministic and reproducible: an \ac{LLM}-only baseline, static-only,
+dynamic-only, raw union, and agreement-based intersection of the two
+evidence sources, the latter two combined by set algebra alone with no
+LLM step. A
+blinded six-rater expert panel compared diagrams reconstructed from
+unfiltered trace output against diagrams reconstructed from trace output
+scoped using static call-graph analysis of the scenario. The underlying
+static approach was further tested in a practitioner session on a second,
+larger industrial codebase to assess industrial usefulness beyond
+reconstruction accuracy.
 
-\textbf{Results:} The full pipeline achieved the highest reconstruction
-accuracy of any evaluated condition (macro-F1~$=$~0.964) and achieved
-100\% interaction recall across all evaluated scenarios, meaning that all
-ground-truth interactions were recovered, although some scenarios still
-contained additional inferred interactions not present in the reference
-model. Combining the two sources improved reconstruction when either
-source missed interactions and had no effect when one source was already
-sufficient. Code-graph-guided instrumentation eliminated all noise (50\%
+\textbf{Results:} Requiring agreement between the two evidence sources
+(evidence intersection) achieved perfect precision on every scenario
+(macro-P~$=$~1.000) by cancelling each source's independent false
+positives rather than pooling them, and strictly dominated both single
+sources on three of the four scenarios; unioning the two sources
+instead was actively harmful, scoring below either source alone on every
+scenario. Dynamic tracing alone achieved the highest overall F1 for
+interaction edges (macro-F1~$=$~0.914 vs.\ intersection's 0.875), because
+intersection's precision came at the cost of recall on the one scenario
+with a genuine, one-sided static blind spot (indirect thread dispatch);
+which condition is preferable in practice therefore depends on whether
+false positives or false negatives matter more downstream. Combining the
+two sources improved reconstruction specifically when each source's own
+errors, not its coverage, were independent of the other's; it had no
+effect, or was actively harmful, otherwise. Code-graph-guided
+instrumentation eliminated all noise (50\%
 fewer nodes, 70\% fewer edges) without losing scenario coverage, and was
-rated higher by the expert panel in 47 of 54 comparisons. The
-reconstructed diagram alone achieved complete component and interaction
-recall across all evaluated scenarios, and matched or outperformed all
-other evaluated conditions, including the \ac{LLM}-assisted variants.
-This suggests that the reconstructed model can serve as a sufficient
-representation for the evaluated comprehension task, whether performed by
-humans or an \ac{LLM}. In the practitioner session, structural and
-dependency diagrams were rated consistently useful, while sequence-diagram
-message labelling was identified as the clearest area for improvement.
+rated higher by the expert panel in 47 of 54 comparisons. In a
+scenario-comprehension task, no single evidence source alone, including a
+reconstructed diagram, was sufficient: source code alone was weakest,
+missing components and interactions that trace or diagram evidence made
+explicit, while a diagram alone tied with runtime traces alone; only
+combining source code with runtime traces reached perfect recall. In the
+practitioner session, structural and dependency diagrams were rated
+consistently useful, while sequence-diagram message labelling was
+identified as the clearest area for improvement.
 
 \textbf{Evaluation and Conclusion:} The three results converge on one
 pattern: additional evidence improves reconstruction or comprehension

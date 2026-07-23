@@ -30,8 +30,8 @@ import pathlib
 from typing import NamedTuple
 
 H2_DIR    = pathlib.Path(__file__).parent.parent          # experiments/H2/
-H1_REF    = H2_DIR.parent / "H1" / "reference_diagrams"
-INSTR_DIR = H2_DIR / "instrumentation"
+SCEN_DIR  = H2_DIR.parent / "scenarios"                   # experiments/scenarios/
+INSTR_DIR = H2_DIR / "instrumentation"                    # experiments/H2/instrumentation/
 RESULTS   = pathlib.Path(__file__).parent / "results.csv"
 SCENARIOS = ["S1", "S2", "S3", "S4"]  # H2: happy-path scenarios + constructed S4
 
@@ -64,7 +64,7 @@ def load_trace_elements(trace_path: pathlib.Path) -> set[DiagramElement]:
 
 
 def load_reference_elements(scenario: str) -> set[DiagramElement]:
-    ref_path = H1_REF / scenario / "elements.json"
+    ref_path = SCEN_DIR / scenario / "gt_interactions.json"
     if not ref_path.exists():
         return set()
     with open(ref_path) as f:

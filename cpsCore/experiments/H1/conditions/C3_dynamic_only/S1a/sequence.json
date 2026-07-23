@@ -1,0 +1,236 @@
+[
+  {
+    "order": 0,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 1,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "order": 2,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 3,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 4,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 5,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "order": 6,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 7,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 8,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 9,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 10,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "order": 11,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 12,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 13,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 14,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "order": 15,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 16,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 17,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 18,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "order": 19,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "order": 20,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 21,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 22,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 23,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 24,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 25,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 26,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 27,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 28,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 29,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 30,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 31,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 32,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 33,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 34,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 35,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 36,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 37,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 38,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "cleanUp"
+  }
+]

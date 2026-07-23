@@ -54,7 +54,7 @@ SCENARIOS_DIR = ROOT / "experiments" / "scenarios"
 H1_C5_DIR     = ROOT / "experiments" / "H1" / "conditions" / "C5_full_pipeline"
 RESPONSES_DIR = pathlib.Path(__file__).parent / "responses"
 
-SCENARIOS  = ["S1", "S2", "S3", "S4"]
+SCENARIOS  = ["S1a", "S2", "S3", "S4"]
 CONDITIONS = ["A", "B"]
 
 TASK_PROMPT_WITH_SOURCE = """\
@@ -128,7 +128,7 @@ def build_context(scenario: str, condition: str, include_source: bool) -> str:
         ctx += f"\n## Relevant source code\n\n```cpp\n{snippet}\n```\n"
 
     if condition == "B":
-        elements_text = format_elements_json(H1_C5_DIR / scenario / "elements.json")
+        elements_text = format_elements_json(H1_C5_DIR / scenario / "sequence.json")
         ctx += f"\n## Component interaction diagram (C5 full-pipeline output)\n\n{elements_text}\n"
 
     return ctx

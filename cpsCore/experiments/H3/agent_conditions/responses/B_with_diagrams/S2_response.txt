@@ -1,12 +1,10 @@
-1. Components
+1. Components:
 - Configuration
 - Logging
 
-2. Interactions
-- Configuration → Logging : RAIILogStream.stream
+2. Interactions:
+- Configuration → Logging : instance
+- Configuration → Logging : stream
 
-3. Execution flow
-- The Configuration component’s PropertyMapper executes several property operations (add, addEnum, addEigen, addVector, getChild, mandatoryCheck). 
-- Each of these operations issues a log via CPSLOG_* macros, which construct a RAIILogStream and invoke its stream method in the Logging component. 
-- Successful property reads (e.g., in add, addEnum) log trace messages, while missing mandatory keys trigger error logs (e.g., in getChild and mandatoryCheck). 
-- The trace captures this as a series of Configuration → Logging calls to RAIILogStream.stream for each of the PropertyMapper methods executed.
+3. Execution flow:
+- The test constructs a Configuration from a JSON file, creates a PropertyMapper, and calls addOptional for two integer properties while logging is initially set to NONE. During PropertyMapper.add (via addOptional), a CPSLOG_* macro is invoked, which triggers interactions with the Logging component: first obtaining the logger via CPSLogger::instance() and then writing via RAIILogStream::stream (the trace captures the stream call). The optional values are processed such that opt2 remains unset and opt1 is set to 7 as asserted by the test. Finally, the log level is switched to DEBUG, but this does not affect the earlier instrumented calls.

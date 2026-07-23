@@ -1,16 +1,16 @@
 1. Components:
-- Synchronization
 - Aggregation
-- Logging
+- Synchronization
 - Utilities
+- Logging
 
 2. Interactions:
 - Synchronization → Aggregation : Aggregator.getAll
-- Synchronization → Logging : RAIILogStream.stream
-- Synchronization → Utilities : EnumMap.convert
+- Aggregation → Logging : RAIILogStream.stream
+- Utilities → Logging : RAIILogStream.stream
 
 3. Execution flow:
-- Within the Synchronization component, SimpleRunner.runStage interacts with Utilities to convert the stage enum (EnumMap.convert), logs via Logging (RAIILogStream.stream), and queries Aggregation for runnable objects (Aggregator.getAll).
-- SimpleRunner.runStages also performs logging and enum-to-string conversion for each stage via the same Logging and Utilities interactions.
-- Additionally, SynchronizedRunnerMaster.runAllStages emits a log via Logging (RAIILogStream.stream).
-- All observed calls are commands initiated by Synchronization to the other components as shown in the trace.
+- AggregatableRunner reacts to an aggregation update and calls Aggregator.getAll to collect IRunnableObject instances. 
+- During this aggregation update, Aggregation code (e.g., ObjectHandleContainer.setFromAggregationIfNotSet) emits logging via RAIILogStream.stream. 
+- The Utilities module then schedules and runs tasks (MultiThreadingScheduler.schedule, run, and runSchedule), and the SignalHandler subscribes for exit while constructing its singleton, all producing logging streams. 
+- Finally, the scheduler is stopped and destroyed, and MicroSimulator.stop is invoked; these shutdown steps also log via RAIILogStream.stream.

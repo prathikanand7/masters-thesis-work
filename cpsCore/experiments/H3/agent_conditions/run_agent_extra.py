@@ -97,7 +97,7 @@ def build_context(scenario: str, condition: str) -> str:
         snippet = load_file_safe(SCENARIOS_DIR / scenario / "source_snippet.txt")
         return f"## Relevant source code\n\n```cpp\n{snippet}\n```\n"
     elif condition == "diagram":
-        elements_text = format_elements_json(H1_C5_DIR / scenario / "elements.json")
+        elements_text = format_elements_json(H1_C5_DIR / scenario / "sequence.json")
         return f"## Component interaction diagram (C5 full-pipeline output)\n\n{elements_text}\n"
     raise ValueError(condition)
 

@@ -1,0 +1,12 @@
+[
+  {
+    "source": "Aggregation",
+    "target": "Synchronization",
+    "interaction": "subscribeStage"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream"
+  }
+]

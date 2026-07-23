@@ -1,0 +1,74 @@
+[
+  {
+    "order": 0,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 4,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 9,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 13,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 18,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "order": 19,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "order": 22,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 25,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 28,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 31,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 35,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 37,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  }
+]

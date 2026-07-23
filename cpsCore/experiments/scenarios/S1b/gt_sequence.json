@@ -1,0 +1,37 @@
+[
+  {
+    "order": 0,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll",
+    "evidence": "both"
+  },
+  {
+    "order": 1,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll",
+    "evidence": "both"
+  },
+  {
+    "order": 2,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush",
+    "evidence": "both"
+  },
+  {
+    "order": 3,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "evidence": "both"
+  },
+  {
+    "order": 4,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush",
+    "evidence": "both"
+  }
+]

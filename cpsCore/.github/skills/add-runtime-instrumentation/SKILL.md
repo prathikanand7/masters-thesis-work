@@ -163,14 +163,6 @@ cmake --build bld/wsl-release --target all -j
 
 **Output:** Trace lines appear on stderr, ready for analysis:
 
-**Automated alternative:** `scripts/collect_traces.py` does the rebuild, the run,
-and converts the captured `[TRACE]` lines directly into `runtime_traces.txt`
-(the pipe-delimited `EventTimestamp|EventName|ClientComponent|ClientFunction|
-ServerComponent|ServerFunction|RelationshipType|InterfaceNames` schema used
-elsewhere in this repo), instead of leaving you with a raw `trace_output.txt`
-to parse by hand. It assumes Step 2 has already been applied; see its own
-docstring and the "Automated: Steps 3-4 in one script" section below.
-
 ```
 [TRACE] 14:23:45.832, runStage, Synchronization, Aggregator.getAll, Aggregation, SimpleRunner, SimpleRunner.cpp:67
 [TRACE] 14:23:45.834, notifyAggregationOnUpdate, Synchronization, Aggregator.getAll, Aggregation, AggregatableRunner, AggregatableRunner.cpp:45
@@ -296,37 +288,6 @@ grep "^\[TRACE\]" trace_output.txt | cut -d',' -f2-5 | sort | uniq -c | sort -rn
 grep "Synchronization" trace_output.txt
 ```
 
-## Automated: Steps 3-4 in one script
-
-`scripts/collect_traces.py` runs the rebuild, runs the (already-instrumented)
-test binary, and converts the captured `[TRACE]` lines straight into
-`runtime_traces.txt` in the repo root -- skipping the manual
-`trace_output.txt` + `grep`/`cut` steps above.
-
-```bash
-# from WSL (or any Linux shell) -- the test binary is a Linux ELF, so this
-# script must run under a Linux Python, not from Windows directly
-python3 .github/skills/add-runtime-instrumentation/scripts/collect_traces.py
-```
-
-**Prerequisite:** Step 2 (`apply_tracing.ps1`) must already have been applied
-to this checkout -- the script only rebuilds and runs, it does not inject
-instrumentation. If Step 2 was skipped, the rebuilt binary won't emit
-`[TRACE]` lines and the script will warn about an empty result.
-
-Options:
-
-```bash
-python3 collect_traces.py --cpscore-root /mnt/c/Users/prathikak/Documents/cpsCore
-python3 collect_traces.py --build-dir bld/wsl-release --skip-build
-```
-
-Output columns match the schema already used elsewhere in this repo:
-`EventTimestamp|EventName|ClientComponent|ClientFunction|ServerComponent|ServerFunction|RelationshipType|InterfaceNames`.
-`RelationshipType` is always written as `Command` (the `[TRACE]` format itself
-doesn't encode Command/Reply/Notification), and `EventTimestamp` is the real
-captured wall-clock time from the trace line, reformatted to ISO-8601.
-
 ### 6. Clean Up (Optional)
 
 ```powershell
@@ -343,7 +304,6 @@ After execution, the skill generates:
 | `*.cpp` (modified) | Instrumented source files with trace injections |
 | `CPSLogger.h` (modified) | Updated CPSLOG macro with trace emission |
 | `apply_tracing_remove_backup.txt` | Backup of remove script for reverting changes |
-| `runtime_traces.txt` (repo root) | Written by `scripts/collect_traces.py` (Steps 3-4) -- rebuilt binary's `[TRACE]` output, converted to the pipe-delimited schema |
 
 ## Troubleshooting
 
@@ -390,6 +350,5 @@ This skill pairs well with:
 - **Renaissance Clang Repository**: `C:\Code\clang-exp`
 - **csp_matcher Tool**: Pattern matching compiler frontend (uses Clang libtooling)
 - **Trace Format Specification**: See `csp_trace.h` for detailed trace line format
-- **Steps 3-4 automation**: `scripts/collect_traces.py` (rebuild + run + convert to `runtime_traces.txt`)
-- **cpsCore Build Instructions**: [README.md](../../../README.md)
+- **cpsCore Build Instructions**: [cpscore-build.instructions.md](../.github/instructions/cpscore-build.instructions.md)
 ```

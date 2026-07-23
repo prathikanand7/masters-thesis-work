@@ -1,0 +1,67 @@
+@startuml
+title MultiThreaded Test 1 — full call sequence (S3)
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+participant "TEST_CASE" as TEST
+participant "AggregatableRunner\n[Synchronization]" as RUNNER
+participant "MultiThreadingScheduler\n[Utilities]" as SCHED
+participant "MicroSimulator\n[Utilities]" as SIM
+participant "SignalHandler\n[Utilities]" as SIG
+participant "Aggregator\n[Aggregation]" as AGG
+participant "ObjectHandleContainer\n[Aggregation]" as OHC
+participant "RAIILogStream\n[Logging]" as LOG
+
+== Setup ==
+
+TEST -> AGG     : Aggregator::aggregate({tp, sched, runner, sigHand})
+TEST -> SCHED   : schedule(schedulingCount, Milliseconds(0))
+TEST -> RUNNER  : runAllStages()
+activate RUNNER
+
+== Stage INIT ==
+
+RUNNER -> AGG   : getAll<IAggregateableObject>()
+AGG --> RUNNER  : [tp, sched, runner, sigHand]
+
+note over RUNNER, OHC : notifyAggregationOnUpdate called for each aggregatable
+RUNNER -> OHC   : setFromAggregationIfNotSet(aggregator)
+OHC -> LOG      : RAIILogStream.stream\n(CPSLOG_DEBUG — component reg)
+note right of LOG : **Agg→Log:stream** [GT event 1]
+
+RUNNER -> AGG   : getAll<IAggregateableObject>()
+AGG --> RUNNER  : [tp, sched, runner, sigHand]
+RUNNER -> OHC   : setFromAggregationIfNotSet(aggregator)
+OHC -> LOG      : RAIILogStream.stream
+note right of LOG : **Agg→Log:stream** [GT event 2]
+
+== Scheduler thread (async) ==
+
+note over SCHED : MultiThreadingScheduler.run() spawns\nthread pool; runSchedule() dispatches tasks
+
+SCHED -> LOG    : RAIILogStream.stream\n(CPSLOG_DEBUG — task dispatch ×multiple)
+note right of LOG : **Util→Log:stream** [GT events 4–12, ×9 total\nfrom runSchedule + MicroSimulator]
+
+SIM -> LOG      : RAIILogStream.stream\n(CPSLOG_DEBUG — simulator events)
+
+== Stage NORMAL ==
+
+RUNNER -> AGG   : getAll<IAggregateableObject>()
+note right of RUNNER : additional notifyAggregationOnUpdate\ncycles during NORMAL stage
+
+== Stage FINAL ==
+
+RUNNER -> AGG   : getAll<IAggregateableObject>()
+RUNNER --> TEST : runAllStages() returns
+
+deactivate RUNNER
+
+== Teardown ==
+
+TEST -> SIG     : ~SignalHandler()
+TEST -> SCHED   : ~MultiThreadingScheduler()
+SCHED -> LOG    : RAIILogStream.stream\n(CPSLOG_DEBUG — shutdown)
+SIM -> LOG      : RAIILogStream.stream\n(CPSLOG_DEBUG — stop)
+
+@enduml

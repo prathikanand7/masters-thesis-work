@@ -16,12 +16,14 @@ Usage:
 Output: experiments/H1/conditions/C4_static_dynamic/<scenario>/elements.json
 """
 import argparse
+import json
 import pathlib
+import shutil
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from _utils import (SCENARIOS, Element, load_elements,
-                    save_elements, elements_path)  # Element used in _normalize
+                    save_elements, interactions_path, sequence_path)
 
 LABEL = "C4_static_dynamic"
 
@@ -33,8 +35,8 @@ def _normalize(elements: set) -> set:
 
 
 def run_scenario(scenario: str) -> None:
-    c2 = _normalize(load_elements(elements_path("C2_static_only",  scenario)))
-    c3 = _normalize(load_elements(elements_path("C3_dynamic_only", scenario)))
+    c2 = _normalize(load_elements(interactions_path("C2_static_only",  scenario)))
+    c3 = _normalize(load_elements(interactions_path("C3_dynamic_only", scenario)))
 
     if not c2:
         print(f"  [WARN] C2 elements missing for {scenario} — run run_c2_static_only.py first")
@@ -42,7 +44,18 @@ def run_scenario(scenario: str) -> None:
         print(f"  [WARN] C3 elements missing for {scenario} — run run_c3_dynamic_only.py first")
 
     merged = c2 | c3
-    save_elements(merged, elements_path(LABEL, scenario))
+    save_elements(merged, interactions_path(LABEL, scenario))
+
+    # Sequence order comes from C3's trace-derived sequence (copy it)
+    c3_seq = sequence_path("C3_dynamic_only", scenario)
+    c4_seq = sequence_path(LABEL, scenario)
+    c4_seq.parent.mkdir(parents=True, exist_ok=True)
+    if c3_seq.exists():
+        shutil.copy2(c3_seq, c4_seq)
+        print(f"  Copied C3 sequence → {c4_seq.relative_to(c4_seq.parents[3])}")
+    else:
+        c4_seq.write_text("[]")
+
     print(f"  C2={len(c2)}  C3={len(c3)}  merged={len(merged)}")
 
 

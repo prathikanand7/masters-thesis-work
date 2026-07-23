@@ -1,0 +1,52 @@
+[
+  {
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "runStage"
+  },
+  {
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "source": "Utilities",
+    "target": "Utilities",
+    "interaction": "runSchedule"
+  },
+  {
+    "source": "Utilities",
+    "target": "Utilities",
+    "interaction": "stop"
+  },
+  {
+    "source": "Utilities",
+    "target": "Utilities",
+    "interaction": "subscribeOnExit"
+  }
+]

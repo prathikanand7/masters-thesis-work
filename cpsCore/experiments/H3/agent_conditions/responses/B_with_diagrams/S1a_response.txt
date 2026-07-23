@@ -1,0 +1,15 @@
+1) Components
+- Aggregation
+- Synchronization
+- Logging
+
+2) Interactions
+- Aggregation → Logging : RAIILogStream.stream
+- Synchronization → Aggregation : Aggregator.getAll
+- Synchronization → Logging : CPSLogger.flush
+
+3) Execution flow
+- Two aggregators are populated with runnable objects; each Aggregator.add call emits logging via RAIILogStream.stream from Aggregation to Logging (four times total in the trace). 
+- Two SynchronizedRunner threads start and, within runSynchronized, each fetches runnable objects by calling Aggregator.getAll (two calls observed). 
+- As the runners progress through their synchronized stages, they repeatedly call CPSLogger::flush to synchronize output, producing multiple Synchronization → Logging flush interactions. 
+- The runners continue this cycle until completion, as indicated by the repeated flush events.

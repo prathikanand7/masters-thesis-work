@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="694px" preserveAspectRatio="none" style="width:550px;height:694px;" version="1.1" viewBox="0 0 550 694" width="550px" zoomAndPan="magnify"><defs><filter height="300%" id="fenpyyp8nc87z" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[881dfaa1e606c9e16fb841f2af0841d7]
+entity CPP--><rect fill="#FDFEFE" filter="url(#fenpyyp8nc87z)" height="50.2656" style="stroke: #888888; stroke-width: 1.5;" width="94" x="6" y="14"/><text fill="#000000" font-family="Arial" font-size="14" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="64" x="21" y="36.9951">«artifact»</text><text fill="#000000" font-family="Arial" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="74" x="16" y="51.4355">C++ source</text><!--MD5=[9847cdf27c04711ca8c7eaba05c3ad08]
+entity REN--><rect fill="#D6EAF8" filter="url(#fenpyyp8nc87z)" height="50.2656" style="stroke: #2980B9; stroke-width: 1.5;" width="100" x="135" y="14"/><text fill="#000000" font-family="Arial" font-size="14" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="44" x="163" y="36.9951">«tool»</text><text fill="#1A5276" font-family="Arial" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="80" x="145" y="51.4355">Renaissance</text><!--MD5=[9cf9e5fe67342b6df5303e8aa6b6ac0e]
+entity NEO--><path d="M270.5,18 C270.5,8 320,8 320,8 C320,8 369.5,8 369.5,18 L369.5,59.5938 C369.5,69.5938 320,69.5938 320,69.5938 C320,69.5938 270.5,69.5938 270.5,59.5938 L270.5,18 " fill="#FEFECE" filter="url(#fenpyyp8nc87z)" style="stroke: #000000; stroke-width: 1.5;"/><path d="M270.5,18 C270.5,28 320,28 320,28 C320,28 369.5,28 369.5,18 " fill="none" style="stroke: #000000; stroke-width: 1.5;"/><text fill="#000000" font-family="Arial" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="40" x="280.5" y="44.9951">Neo4j</text><text fill="#000000" font-family="Arial" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="79" x="280.5" y="61.292">code graph</text><!--MD5=[dfb6271e199066cfe89ec76f9d5abc83]
+entity CYPHER--><rect fill="#FEF9E7" filter="url(#fenpyyp8nc87z)" height="64.2344" style="stroke: #F39C12; stroke-width: 1.5;" width="186" x="97" y="147"/><text fill="#000000" font-family="Arial" font-size="14" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="58" x="161" y="169.9951">«query»</text><text fill="#7D6608" font-family="Arial" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="89" x="107" y="184.4355">Cypher: global</text><text fill="#7D6608" font-family="Arial" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="166" x="107" y="198.4043">cross-component CppCalls</text><!--MD5=[1cbb8cea5fef1eebecd2053ebfa8c333]
+entity TRAV--><rect fill="#FEF9E7" filter="url(#fenpyyp8nc87z)" height="64.2344" style="stroke: #F39C12; stroke-width: 1.5;" width="210" x="329" y="147"/><text fill="#000000" font-family="Arial" font-size="14" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="58" x="405" y="169.9951">«query»</text><text fill="#7D6608" font-family="Arial" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="155" x="339" y="184.4355">Cypher: scenario-scoped</text><text fill="#7D6608" font-family="Arial" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="190" x="339" y="198.4043">CppCalls* 1..6 hops from entry</text><!--MD5=[a16aa7a08599241b183f0102bbb295fd]
+entity C2OUT--><rect fill="#FDFEFE" filter="url(#fenpyyp8nc87z)" height="50.2656" style="stroke: #888888; stroke-width: 1.5;" width="134" x="379" y="279"/><text fill="#000000" font-family="Arial" font-size="14" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="64" x="414" y="301.9951">«artifact»</text><text fill="#000000" font-family="Arial" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="114" x="389" y="316.4355">Static interactions</text><!--MD5=[e06ddd1675cb8869c735f675bbea3c8d]
+entity CLANGEXP--><rect fill="#D6EAF8" filter="url(#fenpyyp8nc87z)" height="64.2344" style="stroke: #2980B9; stroke-width: 1.5;" width="168" x="39" y="272"/><text fill="#000000" font-family="Arial" font-size="14" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="44" x="101" y="294.9951">«tool»</text><text fill="#1A5276" font-family="Arial" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="148" x="49" y="309.4355">Guided instrumentation</text><text fill="#1A5276" font-family="Arial" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="125" x="49" y="323.4043">(clang-renaissance)</text><!--MD5=[72e94ae5afec156f55bedeedae45bf07]
+entity SLICE--><rect fill="#FDFEFE" filter="url(#fenpyyp8nc87z)" height="50.2656" style="stroke: #888888; stroke-width: 1.5;" width="101" x="242.5" y="279"/><text fill="#000000" font-family="Arial" font-size="14" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="64" x="261" y="301.9951">«artifact»</text><text fill="#000000" font-family="Arial" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="81" x="252.5" y="316.4355">Guided trace</text><!--MD5=[6fa062eac7b2b4c9a76f44046cc04333]
+entity TAG--><rect fill="#D6EAF8" filter="url(#fenpyyp8nc87z)" height="64.2344" style="stroke: #2980B9; stroke-width: 1.5;" width="201" x="268.5" y="397"/><text fill="#000000" font-family="Arial" font-size="14" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="44" x="347" y="419.9951">«tool»</text><text fill="#1A5276" font-family="Arial" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="116" x="278.5" y="434.4355">Union and tagging</text><text fill="#1A5276" font-family="Arial" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="181" x="278.5" y="448.4043">both/static-only/dynamic-only</text><!--MD5=[183d75e42a7a852d02a7f9ce2cc3343f]
+entity SRC--><rect fill="#FDFEFE" filter="url(#fenpyyp8nc87z)" height="50.2656" style="stroke: #888888; stroke-width: 1.5;" width="139" x="142.5" y="522"/><text fill="#000000" font-family="Arial" font-size="14" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="64" x="180" y="544.9951">«artifact»</text><text fill="#000000" font-family="Arial" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="119" x="152.5" y="559.4355">C++ code snippets</text><!--MD5=[762d9b1ee2eb630aa40151fb5f0602e7]
+entity LLM--><rect fill="#D6EAF8" filter="url(#fenpyyp8nc87z)" height="50.2656" style="stroke: #2980B9; stroke-width: 1.5;" width="105" x="316.5" y="522"/><text fill="#000000" font-family="Arial" font-size="14" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="44" x="347" y="544.9951">«tool»</text><text fill="#1A5276" font-family="Arial" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="85" x="326.5" y="559.4355">LLM synthesis</text><!--MD5=[cdb747dba8d3b196ca5e8ce60efccb0f]
+entity INTR--><rect fill="#FDFEFE" filter="url(#fenpyyp8nc87z)" height="50.2656" style="stroke: #888888; stroke-width: 1.5;" width="95" x="259.5" y="633"/><text fill="#000000" font-family="Arial" font-size="14" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="64" x="275" y="655.9951">«artifact»</text><text fill="#000000" font-family="Arial" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="75" x="269.5" y="670.4355">Interactions</text><!--MD5=[dbc8fb49dc584c8d7312fd110669ac8a]
+entity SEQ--><rect fill="#FDFEFE" filter="url(#fenpyyp8nc87z)" height="50.2656" style="stroke: #888888; stroke-width: 1.5;" width="84" x="390" y="633"/><text fill="#000000" font-family="Arial" font-size="14" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="64" x="400" y="655.9951">«artifact»</text><text fill="#000000" font-family="Arial" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="63" x="400.5" y="670.4355">Sequence</text><!--MD5=[3237163394d83630f71b9e58ecd05df5]
+link CPP to REN--><path d="M100.18,39 C110.05,39 119.93,39 129.81,39 " fill="none" id="CPP-&gt;REN" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="134.97,39,125.97,35,129.97,39,125.97,43,134.97,39" style="stroke: #444444; stroke-width: 1.0;"/><!--MD5=[6e2912ccc9c370fc57aa298e5ed874fd]
+link REN to NEO--><path d="M235.1,39 C245.08,39 255.06,39 265.03,39 " fill="none" id="REN-&gt;NEO" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="270.25,39,261.25,35,265.25,39,261.25,43,270.25,39" style="stroke: #444444; stroke-width: 1.0;"/><!--MD5=[fb8aa0845140b3bf00f0a2a19e6868a6]
+link NEO to CYPHER--><path d="M291.47,70.28 C271.26,91.74 244.1,120.57 222.97,143 " fill="none" id="NEO-&gt;CYPHER" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="219.36,146.83,228.4411,143.0177,222.7868,143.189,222.6155,137.5347,219.36,146.83" style="stroke: #444444; stroke-width: 1.0;"/><text fill="#000000" font-family="Arial" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="81" x="264" y="113.0669">all arch pairs</text><!--MD5=[15056752411ad3f5802bb0b66782c0d6]
+link NEO to TRAV--><path d="M345.02,70.28 C362.66,91.65 386.36,120.33 404.86,142.72 " fill="none" id="NEO-&gt;TRAV" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="408.25,146.83,405.6028,137.3436,405.066,142.9749,399.4346,142.438,408.25,146.83" style="stroke: #444444; stroke-width: 1.0;"/><text fill="#000000" font-family="Arial" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="104" x="381" y="113.0669">scenario scoped</text><!--MD5=[1e030110ccea20508b21ca9afdfe6e44]
+link TRAV to C2OUT--><path d="M437.03,211.04 C438.91,230.29 441.31,254.88 443.15,273.78 " fill="none" id="TRAV-&gt;C2OUT" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="443.65,278.96,446.7559,269.6137,443.1638,273.9837,438.7938,270.3916,443.65,278.96" style="stroke: #444444; stroke-width: 1.0;"/><!--MD5=[be5d1a3c634e45c56b8c04a00c1b1c46]
+link TAG to LLM--><path d="M369,461.09 C369,478.36 369,499.72 369,516.7 " fill="none" id="TAG-&gt;LLM" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="369,521.82,373,512.82,369,516.82,365,512.82,369,521.82" style="stroke: #444444; stroke-width: 1.0;"/><!--MD5=[e99296e72d3429d543ce82befa0af6f4]
+link SRC to LLM--><path d="M281.61,547 C291.49,547 301.38,547 311.26,547 " fill="none" id="SRC-&gt;LLM" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="316.43,547,307.43,543,311.43,547,307.43,551,316.43,547" style="stroke: #444444; stroke-width: 1.0;"/><!--MD5=[aaf57bf01e9690c49484f68e87dc70ab]
+link LLM to INTR--><path d="M355.24,572.19 C345.85,588.7 333.36,610.65 323.45,628.09 " fill="none" id="LLM-&gt;INTR" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="320.72,632.88,328.6479,627.0363,323.193,628.5344,321.6949,623.0795,320.72,632.88" style="stroke: #444444; stroke-width: 1.0;"/><!--MD5=[a67c1bfcbc8515837a72889950e3676f]
+link LLM to SEQ--><path d="M382.98,572.19 C392.61,588.84 405.43,611.03 415.55,628.53 " fill="none" id="LLM-&gt;SEQ" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="418.06,632.88,417.0226,623.0859,415.5593,628.5503,410.095,627.087,418.06,632.88" style="stroke: #444444; stroke-width: 1.0;"/><!--MD5=[e4edbd4093977c6a808499ad970800c1]
+link CYPHER to CLANGEXP--><path d="M173.09,211.04 C163.73,228.23 152.05,249.66 142.33,267.52 " fill="none" id="CYPHER-&gt;CLANGEXP" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="139.9,271.97,147.7294,265.9951,142.3003,267.5838,140.7115,262.1546,139.9,271.97" style="stroke: #444444; stroke-width: 1.0;"/><!--MD5=[8e5040398ee7af93b4f43bad4715dadc]
+link CLANGEXP to SLICE--><path d="M207,304 C217.02,304 227.03,304 237.04,304 " fill="none" id="CLANGEXP-&gt;SLICE" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="242.28,304,233.28,300,237.28,304,233.28,308,242.28,304" style="stroke: #444444; stroke-width: 1.0;"/><!--MD5=[a0d32911a8720289b0610a31f165cee3]
+link SLICE to TAG--><path d="M307.83,329.01 C318.96,347.02 334.38,371.98 346.96,392.32 " fill="none" id="SLICE-&gt;TAG" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="349.59,396.59,348.2505,386.8327,346.9567,392.3396,341.4498,391.0459,349.59,396.59" style="stroke: #444444; stroke-width: 1.0;"/><!--MD5=[3b4bfdafce1ff1f6b199346552045ce2]
+link C2OUT to TAG--><path d="M430.97,329.01 C419.69,347.02 404.07,371.98 391.33,392.32 " fill="none" id="C2OUT-&gt;TAG" style="stroke: #444444; stroke-width: 1.0;"/><polygon fill="#444444" points="388.66,396.59,396.827,391.0854,391.3138,392.3524,390.0468,386.8393,388.66,396.59" style="stroke: #444444; stroke-width: 1.0;"/><!--MD5=[a9ae894770328169282f7972e7fdf370]
+@startuml h1-full-pipeline
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ArrowColor #444444
+skinparam rectangleFontSize 12
+
+skinparam rectangle<<tool>> {
+    BackgroundColor #D6EAF8
+    BorderColor #2980B9
+    FontColor #1A5276
+}
+skinparam rectangle<<artifact>> {
+    BackgroundColor #FDFEFE
+    BorderColor #888888
+    FontStyle italic
+}
+skinparam rectangle<<query>> {
+    BackgroundColor #FEF9E7
+    BorderColor #F39C12
+    FontColor #7D6608
+}
+
+top to bottom direction
+
+rectangle "C++ source" <<artifact>> as CPP
+rectangle "Renaissance" <<tool>> as REN
+
+database "Neo4j\ncode graph" as NEO
+rectangle "Cypher: global\ncross-component CppCalls" <<query>> as CYPHER
+rectangle "Cypher: scenario-scoped\nCppCalls* 1..6 hops from entry" <<query>> as TRAV
+
+rectangle "Static interactions" <<artifact>> as C2OUT
+
+rectangle "Guided instrumentation\n(clang-renaissance)" <<tool>> as CLANGEXP
+rectangle "Guided trace" <<artifact>> as SLICE
+
+rectangle "Union and tagging\nboth/static-only/dynamic-only" <<tool>> as TAG
+rectangle "C++ code snippets" <<artifact>> as SRC
+rectangle "LLM synthesis" <<tool>> as LLM
+rectangle "Interactions" <<artifact>> as INTR
+rectangle "Sequence" <<artifact>> as SEQ
+
+CPP -right-> REN
+REN -right-> NEO
+NEO -down-> CYPHER: "all arch pairs"
+NEO -down-> TRAV : "scenario scoped"
+
+TRAV -down-> C2OUT
+
+TAG -down-> LLM
+SRC -right-> LLM
+LLM - -> INTR
+LLM - -> SEQ
+
+CYPHER -down-> CLANGEXP 
+CLANGEXP -right-> SLICE
+
+SLICE -down-> TAG
+C2OUT -down-> TAG
+
+@enduml
+
+PlantUML version 1.2020.02(Sun Mar 01 11:22:07 CET 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 18.0.2-ea+9-Ubuntu-222.04
+Operating System: Linux
+Default Encoding: UTF-8
+Language: en
+Country: null
+--></g></svg>

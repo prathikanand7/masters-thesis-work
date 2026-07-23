@@ -1,0 +1,299 @@
+// S1b — Synchronized Runner Timeout (failure path)
+// One runner object sleeps 2s, exceeding the master's 1s timeout; failure flag set.
+
+// === tests/Synchronization/RunnerTest.cpp ===
+TEST_CASE("Synchronized Runner Timeout")
+{
+	auto runObj1 = std::make_shared<RunnableTestTimeoutClass>(); // sleeps 2s in run()
+	auto runObj2 = std::make_shared<RunnableTestClass>();
+	Aggregator agg1;
+	agg1.add(runObj1);
+	agg1.add(runObj2);
+
+	auto runObj3 = std::make_shared<RunnableTestClass>();
+	auto runObj4 = std::make_shared<RunnableTestClass>();
+	Aggregator agg2;
+	agg2.add(runObj3);
+	agg2.add(runObj4);
+
+	SynchronizedRunnerMaster master(2);
+
+	auto runner1 = std::make_shared<SynchronizedRunner>();
+	auto runner2 = std::make_shared<SynchronizedRunner>();
+
+	std::thread run1(
+			std::bind(&SynchronizedRunner::runSynchronized, runner1, std::ref(agg1)));
+	std::thread run2(
+			std::bind(&SynchronizedRunner::runSynchronized, runner2, std::ref(agg2)));
+
+	CPSLogger::instance()->setLogLevel(LogLevel::NONE);
+	//Should timeout due to runObj1
+	CHECK(master.runStage(RunStage::INIT));
+	CPSLogger::instance()->setLogLevel(LogLevel::WARN);
+
+	run1.join();
+	run2.join();
+}
+
+// === src/Synchronization/SynchronizedRunnerMaster.cpp ===
+// Component: Synchronization
+
+bool
+SynchronizedRunnerMaster::runStage(RunStage stage)
+{
+	using namespace boost::interprocess;
+	mapped_region region(sync_, read_write);
+	auto synchronizer = static_cast<Synchronizer*>(region.get_address());
+
+	std::unique_lock<boost::interprocess::interprocess_mutex> lock(synchronizer->runStageMutex);
+	synchronizer->runStage = stage;
+	synchronizer->runStageChanged.notify_all();
+	lock.unlock();
+
+	boost::posix_time::ptime timeout = boost::get_system_time()
+			+ boost::posix_time::milliseconds(
+					std::chrono::duration_cast<Milliseconds>(timeout_).count());
+
+	for (int i = 0; i < numOfRunners_; ++i)
+	{
+		if (!synchronizer->finishedStage.timed_wait(timeout))
+		{
+			CPSLOG_ERROR << numOfRunners_ - i << " Module(s) timed out at runstage " << (int) stage;
+			std::unique_lock<boost::interprocess::interprocess_mutex> lock(
+					synchronizer->runStageMutex);
+			synchronizer->failure = true;
+			synchronizer->runStageChanged.notify_all();
+			lock.unlock();
+			return true;
+		}
+	}
+	return false;
+}
+
+// === include/cpsCore/Logging/CPSLogger.h (macro expansion) ===
+// Every CPSLOG_* macro expands to:
+//   RAIILogStream(CPSLogger::instance(), LogLevel::X, __FILE__, __LINE__).stream << ...
+// The .stream member access IS a cross-component call to Logging regardless of log level.
+// CPSLogger::instance() is a singleton accessor — do NOT count it as an interaction.
+
+
+// === tests/Synchronization/RunnerTest.cpp ===
+// Component: (test code)
+
+TEST_CASE("Synchronized Runner Timeout")
+{
+    auto runObj1 = std::make_shared<RunnableTestTimeoutClass>(); // sleeps 2s in run()
+    auto runObj2 = std::make_shared<RunnableTestClass>();
+    Aggregator agg1;
+    agg1.add(runObj1);
+    agg1.add(runObj2);
+
+    auto runObj3 = std::make_shared<RunnableTestClass>();
+    auto runObj4 = std::make_shared<RunnableTestClass>();
+    Aggregator agg2;
+    agg2.add(runObj3);
+    agg2.add(runObj4);
+
+    SynchronizedRunnerMaster master(2);  // timeout = 1s
+
+    auto runner1 = std::make_shared<SynchronizedRunner>();
+    auto runner2 = std::make_shared<SynchronizedRunner>();
+
+    // Two threads: each calls runSynchronized with its own aggregator
+    std::thread run1(std::bind(&SynchronizedRunner::runSynchronized, runner1, std::ref(agg1)));
+    std::thread run2(std::bind(&SynchronizedRunner::runSynchronized, runner2, std::ref(agg2)));
+
+    CPSLogger::instance()->setLogLevel(LogLevel::NONE);
+    CHECK(master.runStage(RunStage::INIT)); // times out because runObj1 sleeps 2s
+    CPSLogger::instance()->setLogLevel(LogLevel::WARN);
+
+    run1.join();
+    run2.join();
+}
+
+// === src/Synchronization/SynchronizedRunner.cpp ===
+// Component: Synchronization
+
+bool SynchronizedRunner::runSynchronized(Aggregator& agg)
+{
+    using namespace boost::interprocess;
+    mapped_region region(sync_, read_write);
+    auto synchronizer = static_cast<Synchronizer*>(region.get_address());
+
+    auto runnableObjects = agg.getAll<IRunnableObject>();
+    // ^ Synchronization → Aggregation : Aggregator.getAll
+    // Called by EACH runner thread — runner1 and runner2 both call this.
+    // Fires TWICE total (once per thread).
+
+    RunStage lastRunStage = RunStage::SYNCHRONIZE;
+    while (lastRunStage != RunStage::FINAL)
+    {
+        // ... wait for master to set stage ...
+        std::unique_lock<...> lock(synchronizer->runStageMutex);
+        if (synchronizer->failure) return true;  // early exit on failure, no flush
+        stage = synchronizer->runStage;
+        // ... wait on condition variable if stage unchanged ...
+        if (synchronizer->failure) return true;
+        lock.unlock();
+
+        bool failed = false;
+        for (auto it : runnableObjects)
+            if (it->run(stage)) failed = true;
+        if (failed) return true;              // early exit, no flush
+
+        lastRunStage = stage;
+        CPSLogger::instance()->flush();       // Synchronize stdio after stage
+        // ^ Synchronization → Logging : CPSLogger.flush
+        // Fires once per runner per successfully completed stage.
+        // runner2 (fast) completes INIT → flush.
+        // runner1 (slow, 2s) also eventually completes INIT → flush.
+        // = 2 CPSLogger.flush events total in the GT sequence.
+        synchronizer->finishedStage.post();   // signal master this runner is done
+    }
+    return false;
+}
+
+// === src/Synchronization/SynchronizedRunnerMaster.cpp ===
+// Component: Synchronization
+
+bool SynchronizedRunnerMaster::runStage(RunStage stage)
+{
+    using namespace boost::interprocess;
+    mapped_region region(sync_, read_write);
+    auto synchronizer = static_cast<Synchronizer*>(region.get_address());
+
+    // Signal all runners to execute this stage
+    std::unique_lock<...> lock(synchronizer->runStageMutex);
+    synchronizer->runStage = stage;
+    synchronizer->runStageChanged.notify_all();
+    lock.unlock();
+
+    boost::posix_time::ptime timeout = boost::get_system_time()
+            + boost::posix_time::milliseconds(
+                    std::chrono::duration_cast<Milliseconds>(timeout_).count());
+
+    for (int i = 0; i < numOfRunners_; ++i)
+    {
+        if (!synchronizer->finishedStage.timed_wait(timeout))
+        {
+            // Timeout: runner did not complete stage in time
+            CPSLOG_ERROR << numOfRunners_ - i << " Module(s) timed out at runstage " << (int)stage;
+            // ^ Synchronization → Logging : RAIILogStream.stream
+            // Fires when timed_wait expires (runner1 sleeps 2s, timeout is 1s).
+            std::unique_lock<...> lock2(synchronizer->runStageMutex);
+            synchronizer->failure = true;
+            synchronizer->runStageChanged.notify_all();
+            lock2.unlock();
+            return true;
+        }
+    }
+    return false;
+}
+
+// === include/cpsCore/Logging/CPSLogger.h (macro expansion) ===
+// CPSLOG_ERROR expands to:
+//   RAIILogStream(CPSLogger::instance(), LogLevel::ERROR, __FILE__, __LINE__).stream << ...
+// The .stream member access IS the cross-component call: Synchronization → Logging : RAIILogStream.stream
+// CPSLogger::instance() is a singleton accessor — NOT an interaction (do not include it).
+// CPSLogger::flush() IS a cross-component call: Synchronization → Logging : CPSLogger.flush
+
+// === EXECUTION SUMMARY for "Synchronized Runner Timeout" ===
+//
+// Both threads start:
+//   runner1.runSynchronized(agg1) → agg1.getAll<IRunnableObject>()
+//       → Synchronization → Aggregation : Aggregator.getAll   [event 0]
+//   runner2.runSynchronized(agg2) → agg2.getAll<IRunnableObject>()
+//       → Synchronization → Aggregation : Aggregator.getAll   [event 1]
+//
+// master.runStage(INIT) signals runners; both start executing INIT:
+//   runner2: runObj3/runObj4 complete quickly → CPSLogger::flush()
+//       → Synchronization → Logging : CPSLogger.flush          [event 2]
+//   master: runner2 posts, waits 1s for runner1 → TIMEOUT
+//       CPSLOG_ERROR → Synchronization → Logging : RAIILogStream.stream  [event 3]
+//       failure = true, notify_all
+//   runner1: runObj1 finishes (after 2s), flushes (failure set but flush already queued)
+//       → Synchronization → Logging : CPSLogger.flush          [event 4]
+//
+// INTERACTION SET (3 unique):
+//   1. Synchronization → Aggregation : Aggregator.getAll
+//   2. Synchronization → Logging     : CPSLogger.flush
+//   3. Synchronization → Logging     : RAIILogStream.stream
+{
+	auto runObj1 = std::make_shared<RunnableTestTimeoutClass>(); // sleeps 2s in run()
+	auto runObj2 = std::make_shared<RunnableTestClass>();
+	Aggregator agg1;
+	agg1.add(runObj1);
+	agg1.add(runObj2);
+
+	auto runObj3 = std::make_shared<RunnableTestClass>();
+	auto runObj4 = std::make_shared<RunnableTestClass>();
+	Aggregator agg2;
+	agg2.add(runObj3);
+	agg2.add(runObj4);
+
+	SynchronizedRunnerMaster master(2);
+
+	auto runner1 = std::make_shared<SynchronizedRunner>();
+	auto runner2 = std::make_shared<SynchronizedRunner>();
+
+	std::thread run1(
+			std::bind(&SynchronizedRunner::runSynchronized, runner1, std::ref(agg1)));
+	std::thread run2(
+			std::bind(&SynchronizedRunner::runSynchronized, runner2, std::ref(agg2)));
+
+	CPSLogger::instance()->setLogLevel(LogLevel::NONE);
+	//Should timeout due to runObj1
+	CHECK(master.runStage(RunStage::INIT));
+	CPSLogger::instance()->setLogLevel(LogLevel::WARN);
+
+	run1.join();
+	run2.join();
+}
+
+// === src/Synchronization/SynchronizedRunnerMaster.cpp ===
+// Component: Synchronization
+
+bool
+SynchronizedRunnerMaster::runStage(RunStage stage)
+{
+	using namespace boost::interprocess;
+	mapped_region region(sync_, read_write);
+	auto synchronizer = static_cast<Synchronizer*>(region.get_address());
+
+	std::unique_lock<boost::interprocess::interprocess_mutex> lock(synchronizer->runStageMutex);
+	synchronizer->runStage = stage;
+	synchronizer->runStageChanged.notify_all();
+	lock.unlock();
+
+	boost::posix_time::ptime timeout = boost::get_system_time()
+			+ boost::posix_time::milliseconds(
+					std::chrono::duration_cast<Milliseconds>(timeout_).count());
+
+	for (int i = 0; i < numOfRunners_; ++i)
+	{
+		if (!synchronizer->finishedStage.timed_wait(timeout))
+		{
+			CPSLOG_ERROR << numOfRunners_ - i << " Module(s) timed out at runstage " << (int) stage;
+			std::unique_lock<boost::interprocess::interprocess_mutex> lock(
+					synchronizer->runStageMutex);
+			synchronizer->failure = true;
+			synchronizer->runStageChanged.notify_all();
+			lock.unlock();
+			return true;
+		}
+	}
+	return false;
+}
+
+// === include/cpsCore/Logging/CPSLogger.h (macro expansion) ===
+// Every CPSLOG_* macro (CPSLOG_DEBUG, CPSLOG_WARN, CPSLOG_ERROR, …) expands to:
+//   RAIILogStream(CPSLogger::instance(), LogLevel::X, __FILE__, __LINE__).stream << ...
+// i.e., each CPSLOG_* call produces TWO Logging interactions:
+//   Synchronization → Logging : instance   (via CPSLogger::instance())
+//   Synchronization → Logging : stream     (via RAIILogStream::stream)
+//
+// NOTE: The test calls setLogLevel(LogLevel::NONE) before runStage().
+// The runtime instrumentation operates at the C++ call level (not the log-output
+// level), so the CPSLOG_ERROR call at SynchronizedRunnerMaster.cpp:98 IS captured
+// in the trace even though no text is printed. See trace_slice.txt — one
+// RAIILogStream.stream event from SynchronizedRunnerMaster.runStage is present.

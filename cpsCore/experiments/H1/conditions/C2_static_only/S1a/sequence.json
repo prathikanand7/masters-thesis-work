@@ -1,0 +1,34 @@
+[
+  {
+    "order": 0,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll",
+    "evidence": "static",
+    "method": "entry_order"
+  },
+  {
+    "order": 1,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "instance",
+    "evidence": "static",
+    "method": "entry_order"
+  },
+  {
+    "order": 2,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush",
+    "evidence": "static",
+    "method": "entry_order"
+  },
+  {
+    "order": 3,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream",
+    "evidence": "static",
+    "method": "entry_order"
+  }
+]

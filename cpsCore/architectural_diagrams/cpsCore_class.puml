@@ -1,0 +1,2431 @@
+@startuml
+package [include] as C_0002190201107501869016 {
+package [cpsCore] as C_0013080273469188139828 {
+package [Aggregation] as C_0003995443914959500529 {
+class "integral_constant<bool,false>" as C_0002785967449649660056
+class C_0002785967449649660056 {
+__
+}
+package [DynamicContainer] as C_0002902518121926820261 {
+class "shared_ptr<IAggregatableObject>" as C_0014663246273671943175
+class C_0014663246273671943175 {
+__
+}
+class "vector<std::shared_ptr<IAggregatableObject>>" as C_0005705696531821621419
+class C_0005705696531821621419 {
+__
+}
+class "DynamicObjectContainer" as C_0006294081254024426382
+class C_0006294081254024426382 {
++add(std::shared_ptr<IAggregatableObject> obj) : void
++add(const DynamicObjectContainer & obj) : void
++clear() : void
++empty() const : bool
++getAll<Type>(Type * self) const : std::vector<std::shared_ptr<Type> >
++getOne<Type>(Type * self) const : std::shared_ptr<Type>
++notifyAggregationOnUpdate(const Aggregator & agg) : void
++size() const : std::size_t
+__
+-container_ : std::vector<std::shared_ptr<IAggregatableObject>>
+}
+}
+class "shared_ptr<Type>" as C_0006592648460203373488
+class C_0006592648460203373488 {
+__
+}
+class "vector<std::shared_ptr<Type>>" as C_0011611421470239515537
+class C_0011611421470239515537 {
+__
+}
+class "tuple<std::shared_ptr<Types>...>" as C_0005227499162026758926
+class C_0005227499162026758926 {
+__
+}
+class "weak_ptr<Object>" as C_0013349032693750974707
+class C_0013349032693750974707 {
+__
+}
+class "vector<std::weak_ptr<Object>>" as C_0018095915124040822558
+class C_0018095915124040822558 {
+__
+}
+class "integral_constant<bool,true>" as C_0009166925722896823160
+class C_0009166925722896823160 {
+__
+}
+class "ObjectHandleContainer<Others...>" as C_0010573752430770380595
+class C_0010573752430770380595 {
+__
+}
+class "weak_ptr<Type>" as C_0014108254082620922835
+class C_0014108254082620922835 {
+__
+}
+class "ObjectHandleContainer<Objects...>" as C_0007964116635165979508
+class C_0007964116635165979508 {
+__
+}
+class "is_complete_impl<T>" as C_0002099121768658418659
+class C_0002099121768658418659 {
+{static} +test() : std::false_type
+{static} +test<U>(U *) : std::integral_constant<_Bool, sizeof(U) == sizeof(U)>
+__
+}
+class "is_complete<T>" as C_0007215443922100730784
+class C_0007215443922100730784 {
+__
+}
+class "has_typeid_impl<AggObj>" as C_0004280605719769434926
+class C_0004280605719769434926 {
+{static} +test() : std::false_type
+{static} +test<U>(U *) : std::integral_constant<_Bool, sizeof (U::typeId) == sizeof (U::typeId)>
+__
+}
+class "has_typeid<AggObj>" as C_0016911641009388276303
+class C_0016911641009388276303 {
+__
+}
+abstract "IAggregatableObject" as C_0018374402636167681931
+abstract C_0018374402636167681931 {
++~IAggregatableObject() = default : void
+..
+{abstract} +notifyAggregationOnUpdate(const Aggregator & agg) = 0 : void
+__
+}
+class "Aggregator" as C_0000343239904209990740
+class C_0000343239904209990740 {
++Aggregator() : void
++Aggregator(const Aggregator &) = deleted : void
++Aggregator(Aggregator &&) = default : void
+..
++operator=(const Aggregator &) = deleted : Aggregator &
++operator=(Aggregator &&) = default : Aggregator &
+..
++add(std::shared_ptr<IAggregatableObject> obj) : void
++add(const std::vector<std::shared_ptr<IAggregatableObject>> & objs) : void
++add(const Aggregator::ObjectContainer & obj) : void
++add<Type>(std::shared_ptr<Type> obj) : void
++add<Type>(const std::vector<std::shared_ptr<Type>> & objs) : void
++add<Types...>(std::tuple<std::shared_ptr<Types>...> obj) : void
+{static} +aggregate(const std::vector<std::shared_ptr<IAggregatableObject>> & aggregation) : Aggregator
++cleanUp() : void
++clear() : void
++empty() const : bool
++getAll<Type>(Type * self = nullptr) const : std::vector<std::shared_ptr<Type> >
++getOne<Type>(Type * self = nullptr) const : std::shared_ptr<Type>
++merge(Aggregator & agg) : void
++mergeInto(Aggregator & agg) : void
++size() const : std::size_t
+__
+-container_ : Aggregator::ObjectContainer
+}
+class "MultiObjectHandle<Object>" as C_0011140302862299070030
+class C_0011140302862299070030 {
+__
+}
+class "is_multi_object_handle<typename>" as C_0004231367867969345373
+class C_0004231367867969345373 {
+__
+}
+class "is_multi_object_handle<MultiObjectHandle<Object>>" as C_0017018759863667896831
+class C_0017018759863667896831 {
+__
+}
+class "ObjectHandleContainer<Object,Others...>" as C_0000075846301958508806
+class C_0000075846301958508806 {
+{static} +canContain<Ret>() constexpr : _Bool
++get<Ret>() const : GetType<Ret>
++isSet<Ret>() const : _Bool
++setFromAggregationIfNotSet(const Aggregator & agg) : void
++setFromAggregationIfNotSet<Agg>(const Agg & agg) : void
+__
+-object_ : ObjectType
+-others_ : ObjectHandleContainer<Others...>
+}
+class "ObjectHandleContainer::GetTypeImpl<Type,_Bool=is_multi_object_handle<Type>::value>" as C_0006599728870642435125
+class C_0006599728870642435125 {
+__
+}
+class "ObjectHandleContainer::GetTypeImpl<Type,true>" as C_0017788321241357966484
+class C_0017788321241357966484 {
+__
+}
+class "ObjectHandleContainer< >" as C_0012225649900201550445
+class C_0012225649900201550445 {
+{static} +canContain<Ret>() constexpr : _Bool
++get<Ret>() const : std::shared_ptr<Ret>
++isSet<Ret>() const : _Bool
++setFromAggregationIfNotSet(const Aggregator & agg) : void
++setFromAggregationIfNotSet<Agg>(const Agg & agg) : void
+__
+}
+class "AggregatableObject<Objects...>" as C_0008839159018802479930
+class C_0008839159018802479930 {
++checkIsSet<Checks...>() const : _Bool
++checkIsSetAll() const : bool
+#checkIsSetImpl<Check>() const : _Bool
++get<Ret>() const : GetType<Ret>
+{static} #isGettable<Ret>() constexpr : _Bool
++isSet<Checks...>() const : _Bool
+#isSetImpl<Ret>() const : _Bool
++notifyAggregationOnUpdate(const Aggregator & agg) : void
++notifyAggregationOnUpdate<Agg>(const Agg & agg) : void
+__
+#container_ : ObjectHandleContainer<Objects...>
+}
+}
+package [Logging] as C_0001560426030582334780 {
+class "basic_ostream<char>" as C_0012782362847443494988
+class C_0012782362847443494988 {
+__
+}
+class "basic_string<char>" as C_0001275076681856179721
+class C_0001275076681856179721 {
+__
+}
+class "shared_ptr<ITimeProvider>" as C_0014199763570884460392
+class C_0014199763570884460392 {
+__
+}
+class "weak_ptr<ITimeProvider>" as C_0002558881190394428518
+class C_0002558881190394428518 {
+__
+}
+enum "LogLevel" as C_0013137037997763296514
+enum C_0013137037997763296514 {
+TRACE
+DEBUG
+WARN
+ERROR
+NONE
+}
+class "CPSLogger" as C_0007664058835849252473
+class C_0007664058835849252473 {
+-CPSLogger() : void
++~CPSLogger() : void
+..
++flush() : void
++getLogLevel() const : LogLevel
+{static} +instance() : CPSLogger *
++isFlushed() const : bool
++log(LogLevel level) : std::ostream &
++log(LogLevel level, const std::string & module) : std::ostream &
++setLogLevel(LogLevel level) : void
++setModuleName(const std::string & name) : void
++setSink(std::ostream & sink) : void
++setTimeProvider(std::shared_ptr<ITimeProvider> timeProvider) : void
+__
+-emptySink_ : std::ostream
+{static} -instance_ : CPSLogger *
+-isFlushed_ : bool
+-moduleName_ : std::string
+-setLevel_ : LogLevel
+-sink_ : std::ostream
+-timeProvider_ : std::weak_ptr<ITimeProvider>
+}
+class "CPSLogger::LogLevelScope" as C_0017667062111794940040
+class C_0017667062111794940040 {
++LogLevelScope(LogLevel setLevel) : void
++~LogLevelScope() : void
+__
++oldLogLevel_ : LogLevel
+}
+class "CPSLogger::FlushScope" as C_0017435283933898040766
+class C_0017435283933898040766 {
++~FlushScope() : void
+__
+}
+class "CPSLogger::CGuard" as C_0018328262838980206514
+class C_0018328262838980206514 {
++~CGuard() : void
+__
+}
+class "RAIILogStream" as C_0003958153406982005100
+class C_0003958153406982005100 {
++RAIILogStream(LogLevel level) : void
+..
++stream() : std::ostream &
+__
+-scope_ : CPSLogger::FlushScope
+-stream_ : std::ostream &
+}
+}
+package [Utilities] as C_0017626437008417035152 {
+package [SignalHandler] as C_0006580508436900628786 {
+class "function<void(int)>" as C_0018403478467783624103
+class C_0018403478467783624103 {
+__
+}
+class "slot<void(int),boost::function<void(int)>>" as C_0014745034683029007718
+class C_0014745034683029007718 {
+__
+}
+class "function<void()>" as C_0012880145799884330927
+class C_0012880145799884330927 {
+__
+}
+class "slot<void(),boost::function<void()>>" as C_0010666530099642710922
+class C_0010666530099642710922 {
+__
+}
+class "signal<void(int)>" as C_0015988153626575957537
+class C_0015988153626575957537 {
+__
+}
+class "signal<void()>" as C_0001173185122141874266
+class C_0001173185122141874266 {
+__
+}
+class "AggregatableObject" as C_0000226063946474405916
+class C_0000226063946474405916 {
+__
+}
+class "SignalHandlerSingleton" as C_0014374684139888734938
+class C_0014374684139888734938 {
++SignalHandlerSingleton(const SignalHandlerSingleton &) = deleted : void
+-SignalHandlerSingleton() : void
++~SignalHandlerSingleton() : void
+..
++operator=(const SignalHandlerSingleton &) = deleted : void
+..
++callSigHandlers(int sig) : void
+{static} +getInstance() : SignalHandlerSingleton &
++joinHandler() : void
+-signalHandleThreadTask() : void
++subscribeOnExit(const OnExit::slot_type & slot) : void
++subscribeOnSigint(const OnSIGINT::slot_type & slot) : void
++thisThreadBlockSigInt() : void
+__
+-onExit_ : SignalHandlerSingleton::OnExit
+-onSigint_ : SignalHandlerSingleton::OnSIGINT
+-signalHandled_ : bool
+-signalHandlerThread_ : std::thread
+-signalMutex_ : Mutex
+}
+class "SignalHandler" as C_0010344079272727419634
+class C_0010344079272727419634 {
++SignalHandler() = default : void
+..
++subscribeOnExit(const OnExit::slot_type & slot) : void
++subscribeOnSigint(const OnSIGINT::slot_type & slot) : void
+__
+{static} +typeId : const IAggregatableObject::TypeId
+}
+}
+class "Angle<T>" as C_0005346879438759544677
+class C_0005346879438759544677 {
+__
+}
+class "pair<ENUM,std::string>" as C_0003131246190357981810
+class C_0003131246190357981810 {
+__
+}
+class "initializer_list<std::pair<ENUM,std::string>>" as C_0013028038644581934680
+class C_0013028038644581934680 {
+__
+}
+class "map<ENUM,std::string>" as C_0005820013041203055912
+class C_0005820013041203055912 {
+__
+}
+class "unordered_map<std::string,ENUM>" as C_0016251970052706588167
+class C_0016251970052706588167 {
+__
+}
+class "optional<Type>" as C_0002758898732580817746
+class C_0002758898732580817746 {
+__
+}
+class "Matrix<FloatingType,N,1,Eigen::DontAlign>" as C_0011967862020666941795
+class C_0011967862020666941795 {
+__
+}
+class "Matrix<T,rows,1,opts,max_rows,max_cols>" as C_0007932273471488736152
+class C_0007932273471488736152 {
+__
+}
+class "vector<T,A>" as C_0017096192105151754852
+class C_0017096192105151754852 {
+__
+}
+class "map<K,T,C,A>" as C_0012300240799191839889
+class C_0012300240799191839889 {
+__
+}
+class "basic_string<char,std::char_traits<char>,std::allocator<char>>" as C_0010957948077403816313
+class C_0010957948077403816313 {
+__
+}
+class "less<std::string>" as C_0010455722369565428401
+class C_0010455722369565428401 {
+__
+}
+class "pair<std::string const,T>" as C_0002546492948382688409
+class C_0002546492948382688409 {
+__
+}
+class "allocator<std::pair<std::string const,T>>" as C_0001417757876137010842
+class C_0001417757876137010842 {
+__
+}
+class "map<std::string,T,std::less<std::string>,std::allocator<std::pair<std::string const,T>>>" as C_0004811301819044024366
+class C_0004811301819044024366 {
+__
+}
+class "hash<std::string>" as C_0007070474464116181135
+class C_0007070474464116181135 {
+__
+}
+class "equal_to<std::string>" as C_0015405065996646700243
+class C_0015405065996646700243 {
+__
+}
+class "unordered_map<std::string,T,std::hash<std::string>,std::equal_to<std::string>,std::allocator<std::pair<std::string const,T>>>" as C_0009945799118906734303
+class C_0009945799118906734303 {
+__
+}
+class "less<K>" as C_0005649561462667370685
+class C_0005649561462667370685 {
+__
+}
+class "pair<K const,T>" as C_0015402114605685990696
+class C_0015402114605685990696 {
+__
+}
+class "allocator<std::pair<K const,T>>" as C_0013768045732173456656
+class C_0013768045732173456656 {
+__
+}
+class "map<K,T,std::less<K>,std::allocator<std::pair<K const,T>>>" as C_0016807274725055242098
+class C_0016807274725055242098 {
+__
+}
+class "is_enum<K>" as C_0009975951887633166926
+class C_0009975951887633166926 {
+__
+}
+class "hash<K>" as C_0000076502622628151643
+class C_0000076502622628151643 {
+__
+}
+class "equal_to<K>" as C_0003486057476932189247
+class C_0003486057476932189247 {
+__
+}
+class "unordered_map<K,T,std::hash<K>,std::equal_to<K>,std::allocator<std::pair<K const,T>>>" as C_0017301367494642339867
+class C_0017301367494642339867 {
+__
+}
+class "optional<T>" as C_0006290002827945438574
+class C_0006290002827945438574 {
+__
+}
+class "Matrix<T,r,c,o,_Rows,_Cols>" as C_0015276268077206572759
+class C_0015276268077206572759 {
+__
+}
+class "is_same<Type,std::string>" as C_0009280057129622690497
+class C_0009280057129622690497 {
+__
+}
+package [DataPresentation] as C_0008092654943292659429 {
+package [detail] as C_0002946320007251977920 {
+class "Parameter<bool>" as C_0006307934300294070813
+class C_0006307934300294070813 {
+__
+}
+package [Binary] as C_0010994231983867880294 {
+class "ArchiveError" as C_0016218468385456919701
+class C_0016218468385456919701 {
++ArchiveError(const std::string & what) : void
+__
+}
+class "BinaryFromArchive" as C_0004853313194488676669
+class C_0004853313194488676669 {
++BinaryFromArchive(const std::string & str, const ArchiveOptions & opts = ArchiveOptions()) : void
+..
++operator<Type>(Type & val) : class BinaryFromArchive &
++operator&<Type>(Type & val) : void
++operator>>(double & doub) : BinaryFromArchive &
++operator>><Type>(Type & val) : class BinaryFromArchive &
+..
++begin() : const char *
++compressDouble() const : bool
++consume(unsigned long bytes) : void
++getConsumed() : std::size_t
++getRemaining() : std::string
++read(char * val, unsigned long bytes) : void
++setOptions(const ArchiveOptions & opts) : void
+__
+-idx_ : unsigned int
+-options_ : ArchiveOptions
+-string_ : const std::string &
+}
+class "BinaryToArchive" as C_0008800656183088550077
+class C_0008800656183088550077 {
++BinaryToArchive(std::string & str, const ArchiveOptions & opts = ArchiveOptions()) : void
+..
++operator<Type>(const Type & cval) : class BinaryToArchive &
++operator&<Type>(const Type & val) : void
++operator<<(const double & doub) : BinaryToArchive &
++operator>><Type>(const Type & val) : class BinaryToArchive &
+..
++append(const char * c, size_t length) : void
++compressDouble() const : bool
++setOptions(const ArchiveOptions & opts) : void
+__
+-options_ : ArchiveOptions
+-string_ : std::string &
+}
+}
+package [File] as C_0010281367245208129368 {
+class "basic_ifstream<char>" as C_0013346845937494941633
+class C_0013346845937494941633 {
+__
+}
+class "basic_ofstream<char>" as C_0004276277466396066764
+class C_0004276277466396066764 {
+__
+}
+class "FileFromArchive" as C_0012204725332953189770
+class C_0012204725332953189770 {
++FileFromArchive(std::ifstream & file, const ArchiveOptions & opts = ArchiveOptions()) : void
+..
++operator<Type>(Type & val) : class FileFromArchive &
++operator&<Type>(Type & val) : void
++operator>>(double & doub) : FileFromArchive &
++operator>><Type>(Type & val) : class FileFromArchive &
+..
++read(char * val, unsigned long bytes) : void
++setOptions(const ArchiveOptions & opts) : void
+__
+-file_ : std::ifstream &
+-options_ : ArchiveOptions
+}
+class "FileToArchive" as C_0009840101858599344504
+class C_0009840101858599344504 {
++FileToArchive(std::ofstream & str, const ArchiveOptions & opts = ArchiveOptions()) : void
+..
++operator<Type>(const Type & cval) : class FileToArchive &
++operator&<Type>(const Type & val) : void
++operator<<(const double & doub) : FileToArchive &
++operator>><Type>(const Type & val) : class FileToArchive &
+..
++append(const char * c, size_t length) : void
++setOptions(const ArchiveOptions & opts) : void
+__
+-file_ : std::ofstream &
+-options_ : ArchiveOptions
+}
+}
+class "array<T,_Nm>" as C_0006407942233096605905
+class C_0006407942233096605905 {
+__
+}
+class "unordered_map<K,T,H,E,A>" as C_0012340761029599677351
+class C_0012340761029599677351 {
+__
+}
+class "pair<T,A>" as C_0009577404161749001115
+class C_0009577404161749001115 {
+__
+}
+class "Matrix<T,_Rows,_Cols,_Options,_MaxRows,_MaxCols>" as C_0007889047784314986086
+class C_0007889047784314986086 {
+__
+}
+class "ArchiveOptions" as C_0013942310876857373309
+class C_0013942310876857373309 {
++configure<Config>(Config & c) : void
+__
++compressDouble : Parameter<bool>
+}
+class "SerializeCustom" as C_0012456932817712301650
+class C_0012456932817712301650 {
+__
+}
+class "is_vector<T>" as C_0015077548136211620819
+class C_0015077548136211620819 {
+__
+}
+class "is_vector<std::vector<T,A>>" as C_0009664790492427721991
+class C_0009664790492427721991 {
+__
+}
+class "is_array<T>" as C_0010590462660651311554
+class C_0010590462660651311554 {
+__
+}
+class "is_array<std::array<T,_Nm>>" as C_0005422732459855123939
+class C_0005422732459855123939 {
+__
+}
+class "is_map<T>" as C_0016964652346665537464
+class C_0016964652346665537464 {
+__
+}
+class "is_map<std::map<K,T,C,A>>" as C_0003653198421637316027
+class C_0003653198421637316027 {
+__
+}
+class "is_map<std::unordered_map<K,T,H,E,A>>" as C_0003182524728268089645
+class C_0003182524728268089645 {
+__
+}
+class "isOptional<T>" as C_0001575054937493495752
+class C_0001575054937493495752 {
+__
+}
+class "isOptional<std::optional<T>>" as C_0015291787367615456605
+class C_0015291787367615456605 {
+__
+}
+class "is_pair<T>" as C_0002462168001477417158
+class C_0002462168001477417158 {
+__
+}
+class "is_pair<std::pair<T,A>>" as C_0013130660061638738150
+class C_0013130660061638738150 {
+__
+}
+class "is_eigen_mat<Type>" as C_0013838907703542725925
+class C_0013838907703542725925 {
+__
+}
+class "is_eigen_mat<Eigen::Matrix<T,_Rows,_Cols,_Options,_MaxRows,_MaxCols>>" as C_0006792746069886743876
+class C_0006792746069886743876 {
+__
+}
+}
+class "integer_sequence<std::size_t,_Idx...>" as C_0004413695994408527183
+class C_0004413695994408527183 {
+__
+}
+class "ConfigurableObject<ArchiveOptions>" as C_0006595964161420237754
+class C_0006595964161420237754 {
+__
+}
+class "DataPresentation" as C_0005813581957021213842
+class C_0005813581957021213842 {
++DataPresentation() = default : void
+..
++addHeader<Header>(Packet & packet, const Header & header) const : void
++deserialize<Types...>(const Packet & packet) const : auto
++extract<Types...>(Packet & packet) const : auto
++extractHeader<Header>(Packet & packet) const : Header
+-extractTuple<Tuple,std::size_t... Is>(Tuple & t, BinaryFromArchive & archive, std::index_sequence<Is...>) const : void
++getHeader<Header>(const Packet & packet) const : Header
++serialize<Types...>(const Types &... vals) const : class Packet
++serialize<Types...>(const Types &... vals, Packet & packet) const : class Packet &
+__
+{static} +typeId : const IAggregatableObject::TypeId
+}
+}
+class "time_point<Clock>" as C_0000908478690702565473
+class C_0000908478690702565473 {
+__
+}
+class "pair<std::chrono::time_point<Clock>,Type>" as C_0013547778280712816848
+class C_0013547778280712816848 {
+__
+}
+class "time_point<std::chrono::system_clock,std::chrono::duration<long,std::ratio<1L,1000000000L>>>" as C_0012618300953678354318
+class C_0012618300953678354318 {
+__
+}
+class "pair<std::chrono::time_point<std::chrono::system_clock,std::chrono::duration<long,std::ratio<1L,1000000000L>>>,Type>" as C_0004430406160281984455
+class C_0004430406160281984455 {
+__
+}
+package [TimeProvider] as C_0001670047795044081167 {
+class "unique_lock<Mutex>" as C_0006486913296557936509
+class C_0006486913296557936509 {
+__
+}
+abstract "ITimeProvider" as C_0006937669530920927913
+abstract C_0006937669530920927913 {
++~ITimeProvider() = default : void
+..
+{abstract} +now() = 0 : TimePoint
+{abstract} +timeSinceStart() = 0 : Duration
+{abstract} +waitFor(Duration duration, std::condition_variable & interrupt, Lock & lock) = 0 : bool
+{abstract} +waitUntil(TimePoint timePoint, std::condition_variable & interrupt, Lock & lock) = 0 : bool
+__
+{static} +typeId : const char *const
+}
+class "SystemTimeProvider" as C_0011203128200630834940
+class C_0011203128200630834940 {
++SystemTimeProvider() : void
+..
++now() : TimePoint
++timeSinceStart() : Duration
++waitFor(Duration duration, std::condition_variable & interrupt, Lock & lock) : bool
++waitUntil(TimePoint timePoint, std::condition_variable & interrupt, Lock & lock) : bool
+__
+-chronoEpoch_ : TimePoint
+-startTime_ : TimePoint
+{static} +typeId : const IAggregatableObject::TypeId
+}
+}
+package [Scheduler] as C_0011748161272013654255 {
+class "shared_ptr<EventBody>" as C_0005985566406394895047
+class C_0005985566406394895047 {
+__
+}
+class "weak_ptr<EventBody>" as C_0002474759504903096078
+class C_0002474759504903096078 {
+__
+}
+class "function<void()>" as C_0013286274850898176297
+class C_0013286274850898176297 {
+__
+}
+class "optional<std::chrono::duration<int64_t,std::ratio<1,1000000000>>>" as C_0009305931499633879014
+class C_0009305931499633879014 {
+__
+}
+package [ThreadPool] as C_0017235775328414674195 {
+class "Parameter<int>" as C_0003122931519127509939
+class C_0003122931519127509939 {
+__
+}
+class "ThreadPoolSchedulerParams" as C_0016466469442330857391
+class C_0016466469442330857391 {
++configure<Configurator>(Configurator & c) : void
+__
++numThreads : Parameter<int>
+}
+class "atomic<bool>" as C_0004308501729698541420
+class C_0004308501729698541420 {
+__
+}
+class "vector<std::thread>" as C_0003699440369921380857
+class C_0003699440369921380857 {
+__
+}
+class "shared_ptr<Task>" as C_0001874890298042501794
+class C_0001874890298042501794 {
+__
+}
+class "multimap<std::chrono::time_point<Clock>,std::shared_ptr<Task>>" as C_0002836879043902173213
+class C_0002836879043902173213 {
+__
+}
+class "unordered_set<std::string>" as C_0000534642579833992524
+class C_0000534642579833992524 {
+__
+}
+class "AggregatableObject<ITimeProvider>" as C_0014206964886104438982
+class C_0014206964886104438982 {
+__
+}
+class "ConfigurableObject<ThreadPoolSchedulerParams>" as C_0007293688191043054696
+class C_0007293688191043054696 {
+__
+}
+class "ThreadPoolScheduler" as C_0007333975284767953855
+class C_0007333975284767953855 {
++run(RunStage stage) : bool
++schedule(const IScheduler::TaskHandle & task, Duration initialFromNow, const std::string & eventName) : Event
++schedule(const IScheduler::TaskHandle & task, Duration initialFromNow, Duration period, const std::string & eventName) : Event
++setMainThread() : void
++startSchedule() : void
++stop() : void
+-threadLoop() : void
+__
+-canceled_ : std::atomic_bool
+-dependingRunning_ : std::unordered_set<std::string>
+-providingRunning_ : std::unordered_set<std::string>
+-startTime_ : TimePoint
+-taskReleased_ : std::condition_variable
+-tasksMutex_ : std::mutex
+-tasks_ : std::multimap<TimePoint,std::shared_ptr<Task>>
+-threadPool_ : std::vector<std::thread>
+{static} +typeId : const char *const
+}
+class "Task" as C_0012685396697071441978
+class C_0012685396697071441978 {
+__
++depends : std::unordered_set<std::string>
++finished : bool
++provides : std::unordered_set<std::string>
++running : bool
++task : std::function<void ()>
+}
+}
+class "AggregatableObject<IDC,IPC,MicroSimulator>" as C_0015518524769299153386
+class C_0015518524769299153386 {
+__
+}
+class "ExternalSimulator" as C_0008160456670655200528
+class C_0008160456670655200528 {
+-onSimulateCommand(const uint64_t & simTime) : void
++run(RunStage stage) : bool
+__
+{static} +typeId : const IAggregatableObject::TypeId
+}
+class "Parameter<float>" as C_0006308860842537254355
+class C_0006308860842537254355 {
+__
+}
+class "Parameter<unsigned int>" as C_0015809188638768756732
+class C_0015809188638768756732 {
+__
+}
+class "multimap<std::chrono::time_point<Clock>,std::shared_ptr<EventBody>>" as C_0013896361856843042412
+class C_0013896361856843042412 {
+__
+}
+class "ConfigurableObject<MicroSimulatorParams>" as C_0017510143617188825594
+class C_0017510143617188825594 {
+__
+}
+class "MicroSimulatorParams" as C_0009021662014984916439
+class C_0009021662014984916439 {
++configure<Config>(Config & c) : void
+__
++realTimeFactor : Parameter<float>
++showProgress : Parameter<bool>
++simTime : Parameter<unsigned int>
+}
+class "MicroSimulator" as C_0012000368739965278242
+class C_0012000368739965278242 {
++MicroSimulator() : void
++~MicroSimulator() : void
+..
++clearSchedule() : void
+-drawProgressBar(float progress) : void
++getSimMutex() : std::mutex &
++isStopped() : bool
+-logProgress(const TimePoint end, const Duration duration) : void
++now() : TimePoint
++releaseWait() : void
++run(RunStage stage) : bool
++schedule(const std::function<void ()> & task, Duration initialFromNow, const std::string & eventName = "") : Event
++schedule(const std::function<void ()> & task, Duration initialFromNow, Duration period, const std::string & eventName = "") : Event
++setMainThread() : void
++setRealTimeFactor(float factor) : void
++simulate(Duration duration) : int
++simulate() : int
++startSchedule() : void
++stop() : void
++stopOnWait() : void
++timeSinceStart() : Duration
++waitFor(Duration duration, std::condition_variable & interrupt, std::unique_lock<std::mutex> & lock) : bool
++waitUntil(TimePoint timePoint, std::condition_variable & interrupt, std::unique_lock<std::mutex> & lock) : bool
+__
+-events_ : std::multimap<TimePoint,std::shared_ptr<EventBody>>
+-now_ : TimePoint
+-realTimeCondition_ : std::condition_variable
+-realTimeFactor_ : float
+-runs_ : int
+-simMutex_ : std::mutex
+-stopOnWait_ : bool
+-stopped_ : bool
+{static} +typeId : const IAggregatableObject::TypeId
+-waitCondMutex_ : Mutex
+-waitCondition_ : std::condition_variable *
+-waitReleased_ : bool
+}
+class "EventBody" as C_0001266441783234404432
+class C_0001266441783234404432 {
++EventBody(std::function<void ()> b, const std::string & name = "") : void
++EventBody(std::function<void ()> b, const Duration & p, const std::string & name = "") : void
+__
++body : std::function<void ()>
++eventName : std::string
++executionMutex : std::mutex
++intervalCondition : std::condition_variable
++isCanceled : std::atomic_bool
++isDone : std::atomic_bool
++isStarted : std::atomic_bool
++missedDeadline : std::atomic_bool
++period : std::optional<Duration>
++periodicThread : std::thread
+}
+class "Event" as C_0005488138325014560489
+class C_0005488138325014560489 {
++Event() : void
++Event(std::shared_ptr<EventBody> body) : void
+..
++cancel() : void
++changePeriod(const Duration & period) : void
++isCanceled() const : bool
+__
+-body_ : std::weak_ptr<EventBody>
+}
+class "SchedulingArgs" as C_0005184828978756532500
+class C_0005184828978756532500 {
+__
++callback : std::function<void ()>
++deadline : std::optional<Duration>
++depends : std::vector<std::string>
++offset : Duration
++period : std::optional<Duration>
++provides : std::vector<std::string>
++wcet : std::optional<Duration>
+}
+abstract "IScheduler" as C_0000958718200059721479
+abstract C_0000958718200059721479 {
++~IScheduler() = default : void
+..
+{abstract} +schedule(const IScheduler::TaskHandle & task, Duration initialFromNow, const std::string & eventName = "") = 0 : Event
+{abstract} +schedule(const IScheduler::TaskHandle & task, Duration initialFromNow, Duration period, const std::string & eventName = "") = 0 : Event
+{abstract} +setMainThread() = 0 : void
+{abstract} +startSchedule() = 0 : void
+{abstract} +stop() = 0 : void
+__
+{static} +typeId : const char *const
+}
+class "Parameter<size_t>" as C_0017476204617604451015
+class C_0017476204617604451015 {
+__
+}
+class "MultiThreadingSchedulerParams" as C_0000218479092921216142
+class C_0000218479092921216142 {
++configure<Config>(Config & c) : void
+__
++priority : Parameter<size_t>
+}
+class "pair<std::chrono::duration<long,std::ratio<1L,1000000000L>> const,std::shared_ptr<EventBody>>" as C_0016670134323454528728
+class C_0016670134323454528728 {
+__
+}
+class "multimap<std::chrono::duration<int64_t,std::ratio<1,1000000000>>,std::shared_ptr<EventBody>>" as C_0014555851561371322637
+class C_0014555851561371322637 {
+__
+}
+class "vector<std::shared_ptr<EventBody>>" as C_0009994253422127270946
+class C_0009994253422127270946 {
+__
+}
+class "AggregatableObject<ITimeProvider,SignalHandler>" as C_0017880917017906069743
+class C_0017880917017906069743 {
+__
+}
+class "ConfigurableObject<MultiThreadingSchedulerParams>" as C_0000640079464715607512
+class C_0000640079464715607512 {
+__
+}
+class "MultiThreadingScheduler" as C_0009613261135746258361
+class C_0009613261135746258361 {
++MultiThreadingScheduler() = default : void
++~MultiThreadingScheduler() : void
+..
+-createSchedule(Duration start, std::shared_ptr<EventBody> body) : EventMap::value_type
+-handleMissedDeadline(std::shared_ptr<EventBody> body) : void
+-periodicTask(std::shared_ptr<EventBody> body) : void
++run(RunStage stage) : bool
+-runSchedule() : void
++schedule(const std::function<void ()> & task, Duration initialFromNow, const std::string & eventName = "") : Event
++schedule(const std::function<void ()> & task, Duration initialFromNow, Duration period, const std::string & eventName = "") : Event
++setMainThread() : void
++startSchedule() : void
++stop() : void
+__
+-eventsMutex_ : std::mutex
+-events_ : MultiThreadingScheduler::EventMap
+-invokerThread_ : std::thread
+-mainThread_ : bool
+-nonPeriodicEvents_ : std::vector<std::shared_ptr<EventBody>>
+-schedulingParams_ : sched_param
+-started_ : std::atomic_bool
+-startingTime_ : TimePoint
+{static} +typeId : const IAggregatableObject::TypeId
+-wakeupCondition_ : std::condition_variable
+}
+}
+class "Packet" as C_0000162703614957357143
+class C_0000162703614957357143 {
++Packet() = default : void
++Packet(const std::string & buf) : void
+..
++consume(std::size_t length) : std::string
++getBuffer() const : const std::string &
++getBuffer() : std::string &
++getCRC16() const : std::uint16_t
++getSize() const : std::size_t
++getStart() const : const char *
++getStartAddress() : void *
++hamming74Decode() const : Packet
++hamming74Encode() const : Packet
++prepend(const std::string & str) : void
++prepend(const Packet & str) : void
+__
+-buffer_ : std::string
+}
+package [IPC] as C_0004759331265617280509 {
+package [detail] as C_0001221133622245840337 {
+class "function<void(Packet const&)>" as C_0013172502064191320957
+class C_0013172502064191320957 {
+__
+}
+class "slot<void(Packet const&),boost::function<void(Packet const&)>>" as C_0000723133310700534793
+class C_0000723133310700534793 {
+__
+}
+abstract "ISubscriptionImpl" as C_0016645552100932858647
+abstract C_0016645552100932858647 {
++~ISubscriptionImpl() = default : void
+..
+{abstract} +cancel() = 0 : void
+{abstract} +connect() = 0 : bool
+{abstract} +connected() const = 0 : bool
+{abstract} +start() = 0 : void
+{abstract} +subscribe(const ISubscriptionImpl::OnPacketSlot & slot) = 0 : boost::signals2::connection
+__
+}
+class "signal<void(Packet const&)>" as C_0009599583223722736727
+class C_0009599583223722736727 {
+__
+}
+class "SharedMemorySubscriptionImpl" as C_0011343920127748547621
+class C_0011343920127748547621 {
++SharedMemorySubscriptionImpl(const std::string & id) : void
++~SharedMemorySubscriptionImpl() : void
+..
++cancel() : void
++connect() : bool
++connected() const : bool
+-onSharedMemory() : void
++start() : void
++subscribe(const ISubscriptionImpl::OnPacketSlot & slot) : boost::signals2::connection
+__
+-connected_ : bool
+-id_ : std::string
+-listenerCanceled_ : std::atomic_bool
+-listenerThread_ : std::thread
+-onSharedMem_ : ISubscriptionImpl::OnPacket
+-sharedMem_ : boost::interprocess::shared_memory_object
+}
+abstract "IPublisherImpl" as C_0015410170399665019813
+abstract C_0015410170399665019813 {
++~IPublisherImpl() = default : void
+..
+{abstract} +publish(const Packet & obj) = 0 : bool
+__
+}
+}
+class "shared_ptr<IPublisherImpl>" as C_0006946191189180070683
+class C_0006946191189180070683 {
+__
+}
+class "function<Packet(Pub const&)>" as C_0017258840792577751424
+class C_0017258840792577751424 {
+__
+}
+class "weak_ptr<IPublisherImpl>" as C_0013612269257318515615
+class C_0013612269257318515615 {
+__
+}
+class "Publisher<Pub>" as C_0002072818236884030121
+class C_0002072818236884030121 {
++Publisher() = default : void
++Publisher(std::shared_ptr<IPublisherImpl> impl, std::function<Packet (const Pub &)> forwarding) : void
+..
++publish(const Pub & obj) : bool
+__
+-forwarding_ : std::function<Packet (const Pub &)>
+-publisherImpl_ : std::weak_ptr<IPublisherImpl>
+}
+class "shared_ptr<ISubscriptionImpl>" as C_0012172513442630793912
+class C_0012172513442630793912 {
+__
+}
+class "weak_ptr<ISubscriptionImpl>" as C_0005505722942827554588
+class C_0005505722942827554588 {
+__
+}
+class "Subscription" as C_0009623329680503381238
+class C_0009623329680503381238 {
++Subscription() = default : void
++Subscription(std::shared_ptr<ISubscriptionImpl> impl, const boost::signals2::connection & con) : void
+..
++cancel() : void
++connect(std::shared_ptr<ISubscriptionImpl> impl, const boost::signals2::connection & con) : void
++connected() const : bool
+__
+-connection_ : boost::signals2::connection
+-subscriptionImpl_ : std::weak_ptr<ISubscriptionImpl>
+}
+class "IPCOptions" as C_0014749111132924026453
+class C_0014749111132924026453 {
+__
++multiTarget : bool
++retry : bool
++variableSize : bool
+}
+class "Parameter<std::size_t>" as C_0016455220877322969531
+class C_0016455220877322969531 {
+__
+}
+class "IPCParams" as C_0016823232206258020814
+class C_0016823232206258020814 {
++configure<Config>(Config & c) : void
+__
++maxNumPackets : Parameter<std::size_t>
++maxPacketSize : Parameter<std::size_t>
++retryPeriod : Parameter<unsigned int>
++useRedis : Parameter<bool>
+}
+class "function<void(Packet const&)>" as C_0005570961215752941707
+class C_0005570961215752941707 {
+__
+}
+class "Publisher<Packet>" as C_0013840545877025356254
+class C_0013840545877025356254 {
+__
+}
+class "function<void(Type const&)>" as C_0006341709548795045932
+class C_0006341709548795045932 {
+__
+}
+class "vector<std::shared_ptr<IPublisherImpl>>" as C_0000747763826523245034
+class C_0000747763826523245034 {
+__
+}
+class "map<std::string,std::shared_ptr<ISubscriptionImpl>>" as C_0002651047020944179473
+class C_0002651047020944179473 {
+__
+}
+class "AggregatableObject<IScheduler,DataPresentation,SignalHandler>" as C_0007609317871379289764
+class C_0007609317871379289764 {
+__
+}
+class "ConfigurableObject<IPCParams>" as C_0013054147667967913680
+class C_0013054147667967913680 {
+__
+}
+class "IPC" as C_0005197286273459830193
+class C_0005197286273459830193 {
++IPC() = default : void
++~IPC() : void
+..
+-forwardFromPacket<Type>(const Packet & packet, const std::function<void (const Type &)> & func) const : void
+-forwardToPacket<Type>(const Type & val) const : class Packet
++publish<Type>(const std::string & id, const IPCOptions & options = IPCOptions()) : Publisher<Type>
+-publishOnMessageQueue(const std::string & id, unsigned int maxPacketSize, unsigned int numPackets) : std::shared_ptr<IPublisherImpl>
+-publishOnRedis(const std::string & id, unsigned int maxPacketSize) : std::shared_ptr<IPublisherImpl>
+-publishOnSharedMemory(const std::string & id, unsigned int maxPacketSize) : std::shared_ptr<IPublisherImpl>
++publishPackets(const std::string & id, const IPCOptions & options = IPCOptions()) : Publisher<Packet>
+-retrySubscriptions() : void
++run(RunStage stage) : bool
+-sigintHandler(int sig) : void
++subscribe<Type>(const std::string & id, const std::function<void (const Type &)> & slot, const IPCOptions & options = IPCOptions()) : class Subscription
+-subscribeOnMessageQueue(const std::string & id) : std::shared_ptr<ISubscriptionImpl>
++subscribeOnPackets(const std::string & id, const std::function<void (const Packet &)> & slot, const IPCOptions & options = IPCOptions()) : Subscription
+-subscribeOnPacketsImpl(const std::string & id, const IPCOptions & options) : std::shared_ptr<ISubscriptionImpl>
+-subscribeOnRedis(const std::string & id) : std::shared_ptr<ISubscriptionImpl>
+-subscribeOnSharedMemory(const std::string & id) : std::shared_ptr<ISubscriptionImpl>
+__
+-publications_ : std::vector<std::shared_ptr<IPublisherImpl>>
+-retryVectorMutex_ : Mutex
+-retryVector_ : std::vector<std::string>
+-subscribeMutex_ : Mutex
+-subscriptions_ : std::map<std::string,std::shared_ptr<ISubscriptionImpl>>
+{static} +typeId : const IAggregatableObject::TypeId
+}
+}
+package [IDC] as C_0010757978742786688208 {
+class "weak_ptr<IDC>" as C_0016201641408499595425
+class C_0016201641408499595425 {
+__
+}
+class "IDCSender" as C_0004001668839936140075
+class C_0004001668839936140075 {
++IDCSender() = default : void
++IDCSender(std::weak_ptr<IDC> idc, const std::string & id) : void
+..
++sendPacket(const Packet & packet, bool ack = false) : bool
+__
+-id_ : std::string
+-idc_ : std::weak_ptr<IDC>
+}
+package [NetworkLayer] as C_0017323593456091859336 {
+class "NamedValue<int>" as C_0010349066952073605459
+class C_0010349066952073605459 {
+__
+}
+class "NamedValue<std::size_t>" as C_0005703986554947373109
+class C_0005703986554947373109 {
+__
+}
+class "NetworkStats" as C_0017890340805030347693
+class C_0017890340805030347693 {
++parse<Parser>(Parser & p) const : void
+__
++dataCorrupted : NamedValue<std::size_t>
++dataReceived : NamedValue<std::size_t>
++dataSent : NamedValue<std::size_t>
++packetsCorrupted : NamedValue<int>
++packetsReceived : NamedValue<int>
++packetsSent : NamedValue<int>
+}
+class "map<std::string,NetworkStats>" as C_0011808837223480598865
+class C_0011808837223480598865 {
+__
+}
+abstract "INetworkLayer" as C_0007303218860355575300
+abstract C_0007303218860355575300 {
++~INetworkLayer() = default : void
+..
+{abstract} +getStats() const = 0 : std::map<std::string,NetworkStats>
+{abstract} +resetStats(const std::string & id) = 0 : void
+{abstract} +sendPacket(const std::string & id, const Packet & packet) = 0 : bool
+{abstract} +subscribeOnPacket(const std::string & id, const OnPacket::slot_type & handle) = 0 : boost::signals2::connection
+__
+{static} +typeId : const char *const
+}
+class "INetworkParams" as C_0012296356414502002769
+class C_0012296356414502002769 {
+__
+}
+}
+package [TransportLayer] as C_0014462083819508281232 {
+abstract "ITransportLayer" as C_0001271681202276591091
+abstract C_0001271681202276591091 {
++~ITransportLayer() = default : void
+..
+{abstract} +send(const std::string & dest, const Packet & packet, bool ack = false) = 0 : bool
+{abstract} +subscribeOnPacket(const std::string & orig, const OnPacket::slot_type & slot) = 0 : boost::signals2::connection
+__
+{static} +typeId : const char *const
+}
+}
+class "MultiObjectHandle<INetworkLayer>" as C_0002180975388864908253
+class C_0002180975388864908253 {
+__
+}
+class "AggregatableObject<Multi<INetworkLayer>,ITransportLayer,IDC>" as C_0012141478295566698368
+class C_0012141478295566698368 {
+__
+}
+class "IDC" as C_0009194554853436451460
+class C_0009194554853436451460 {
++createSender(const std::string & id) : IDCSender
++run(RunStage stage) : bool
++sendPacket(const std::string & id, const Packet & packet, bool ack = false) : bool
++subscribeOnPacket(const std::string & id, const OnPacket::slot_type & handle) : boost::signals2::connection
+__
+{static} +typeId : const char *const
+}
+}
+class "NamedValue<Type>" as C_0012840769052112322537
+class C_0012840769052112322537 {
+__
+}
+class "map<std::string,Type>" as C_0010286479397526495991
+class C_0010286479397526495991 {
+__
+}
+class "NamedValueParser<Type>" as C_0015251845947426937680
+class C_0015251845947426937680 {
++NamedValueParser() = default : void
+..
++operator&<NamedValueType>(const NamedValueType & value) : void
+..
++parse<NamedValueSet>(const NamedValueSet & set) : const std::map<std::string, Type> &
+__
+-values_ : std::map<std::string,Type>
+}
+class "NamedValuePrinter" as C_0015798704804133110247
+class C_0015798704804133110247 {
++NamedValuePrinter(std::ostream & os) : void
+..
++operator<NamedValueSet>(const NamedValueSet & set) : std::ostream &
++operator&<Type>(const NamedValue<Type> & value) : class NamedValuePrinter &
+..
++print<NamedValueSet>(const NamedValueSet & set) : std::ostream &
+__
+-os_ : std::ostream &
+}
+class "is_named_value_set<typename,typename=void>" as C_0007118392337150395745
+class C_0007118392337150395745 {
+__
+}
+class "is_named_value_set<T,void>" as C_0013209094413487711357
+class C_0013209094413487711357 {
+__
+}
+class "is_named_value<Type>" as C_0016674062258957193252
+class C_0016674062258957193252 {
+__
+}
+class "is_named_value<NamedValue<Type>>" as C_0006287391464698701328
+class C_0006287391464698701328 {
+__
+}
+class "Angle<Type>" as C_0004232611612597203419
+class C_0004232611612597203419 {
++Angle() : void
++Angle(const Type & deg) : void
+..
++operator()() const : const Type &
++operator()() : Type &
++operator=(const Type & deg) : Angle<Type> &
+..
++degrees() const : Type
+{static} +fromRad(const Type & rad) : Angle<Type>
++operator type-parameter-0-0() const : Type
++setRad(const Type & rad) : void
+__
+{static} +degToRadFactor : const Type
+{static} +radToDegFactor : const Type
+-rad_ : Type
+}
+class "is_angle<T>" as C_0003724642157303074132
+class C_0003724642157303074132 {
+__
+}
+class "is_angle<Angle<T>>" as C_0008543833834983315116
+class C_0008543833834983315116 {
+__
+}
+class "EnumMap<ENUM>" as C_0008295616038026314040
+class C_0008295616038026314040 {
++EnumMap(const EnumMap<ENUM> &) = deleted : void
+-EnumMap() = default : void
+..
++operator=(const EnumMap<ENUM> &) = deleted : void
+..
++begin() const : auto
+{static} +convert(const std::string & str) : ENUM
+{static} +convert(ENUM e) : std::string
++end() const : auto
+{static} +getInstance() : EnumMap<ENUM> &
+{static} +initialize(std::initializer_list<std::pair<ENUM,std::string>> l) : void
+__
+#left_ : std::map<ENUM,std::string>
+#right_ : std::unordered_map<std::string,ENUM>
+}
+class "EnumInitializer<ENUM>" as C_0007172408094915294144
+class C_0007172408094915294144 {
++EnumInitializer(std::initializer_list<std::pair<ENUM,std::string>> l) noexcept : void
+__
+}
+class "TypeToEnum<T,E>" as C_0003594051772893980780
+class C_0003594051772893980780 {
+__
+}
+class "EnumToType<E,E VALUE>" as C_0003925868811875120159
+class C_0003925868811875120159 {
+__
+}
+class "is_eigen_vector<T>" as C_0003589956688787328878
+class C_0003589956688787328878 {
+__
+}
+class "is_eigen_vector<Eigen::Matrix<T,rows,1,opts,max_rows,max_cols>>" as C_0010181556741836481452
+class C_0010181556741836481452 {
+__
+}
+class "is_vector<T>" as C_0003958097254058230554
+class C_0003958097254058230554 {
+__
+}
+class "is_vector<std::vector<T,A>>" as C_0001778640447425162599
+class C_0001778640447425162599 {
+__
+}
+class "is_map<T>" as C_0001969217826127562843
+class C_0001969217826127562843 {
+__
+}
+class "is_map<std::map<K,T,C,A>>" as C_0014025468633764315063
+class C_0014025468633764315063 {
+__
+}
+class "is_string_key_map<T>" as C_0007859608980708527739
+class C_0007859608980708527739 {
+__
+}
+class "is_string_key_map<std::map<std::string,T,std::less<std::string>,std::allocator<std::pair<std::string const,T>>>>" as C_0015159360120864128455
+class C_0015159360120864128455 {
+__
+}
+class "is_string_key_map<std::unordered_map<std::string,T,std::hash<std::string>,std::equal_to<std::string>,std::allocator<std::pair<std::string const,T>>>>" as C_0004961477316647142997
+class C_0004961477316647142997 {
+__
+}
+class "is_enum_map<T>" as C_0011749926717872403817
+class C_0011749926717872403817 {
+__
+}
+class "is_enum_map<std::map<K,T,std::less<K>,std::allocator<std::pair<K const,T>>>>" as C_0018231043327051668118
+class C_0018231043327051668118 {
+__
+}
+class "is_enum_map<std::unordered_map<K,T,std::hash<K>,std::equal_to<K>,std::allocator<std::pair<K const,T>>>>" as C_0007563406993271463263
+class C_0007563406993271463263 {
+__
+}
+class "is_optional<T>" as C_0008175345052455287538
+class C_0008175345052455287538 {
+__
+}
+class "is_optional<std::optional<T>>" as C_0001997610129769237826
+class C_0001997610129769237826 {
+__
+}
+class "is_eigen<T>" as C_0003357885005899714375
+class C_0003357885005899714375 {
+__
+}
+class "is_eigen<Eigen::Matrix<T,r,c,o,_Rows,_Cols>>" as C_0002753357962043618260
+class C_0002753357962043618260 {
+__
+}
+package [Test] as C_0016741174557855448303 {
+class "TestInfo" as C_0015078483726432396451
+class C_0015078483726432396451 {
+-TestInfo() = default : void
+..
+{static} +getInstance() : TestInfo &
++initialize(int argc, char ** argv) : void
+__
++testDir : std::string
+}
+}
+enum "TimeUnit" as C_0015632774256934338990
+enum C_0015632774256934338990 {
+Nanoseconds
+Microseconds
+Milliseconds
+Seconds
+Minutes
+Hours
+}
+class "is_timed_value<Type>" as C_0018060951739520694026
+class C_0018060951739520694026 {
+__
+}
+class "is_timed_value<std::pair<std::chrono::time_point<std::chrono::system_clock,std::chrono::duration<long,std::ratio<1L,1000000000L>>>,Type>>" as C_0018416593695100838874
+class C_0018416593695100838874 {
+__
+}
+}
+package [Configuration] as C_0011713641715786099663 {
+class "basic_json" as C_0008843406913308057517
+class C_0008843406913308057517 {
+__
+}
+class "enable_if_t<is_parameter<Type>::value,Type>" as C_0008403520991582871311
+class C_0008403520991582871311 {
+__
+}
+class "enable_if_t<!is_parameter<Type>::value,Type>" as C_0010205435970788422569
+class C_0010205435970788422569 {
+__
+}
+class "enable_if_t<is_parameter_set<Type>::value,Type>" as C_0008956538216400024781
+class C_0008956538216400024781 {
+__
+}
+class "enable_if_t<!(is_parameter_set<Type>::value),Type>" as C_0014663711081847961636
+class C_0014663711081847961636 {
+__
+}
+class "is_base_of<IConfigurableObject,T>" as C_0001020200601652707434
+class C_0001020200601652707434 {
+__
+}
+class "tuple<Args...>" as C_0004822627011371164501
+class C_0004822627011371164501 {
+__
+}
+class "ratio<1,1000000000>" as C_0012415743977570969849
+class C_0012415743977570969849 {
+__
+}
+class "duration<int64_t,std::ratio<1,1000000000>>" as C_0017614144533568309161
+class C_0017614144533568309161 {
+__
+}
+class "Matrix<FloatingType,3,1,Eigen::DontAlign>" as C_0012322212928576280879
+class C_0012322212928576280879 {
+__
+}
+class "Matrix<FloatingType,2,1,Eigen::DontAlign>" as C_0010478178572889493679
+class C_0010478178572889493679 {
+__
+}
+class "enable_if_t<std::is_pod_v<PODType>,PODType>" as C_0016657843338292946743
+class C_0016657843338292946743 {
+__
+}
+class "enable_if_t<!std::is_pod_v<Type>,Type>" as C_0004260947219628560954
+class C_0004260947219628560954 {
+__
+}
+class "vector<T>" as C_0015625435119362590644
+class C_0015625435119362590644 {
+__
+}
+class "enable_if_t<is_parameter_set<Type>::value,typename type-parameter-0-0::value_type::second_type>" as C_0002481139442857516266
+class C_0002481139442857516266 {
+__
+}
+class "map<std::string,enable_if_is_parameter_set<is_parameter_set<Type>::value,typename type-parameter-0-0::value_type::second_type>>" as C_0017475076386776221102
+class C_0017475076386776221102 {
+__
+}
+class "enable_if_t<!(is_parameter_set<Type>::value),typename type-parameter-0-0::value_type::second_type>" as C_0012949798472407589075
+class C_0012949798472407589075 {
+__
+}
+class "map<std::string,enable_if_not_is_parameter_set<!(is_parameter_set<Type>::value),typename type-parameter-0-0::value_type::second_type>>" as C_0004934163269875422839
+class C_0004934163269875422839 {
+__
+}
+class "unordered_map<std::string,enable_if_is_parameter_set<is_parameter_set<Type>::value,typename type-parameter-0-0::value_type::second_type>>" as C_0001615357547103002269
+class C_0001615357547103002269 {
+__
+}
+class "unordered_map<std::string,enable_if_not_is_parameter_set<!(is_parameter_set<Type>::value),typename type-parameter-0-0::value_type::second_type>>" as C_0008395348751897730245
+class C_0008395348751897730245 {
+__
+}
+class "map<typename T::key_type,enable_if_is_parameter_set<is_parameter_set<Type>::value,typename type-parameter-0-0::value_type::second_type>>" as C_0015116365060122692688
+class C_0015116365060122692688 {
+__
+}
+class "map<typename T::key_type,enable_if_not_is_parameter_set<!(is_parameter_set<Type>::value),typename type-parameter-0-0::value_type::second_type>>" as C_0004758537526048551464
+class C_0004758537526048551464 {
+__
+}
+class "unordered_map<typename T::key_type,enable_if_is_parameter_set<is_parameter_set<Type>::value,typename type-parameter-0-0::value_type::second_type>>" as C_0008512558841133812862
+class C_0008512558841133812862 {
+__
+}
+class "unordered_map<typename T::key_type,enable_if_not_is_parameter_set<!(is_parameter_set<Type>::value),typename type-parameter-0-0::value_type::second_type>>" as C_0014009399528624393172
+class C_0014009399528624393172 {
+__
+}
+class "Matrix<Type,Eigen::Dynamic,1>" as C_0011700714670214200523
+class C_0011700714670214200523 {
+__
+}
+class "Array<Type,Eigen::Dynamic,1>" as C_0002760424051573831251
+class C_0002760424051573831251 {
+__
+}
+class "Matrix<Type,rows,cols,options>" as C_0010753965135633812092
+class C_0010753965135633812092 {
+__
+}
+class "Parameter<Type>" as C_0008701292039570110576
+class C_0008701292039570110576 {
++operator=(const Parameter<Type> & other) : Parameter<Type> &
+..
++operator()() const : const Type &
++operator()() : Type &
++operator=(const Type & val) : Parameter<Type> &
++operator==(const Parameter<Type> & other) const : bool
+..
++setValue(const Type & val) : void
+__
++id : const std::string
++mandatory : const bool
++value : Type
+}
+class "ParameterPrinter" as C_0005148644649595111135
+class C_0005148644649595111135 {
++ParameterPrinter(std::ostream & os) : void
+..
++operator<ParameterSet>(const ParameterSet & set) : std::ostream &
++operator&<Type>(const Parameter<Type> & value) : class ParameterPrinter &
+..
++print<ParameterSet>(const ParameterSet & set) : std::ostream &
+__
+-os_ : std::ostream &
+}
+class "is_parameter_set<typename,typename=void>" as C_0001803074732784199712
+class C_0001803074732784199712 {
+__
+}
+class "is_parameter_set<T,void>" as C_0000308010660944835977
+class C_0000308010660944835977 {
+__
+}
+class "is_parameter<Type>" as C_0016658348566368638777
+class C_0016658348566368638777 {
+__
+}
+class "is_parameter<Parameter<Type>>" as C_0013120488232555458968
+class C_0013120488232555458968 {
+__
+}
+class "ParameterRef<Type>" as C_0014398845583627520482
+class C_0014398845583627520482 {
++ParameterRef(ParameterRef::ValueType & ref, const ParameterRef::ValueType & def, const std::string & name, bool man) : void
++ParameterRef(ParameterRef::ValueType & ref, const std::string & name, bool man) : void
+..
++operator()() const : const Type &
+..
++setValue(const Type & val) : void
+__
++id : const std::string
++mandatory : const bool
++value : Type &
+}
+class "is_parameter_ref<Type>" as C_0012114598196147316949
+class C_0012114598196147316949 {
+__
+}
+class "is_parameter_ref<ParameterRef<Type>>" as C_0004011947688747552240
+class C_0004011947688747552240 {
+__
+}
+abstract "IConfigurableObject" as C_0010871203999333115866
+abstract C_0010871203999333115866 {
++~IConfigurableObject() = default : void
+..
+{abstract} +configure(const Configuration & config) = 0 : bool
+{abstract} +parse(Configuration & config) = 0 : void
+__
+}
+class "is_parameter_set_ref<typename,typename=void>" as C_0001816636100447124443
+class C_0001816636100447124443 {
+__
+}
+class "is_parameter_set_ref<T,void>" as C_0016657619319262718352
+class C_0016657619319262718352 {
+__
+}
+class "has_configure_params<typename,typename=void>" as C_0005533134232035993657
+class C_0005533134232035993657 {
+__
+}
+class "has_configure_params<T,void>" as C_0015141976106184398961
+class C_0015141976106184398961 {
+__
+}
+class "JsonPopulator" as C_0012884555383035663909
+class C_0012884555383035663909 {
++JsonPopulator() = default : void
++~JsonPopulator() = default : void
+..
++operator&<Type>(const Parameter<Type> & param) : class JsonPopulator &
++operator&<Type>(const ParameterRef<Type> & param) : class JsonPopulator &
++operator&<Type,std::enable_if_t<is_parameter_set<Type>::value, int>=0>(const Type & param) : class JsonPopulator &
+..
++getConfig() const : Configuration
++getString() const : std::string
+{static} +populate<Objects...>() : class JsonPopulator
+{static} +populateContainer<Container>() : class JsonPopulator
++populateOne<Object>() : void
++toFile(const std::string & path) const : void
++writeValue<Type>(const std::string & id, const Type & value) : void
+__
+-json_ : nlohmann::json
+}
+class "JsonPopulator::populate_from_container<Container>" as C_0015415451670847828667
+class C_0015415451670847828667 {
+{static} +doPopulate() : JsonPopulator
+{static} +populateHelper<Args...>(std::tuple<Args...>) : class JsonPopulator
+__
+}
+class "PropertyMapper" as C_0003483473160485131400
+class C_0003483473160485131400 {
++PropertyMapper(const Configuration & p) : void
+..
++operator&<Param>(Param & param) : _Bool
+..
++add(const std::string & key, std::string & val, bool mandatory) : bool
++add(const std::string & key, Duration & val, bool mandatory) : bool
++add<Type>(const std::string & key, Eigen::Matrix<Type,Eigen::Dynamic,1> & val, bool mandatory) : _Bool
++add<Type>(const std::string & key, typename enable_if<!std::is_pod_v<Type>,Type> & val, bool mandatory) : _Bool
++add<PODType>(const std::string & key, typename enable_if<std::is_pod_v<PODType>,PODType> & val, bool mandatory) : _Bool
++add<Type>(const std::string & key, Eigen::Array<Type,Eigen::Dynamic,1> & val, bool mandatory) : _Bool
++add(const std::string & key, Configuration & val, bool mandatory) : bool
++add(const std::string & key, Vector2 & val, bool mandatory) : bool
++add(const std::string & key, Vector3 & val, bool mandatory) : bool
++addAngle<Type>(const std::string & key, Angle<Type> & val, bool mandatory) : _Bool
++addEigen<Type,int rows,int cols,int options>(const std::string & key, Eigen::Matrix<Type,rows,cols,options> & val, bool mandatory) : _Bool
++addEnum<Enum>(const std::string & key, Enum & e, bool mandatory) : _Bool
++addEnumMap<T>(const std::string & key, std::unordered_map<typename T::key_type,enable_if_not_is_parameter_set<typename T::value_type::second_type>> & val, bool mandatory) : _Bool
++addEnumMap<T>(const std::string & key, std::unordered_map<typename T::key_type,enable_if_is_parameter_set<typename T::value_type::second_type>> & val, bool mandatory) : _Bool
++addEnumMap<T>(const std::string & key, std::map<typename T::key_type,enable_if_not_is_parameter_set<typename T::value_type::second_type>> & val, bool mandatory) : _Bool
++addEnumMap<T>(const std::string & key, std::map<typename T::key_type,enable_if_is_parameter_set<typename T::value_type::second_type>> & val, bool mandatory) : _Bool
++addMap<T>(const std::string & key, std::map<std::string,enable_if_not_is_parameter_set<typename T::value_type::second_type>> & val, bool mandatory) : _Bool
++addMap<T>(const std::string & key, std::unordered_map<std::string,enable_if_not_is_parameter_set<typename T::value_type::second_type>> & val, bool mandatory) : _Bool
++addMap<T>(const std::string & key, std::unordered_map<std::string,enable_if_is_parameter_set<typename T::value_type::second_type>> & val, bool mandatory) : _Bool
++addMap<T>(const std::string & key, std::map<std::string,enable_if_is_parameter_set<typename T::value_type::second_type>> & val, bool mandatory) : _Bool
++addOptional<Type>(const std::string & key, Optional<Type> & val, bool mandatory) : _Bool
+-addSpecific<Type>(const std::string & key, Type & val, bool mandatory) : _Bool
++addVector<T>(const std::string & key, std::vector<T> & val, bool mandatory) : _Bool
++getChild(const std::string & key, bool mandatory) : PropertyMapper
++isEmpty() const : bool
+-mandatoryCheck(const std::string & key, bool mandatory) : void
++map() const : bool
+__
+#empty_ : bool
+#mandatoryCheck_ : bool
+#p_ : const Configuration &
+}
+class "is_special_param<T,typename=void>" as C_0005858728248611077480
+class C_0005858728248611077480 {
+__
+}
+class "is_special_param<T,void>" as C_0008389645539418627706
+class C_0008389645539418627706 {
+__
+}
+class "ConfigurableObject<ParameterSet>" as C_0008822349375121146920
+class C_0008822349375121146920 {
++ConfigurableObject() = default : void
++ConfigurableObject(const ParameterSet & p) : void
++~ConfigurableObject() = default : void
+..
++configure(const Configuration & config) : bool
+{static} +configureParamsStatic<Config>(Config & config) : ParameterSet
++getParams() const : const ParameterSet &
++getParams() : ParameterSet &
++parse(Configuration & config) : void
++setParams(const ParameterSet & set) : void
+__
+#params : ParameterSet
+}
+}
+package [Framework] as C_0017248114785179560574 {
+class "StaticHelper<Objs...>" as C_0007055588601913548918
+class C_0007055588601913548918 {
+__
+}
+class "StaticFactory<T,S,C...>" as C_0010976483168152860821
+class C_0010976483168152860821 {
+__
+}
+class "StaticHelper<typename...>" as C_0010651970394024998587
+class C_0010651970394024998587 {
+__
+}
+class "StaticFactory<T,_Bool S,C...>" as C_0017837550338172777761
+class C_0017837550338172777761 {
+__
+}
+package [api] as C_0012751745764868273303 {
+class "unique_lock<std::mutex>" as C_0005482661784610379705
+class C_0005482661784610379705 {
+__
+}
+class "FrameworkAPI" as C_0016929019808385924744
+class C_0016929019808385924744 {
+-FrameworkAPI() = default : void
++~FrameworkAPI() = default : void
+..
+{static} +getAggregator() : Aggregator *
+{static} +instance() : FrameworkAPI *
+{static} +lockAggregator() : std::unique_lock<std::mutex>
+__
+-aggMutex_ : std::mutex
+-agg_ : Aggregator
+{static} -instance_ : FrameworkAPI *
+}
+class "FrameworkAPI::CGuard" as C_0004455846555117346042
+class C_0004455846555117346042 {
++~CGuard() : void
+__
+}
+}
+class "vector<std::string>" as C_0001347152004389415025
+class C_0001347152004389415025 {
+__
+}
+class "Parameter<std::vector<std::string>>" as C_0015206398994527808845
+class C_0015206398994527808845 {
+__
+}
+class "PluginHelperParams" as C_0007799755374329255294
+class C_0007799755374329255294 {
++configure<Configurator>(Configurator & c) : void
+__
++plugins : Parameter<std::vector<std::string>>
+}
+class "function<std::shared_ptr<IAggregatableObject>(nlohmann::basic_json const&)>" as C_0003911895599859110451
+class C_0003911895599859110451 {
+__
+}
+class "unordered_map<std::string,std::function<std::shared_ptr<IAggregatableObject>(nlohmann::basic_json const&)>>" as C_0014365146155445944203
+class C_0014365146155445944203 {
+__
+}
+class "ConfigurableObject<PluginHelperParams>" as C_0011157316963592740002
+class C_0011157316963592740002 {
+__
+}
+class "PluginHelper" as C_0009185723470686767680
+class C_0009185723470686767680 {
+-PluginHelper() = default : void
+..
+-addPlugin(const std::string & path) : bool
+{static} +createPlugins(const Configuration & config) : std::vector<std::shared_ptr<IAggregatableObject>>
+-createPluginsImpl(const Configuration & config) const : std::vector<std::shared_ptr<IAggregatableObject>>
+{static} +instance() : PluginHelper &
+{static} +loadPlugins() : void
+-loadPluginsImpl() : void
+{static} +registerPlugin<Type>() : void
+-registerPluginImpl<Type>() : void
+__
+-pluginCreators_ : std::unordered_map<std::string,CreatorFunc>
+{static} +typeId : const char *const
+}
+class "is_static_helper<T>" as C_0013758210545487039578
+class C_0013758210545487039578 {
+__
+}
+class "is_static_helper<StaticHelper<Objs...>>" as C_0014598968275229283285
+class C_0014598968275229283285 {
+__
+}
+class "is_static_factory<T>" as C_0008581834415901654607
+class C_0008581834415901654607 {
+__
+}
+class "is_static_factory<StaticFactory<T,S,C...>>" as C_0013881424357272374790
+class C_0013881424357272374790 {
+__
+}
+}
+package [Synchronization] as C_0012523331980093797644 {
+class "shared_ptr<IRunnableObject>" as C_0001190815256257322949
+class C_0001190815256257322949 {
+__
+}
+class "vector<std::shared_ptr<IRunnableObject>>" as C_0006531934893186424282
+class C_0006531934893186424282 {
+__
+}
+class "AggregatableRunner" as C_0004158711190580997697
+class C_0004158711190580997697 {
++AggregatableRunner() : void
+..
++notifyAggregationOnUpdate(const Aggregator & agg) : void
++runAllStages() : bool
++runStage(RunStage stage) : bool
+__
+-runnableObjects_ : std::vector<std::shared_ptr<IRunnableObject>>
+{static} +typeId : const IAggregatableObject::TypeId
+}
+class "vector<RunStage>" as C_0000625404512531737675
+class C_0000625404512531737675 {
+__
+}
+class "SimpleRunner" as C_0015867217510380289680
+class C_0015867217510380289680 {
++SimpleRunner(Aggregator & agg) : void
+..
++runAllStages() : bool
++runStage(RunStage stage) : bool
++runStages(const std::vector<RunStage> & stages) : bool
+__
+-agg_ : Aggregator &
+}
+class "SynchronizedRunner" as C_0002217378351284568569
+class C_0002217378351284568569 {
++SynchronizedRunner() : void
+..
++runSynchronized(Aggregator & agg) : bool
+__
+-sync_ : boost::interprocess::shared_memory_object
+}
+class "Synchronizer" as C_0015771998079653783310
+class C_0015771998079653783310 {
++Synchronizer() : void
+__
++failure : bool
++finishedStage : boost::interprocess::interprocess_semaphore
++runStage : RunStage
++runStageChanged : boost::interprocess::interprocess_condition
++runStageMutex : boost::interprocess::interprocess_mutex
+}
+class "SynchronizedRunnerMaster" as C_0018286519554268830041
+class C_0018286519554268830041 {
++SynchronizedRunnerMaster(int numOfRunners) : void
++~SynchronizedRunnerMaster() : void
+..
++cleanUp() : void
++runAllStages() : bool
++runStage(RunStage stage) : bool
+__
+-numOfRunners_ : int
+-shmAllocated_ : bool
+-sync_ : boost::interprocess::shared_memory_object
+-timeout_ : Duration
+}
+enum "RunStage" as C_0013069770258147578243
+enum C_0013069770258147578243 {
+INIT
+NORMAL
+FINAL
+SYNCHRONIZE
+}
+abstract "IRunnableObject" as C_0012950509632165636408
+abstract C_0012950509632165636408 {
++~IRunnableObject() = default : void
+..
+{abstract} +run(RunStage stage) = 0 : bool
++runAllStages() : bool
+__
+}
+}
+}
+}
+C_0014663246273671943175 ..> C_0018374402636167681931
+C_0005705696531821621419 ..> C_0014663246273671943175
+C_0006294081254024426382 ..> C_0014663246273671943175
+C_0006294081254024426382 ..> C_0018374402636167681931
+C_0006294081254024426382 ..> C_0000343239904209990740
+C_0006294081254024426382 o-- C_0005705696531821621419 : -container_
+C_0011611421470239515537 ..> C_0006592648460203373488
+C_0018095915124040822558 ..> C_0013349032693750974707
+C_0010573752430770380595 ..|> C_0007964116635165979508
+C_0014108254082620922835 ..|> C_0013349032693750974707
+C_0007964116635165979508 ..|> C_0010573752430770380595
+C_0002099121768658418659 ..> C_0002785967449649660056
+C_0004280605719769434926 ..> C_0002785967449649660056
+C_0018374402636167681931 ..> C_0000343239904209990740
+C_0000343239904209990740 ..> C_0014663246273671943175
+C_0000343239904209990740 ..> C_0018374402636167681931
+C_0000343239904209990740 ..> C_0005705696531821621419
+C_0000343239904209990740 ..> C_0006592648460203373488
+C_0000343239904209990740 ..> C_0011611421470239515537
+C_0000343239904209990740 ..> C_0005227499162026758926
+C_0000343239904209990740 o-- C_0006294081254024426382 : -container_
+C_0018095915124040822558 <|-- C_0011140302862299070030
+C_0002785967449649660056 <|-- C_0004231367867969345373
+C_0017018759863667896831 ..> C_0011140302862299070030
+C_0017018759863667896831 ..|> C_0004231367867969345373
+C_0009166925722896823160 <|-- C_0017018759863667896831
+C_0000075846301958508806 ..> C_0000343239904209990740
+C_0000075846301958508806 o-- C_0010573752430770380595 : -others_
+C_0000075846301958508806 ..|> C_0007964116635165979508
+C_0006599728870642435125 --+ C_0000075846301958508806
+C_0017788321241357966484 --+ C_0000075846301958508806
+C_0017788321241357966484 ..|> C_0006599728870642435125
+C_0012225649900201550445 ..|> C_0010573752430770380595
+C_0012225649900201550445 ..> C_0000343239904209990740
+C_0008839159018802479930 ..> C_0000343239904209990740
+C_0008839159018802479930 o-- C_0007964116635165979508 : #container_
+C_0018374402636167681931 <|-- C_0008839159018802479930
+C_0014199763570884460392 ..> C_0006937669530920927913
+C_0002558881190394428518 ..> C_0006937669530920927913
+C_0007664058835849252473 ..> C_0014199763570884460392
+C_0007664058835849252473 o-- C_0013137037997763296514 : -setLevel_
+C_0007664058835849252473 o-- C_0012782362847443494988 : -sink_
+C_0007664058835849252473 o-- C_0012782362847443494988 : -emptySink_
+C_0007664058835849252473 o-- C_0001275076681856179721 : -moduleName_
+C_0007664058835849252473 --> C_0006937669530920927913 : -timeProvider_
+C_0007664058835849252473 --> C_0002558881190394428518 : -timeProvider_
+C_0007664058835849252473 --> C_0007664058835849252473 : -instance_
+C_0017667062111794940040 --+ C_0007664058835849252473
+C_0017667062111794940040 o-- C_0013137037997763296514 : +oldLogLevel_
+C_0017435283933898040766 --+ C_0007664058835849252473
+C_0018328262838980206514 --+ C_0007664058835849252473
+C_0003958153406982005100 ..> C_0013137037997763296514
+C_0003958153406982005100 o-- C_0017435283933898040766 : -scope_
+C_0003958153406982005100 --> C_0012782362847443494988 : -stream_
+C_0000226063946474405916 ..|> C_0008839159018802479930
+C_0014374684139888734938 ..> C_0018403478467783624103
+C_0014374684139888734938 ..> C_0014745034683029007718
+C_0014374684139888734938 ..> C_0012880145799884330927
+C_0014374684139888734938 ..> C_0010666530099642710922
+C_0014374684139888734938 o-- C_0015988153626575957537 : -onSigint_
+C_0014374684139888734938 o-- C_0001173185122141874266 : -onExit_
+C_0010344079272727419634 ..> C_0018403478467783624103
+C_0010344079272727419634 ..> C_0014745034683029007718
+C_0010344079272727419634 ..> C_0012880145799884330927
+C_0010344079272727419634 ..> C_0010666530099642710922
+C_0000226063946474405916 <|-- C_0010344079272727419634
+C_0005346879438759544677 ..|> C_0004232611612597203419
+C_0003131246190357981810 ..> C_0001275076681856179721
+C_0013028038644581934680 ..> C_0003131246190357981810
+C_0005820013041203055912 ..> C_0001275076681856179721
+C_0016251970052706588167 ..> C_0001275076681856179721
+C_0001417757876137010842 ..> C_0010957948077403816313
+C_0001417757876137010842 ..> C_0002546492948382688409
+C_0004811301819044024366 ..> C_0001417757876137010842
+C_0004811301819044024366 ..|> C_0012300240799191839889
+C_0009945799118906734303 ..> C_0001417757876137010842
+C_0013768045732173456656 ..> C_0015402114605685990696
+C_0016807274725055242098 ..> C_0005649561462667370685
+C_0016807274725055242098 ..> C_0013768045732173456656
+C_0016807274725055242098 ..|> C_0012300240799191839889
+C_0017301367494642339867 ..> C_0000076502622628151643
+C_0017301367494642339867 ..> C_0003486057476932189247
+C_0017301367494642339867 ..> C_0013768045732173456656
+C_0006290002827945438574 ..|> C_0002758898732580817746
+C_0009280057129622690497 ..> C_0001275076681856179721
+C_0006307934300294070813 ..|> C_0008701292039570110576
+C_0016218468385456919701 ..> C_0001275076681856179721
+C_0004853313194488676669 o-- C_0013942310876857373309 : -options_
+C_0004853313194488676669 --> C_0001275076681856179721 : -string_
+C_0008800656183088550077 o-- C_0013942310876857373309 : -options_
+C_0008800656183088550077 --> C_0001275076681856179721 : -string_
+C_0012204725332953189770 o-- C_0013942310876857373309 : -options_
+C_0012204725332953189770 --> C_0013346845937494941633 : -file_
+C_0009840101858599344504 o-- C_0013942310876857373309 : -options_
+C_0009840101858599344504 --> C_0004276277466396066764 : -file_
+C_0013942310876857373309 o-- C_0006307934300294070813 : +compressDouble
+C_0002785967449649660056 <|-- C_0015077548136211620819
+C_0009664790492427721991 ..> C_0017096192105151754852
+C_0009664790492427721991 ..|> C_0015077548136211620819
+C_0009166925722896823160 <|-- C_0009664790492427721991
+C_0002785967449649660056 <|-- C_0010590462660651311554
+C_0005422732459855123939 ..> C_0006407942233096605905
+C_0005422732459855123939 ..|> C_0010590462660651311554
+C_0009166925722896823160 <|-- C_0005422732459855123939
+C_0002785967449649660056 <|-- C_0016964652346665537464
+C_0003653198421637316027 ..> C_0012300240799191839889
+C_0003653198421637316027 ..|> C_0016964652346665537464
+C_0009166925722896823160 <|-- C_0003653198421637316027
+C_0003182524728268089645 ..> C_0012340761029599677351
+C_0003182524728268089645 ..|> C_0016964652346665537464
+C_0009166925722896823160 <|-- C_0003182524728268089645
+C_0002785967449649660056 <|-- C_0001575054937493495752
+C_0015291787367615456605 ..> C_0006290002827945438574
+C_0015291787367615456605 ..|> C_0001575054937493495752
+C_0009166925722896823160 <|-- C_0015291787367615456605
+C_0002785967449649660056 <|-- C_0002462168001477417158
+C_0013130660061638738150 ..> C_0009577404161749001115
+C_0013130660061638738150 ..|> C_0002462168001477417158
+C_0009166925722896823160 <|-- C_0013130660061638738150
+C_0002785967449649660056 <|-- C_0013838907703542725925
+C_0006792746069886743876 ..> C_0007889047784314986086
+C_0006792746069886743876 ..|> C_0013838907703542725925
+C_0009166925722896823160 <|-- C_0006792746069886743876
+C_0006595964161420237754 ..> C_0013942310876857373309
+C_0006595964161420237754 ..|> C_0008822349375121146920
+C_0005813581957021213842 ..> C_0000162703614957357143
+C_0005813581957021213842 ..> C_0004853313194488676669
+C_0005813581957021213842 ..> C_0004413695994408527183
+C_0000226063946474405916 <|-- C_0005813581957021213842
+C_0006595964161420237754 <|-- C_0005813581957021213842
+C_0013547778280712816848 ..> C_0000908478690702565473
+C_0006937669530920927913 ..> C_0000908478690702565473
+C_0006937669530920927913 ..> C_0017614144533568309161
+C_0006937669530920927913 ..> C_0006486913296557936509
+C_0011203128200630834940 ..> C_0017614144533568309161
+C_0011203128200630834940 ..> C_0006486913296557936509
+C_0011203128200630834940 o-- C_0000908478690702565473 : -chronoEpoch_
+C_0011203128200630834940 o-- C_0000908478690702565473 : -startTime_
+C_0006937669530920927913 <|-- C_0011203128200630834940
+C_0000226063946474405916 <|-- C_0011203128200630834940
+C_0005985566406394895047 ..> C_0001266441783234404432
+C_0005985566406394895047 ..|> C_0006592648460203373488
+C_0002474759504903096078 ..> C_0001266441783234404432
+C_0002474759504903096078 ..|> C_0013349032693750974707
+C_0009305931499633879014 ..> C_0017614144533568309161
+C_0009305931499633879014 ..|> C_0002758898732580817746
+C_0003122931519127509939 ..|> C_0008701292039570110576
+C_0016466469442330857391 o-- C_0003122931519127509939 : +numThreads
+C_0003699440369921380857 ..|> C_0015625435119362590644
+C_0001874890298042501794 ..> C_0012685396697071441978
+C_0001874890298042501794 ..|> C_0006592648460203373488
+C_0002836879043902173213 ..> C_0000908478690702565473
+C_0002836879043902173213 ..> C_0001874890298042501794
+C_0000534642579833992524 ..> C_0001275076681856179721
+C_0014206964886104438982 ..> C_0006937669530920927913
+C_0014206964886104438982 ..|> C_0008839159018802479930
+C_0007293688191043054696 ..> C_0016466469442330857391
+C_0007293688191043054696 ..|> C_0008822349375121146920
+C_0007333975284767953855 ..> C_0013286274850898176297
+C_0007333975284767953855 ..> C_0017614144533568309161
+C_0007333975284767953855 ..> C_0001275076681856179721
+C_0007333975284767953855 ..> C_0005488138325014560489
+C_0007333975284767953855 ..> C_0013069770258147578243
+C_0007333975284767953855 o-- C_0004308501729698541420 : -canceled_
+C_0007333975284767953855 o-- C_0003699440369921380857 : -threadPool_
+C_0007333975284767953855 o-- C_0000908478690702565473 : -startTime_
+C_0007333975284767953855 o-- C_0002836879043902173213 : -tasks_
+C_0007333975284767953855 o-- C_0000534642579833992524 : -providingRunning_
+C_0007333975284767953855 o-- C_0000534642579833992524 : -dependingRunning_
+C_0000958718200059721479 <|-- C_0007333975284767953855
+C_0014206964886104438982 <|-- C_0007333975284767953855
+C_0007293688191043054696 <|-- C_0007333975284767953855
+C_0012950509632165636408 <|-- C_0007333975284767953855
+C_0012685396697071441978 o-- C_0013286274850898176297 : +task
+C_0012685396697071441978 o-- C_0000534642579833992524 : +depends
+C_0012685396697071441978 o-- C_0000534642579833992524 : +provides
+C_0015518524769299153386 ..> C_0009194554853436451460
+C_0015518524769299153386 ..> C_0005197286273459830193
+C_0015518524769299153386 ..> C_0012000368739965278242
+C_0015518524769299153386 ..|> C_0008839159018802479930
+C_0008160456670655200528 ..> C_0013069770258147578243
+C_0015518524769299153386 <|-- C_0008160456670655200528
+C_0012950509632165636408 <|-- C_0008160456670655200528
+C_0006308860842537254355 ..|> C_0008701292039570110576
+C_0015809188638768756732 ..|> C_0008701292039570110576
+C_0013896361856843042412 ..> C_0000908478690702565473
+C_0013896361856843042412 ..> C_0005985566406394895047
+C_0017510143617188825594 ..> C_0009021662014984916439
+C_0017510143617188825594 ..|> C_0008822349375121146920
+C_0009021662014984916439 o-- C_0006308860842537254355 : +realTimeFactor
+C_0009021662014984916439 o-- C_0015809188638768756732 : +simTime
+C_0009021662014984916439 o-- C_0006307934300294070813 : +showProgress
+C_0012000368739965278242 ..> C_0013069770258147578243
+C_0012000368739965278242 ..> C_0013286274850898176297
+C_0012000368739965278242 ..> C_0017614144533568309161
+C_0012000368739965278242 ..> C_0001275076681856179721
+C_0012000368739965278242 ..> C_0005488138325014560489
+C_0012000368739965278242 ..> C_0005482661784610379705
+C_0012000368739965278242 o-- C_0013896361856843042412 : -events_
+C_0012000368739965278242 o-- C_0000908478690702565473 : -now_
+C_0000958718200059721479 <|-- C_0012000368739965278242
+C_0006937669530920927913 <|-- C_0012000368739965278242
+C_0012950509632165636408 <|-- C_0012000368739965278242
+C_0000226063946474405916 <|-- C_0012000368739965278242
+C_0017510143617188825594 <|-- C_0012000368739965278242
+C_0001266441783234404432 ..> C_0017614144533568309161
+C_0001266441783234404432 o-- C_0013286274850898176297 : +body
+C_0001266441783234404432 o-- C_0009305931499633879014 : +period
+C_0001266441783234404432 o-- C_0004308501729698541420 : +isCanceled
+C_0001266441783234404432 o-- C_0004308501729698541420 : +isStarted
+C_0001266441783234404432 o-- C_0004308501729698541420 : +missedDeadline
+C_0001266441783234404432 o-- C_0004308501729698541420 : +isDone
+C_0001266441783234404432 o-- C_0001275076681856179721 : +eventName
+C_0005488138325014560489 ..> C_0005985566406394895047
+C_0005488138325014560489 ..> C_0017614144533568309161
+C_0005488138325014560489 --> C_0001266441783234404432 : -body_
+C_0005488138325014560489 --> C_0002474759504903096078 : -body_
+C_0005184828978756532500 o-- C_0013286274850898176297 : +callback
+C_0005184828978756532500 o-- C_0017614144533568309161 : +offset
+C_0005184828978756532500 o-- C_0009305931499633879014 : +period
+C_0005184828978756532500 o-- C_0009305931499633879014 : +deadline
+C_0005184828978756532500 o-- C_0009305931499633879014 : +wcet
+C_0005184828978756532500 o-- C_0001347152004389415025 : +depends
+C_0005184828978756532500 o-- C_0001347152004389415025 : +provides
+C_0000958718200059721479 ..> C_0013286274850898176297
+C_0000958718200059721479 ..> C_0017614144533568309161
+C_0000958718200059721479 ..> C_0001275076681856179721
+C_0000958718200059721479 ..> C_0005488138325014560489
+C_0017476204617604451015 ..|> C_0008701292039570110576
+C_0000218479092921216142 o-- C_0017476204617604451015 : +priority
+C_0016670134323454528728 ..> C_0001266441783234404432
+C_0016670134323454528728 ..|> C_0006592648460203373488
+C_0016670134323454528728 ..|> C_0015402114605685990696
+C_0014555851561371322637 ..> C_0017614144533568309161
+C_0014555851561371322637 ..> C_0005985566406394895047
+C_0009994253422127270946 ..> C_0005985566406394895047
+C_0009994253422127270946 ..|> C_0011611421470239515537
+C_0017880917017906069743 ..> C_0006937669530920927913
+C_0017880917017906069743 ..> C_0010344079272727419634
+C_0017880917017906069743 ..|> C_0008839159018802479930
+C_0000640079464715607512 ..> C_0000218479092921216142
+C_0000640079464715607512 ..|> C_0008822349375121146920
+C_0009613261135746258361 ..> C_0013286274850898176297
+C_0009613261135746258361 ..> C_0017614144533568309161
+C_0009613261135746258361 ..> C_0001275076681856179721
+C_0009613261135746258361 ..> C_0005488138325014560489
+C_0009613261135746258361 ..> C_0013069770258147578243
+C_0009613261135746258361 ..> C_0005985566406394895047
+C_0009613261135746258361 ..> C_0001266441783234404432
+C_0009613261135746258361 ..> C_0016670134323454528728
+C_0009613261135746258361 o-- C_0014555851561371322637 : -events_
+C_0009613261135746258361 o-- C_0009994253422127270946 : -nonPeriodicEvents_
+C_0009613261135746258361 o-- C_0004308501729698541420 : -started_
+C_0009613261135746258361 o-- C_0000908478690702565473 : -startingTime_
+C_0000958718200059721479 <|-- C_0009613261135746258361
+C_0017880917017906069743 <|-- C_0009613261135746258361
+C_0000640079464715607512 <|-- C_0009613261135746258361
+C_0012950509632165636408 <|-- C_0009613261135746258361
+C_0000162703614957357143 o-- C_0001275076681856179721 : -buffer_
+C_0013172502064191320957 ..> C_0000162703614957357143
+C_0000723133310700534793 ..> C_0000162703614957357143
+C_0016645552100932858647 ..> C_0013172502064191320957
+C_0016645552100932858647 ..> C_0000723133310700534793
+C_0016645552100932858647 ..> C_0000162703614957357143
+C_0009599583223722736727 ..> C_0000162703614957357143
+C_0011343920127748547621 ..> C_0013172502064191320957
+C_0011343920127748547621 ..> C_0000723133310700534793
+C_0011343920127748547621 ..> C_0000162703614957357143
+C_0011343920127748547621 o-- C_0009599583223722736727 : -onSharedMem_
+C_0011343920127748547621 o-- C_0004308501729698541420 : -listenerCanceled_
+C_0011343920127748547621 o-- C_0001275076681856179721 : -id_
+C_0016645552100932858647 <|-- C_0011343920127748547621
+C_0015410170399665019813 ..> C_0000162703614957357143
+C_0006946191189180070683 ..> C_0015410170399665019813
+C_0006946191189180070683 ..|> C_0006592648460203373488
+C_0017258840792577751424 ..> C_0000162703614957357143
+C_0013612269257318515615 ..> C_0015410170399665019813
+C_0013612269257318515615 ..|> C_0013349032693750974707
+C_0002072818236884030121 ..> C_0006946191189180070683
+C_0002072818236884030121 --> C_0015410170399665019813 : -publisherImpl_
+C_0002072818236884030121 --> C_0013612269257318515615 : -publisherImpl_
+C_0002072818236884030121 o-- C_0017258840792577751424 : -forwarding_
+C_0012172513442630793912 ..> C_0016645552100932858647
+C_0012172513442630793912 ..|> C_0006592648460203373488
+C_0005505722942827554588 ..> C_0016645552100932858647
+C_0005505722942827554588 ..|> C_0013349032693750974707
+C_0009623329680503381238 ..> C_0012172513442630793912
+C_0009623329680503381238 --> C_0016645552100932858647 : -subscriptionImpl_
+C_0009623329680503381238 --> C_0005505722942827554588 : -subscriptionImpl_
+C_0016455220877322969531 ..|> C_0008701292039570110576
+C_0016823232206258020814 o-- C_0016455220877322969531 : +maxPacketSize
+C_0016823232206258020814 o-- C_0016455220877322969531 : +maxNumPackets
+C_0016823232206258020814 o-- C_0015809188638768756732 : +retryPeriod
+C_0016823232206258020814 o-- C_0006307934300294070813 : +useRedis
+C_0005570961215752941707 ..> C_0000162703614957357143
+C_0013840545877025356254 ..> C_0000162703614957357143
+C_0013840545877025356254 ..|> C_0002072818236884030121
+C_0000747763826523245034 ..> C_0006946191189180070683
+C_0000747763826523245034 ..|> C_0011611421470239515537
+C_0002651047020944179473 ..> C_0001275076681856179721
+C_0002651047020944179473 ..> C_0012172513442630793912
+C_0007609317871379289764 ..> C_0000958718200059721479
+C_0007609317871379289764 ..> C_0005813581957021213842
+C_0007609317871379289764 ..> C_0010344079272727419634
+C_0007609317871379289764 ..|> C_0008839159018802479930
+C_0013054147667967913680 ..> C_0016823232206258020814
+C_0013054147667967913680 ..|> C_0008822349375121146920
+C_0005197286273459830193 ..> C_0001275076681856179721
+C_0005197286273459830193 ..> C_0005570961215752941707
+C_0005197286273459830193 ..> C_0000162703614957357143
+C_0005197286273459830193 ..> C_0014749111132924026453
+C_0005197286273459830193 ..> C_0009623329680503381238
+C_0005197286273459830193 ..> C_0013840545877025356254
+C_0005197286273459830193 ..> C_0002072818236884030121
+C_0005197286273459830193 ..> C_0013069770258147578243
+C_0005197286273459830193 ..> C_0012172513442630793912
+C_0005197286273459830193 ..> C_0016645552100932858647
+C_0005197286273459830193 ..> C_0006946191189180070683
+C_0005197286273459830193 ..> C_0015410170399665019813
+C_0005197286273459830193 ..> C_0006341709548795045932
+C_0005197286273459830193 o-- C_0000747763826523245034 : -publications_
+C_0005197286273459830193 o-- C_0002651047020944179473 : -subscriptions_
+C_0005197286273459830193 o-- C_0001347152004389415025 : -retryVector_
+C_0012950509632165636408 <|-- C_0005197286273459830193
+C_0007609317871379289764 <|-- C_0005197286273459830193
+C_0013054147667967913680 <|-- C_0005197286273459830193
+C_0016201641408499595425 ..> C_0009194554853436451460
+C_0016201641408499595425 ..|> C_0013349032693750974707
+C_0004001668839936140075 ..> C_0000162703614957357143
+C_0004001668839936140075 --> C_0009194554853436451460 : -idc_
+C_0004001668839936140075 --> C_0016201641408499595425 : -idc_
+C_0004001668839936140075 o-- C_0001275076681856179721 : -id_
+C_0010349066952073605459 ..|> C_0012840769052112322537
+C_0005703986554947373109 ..|> C_0012840769052112322537
+C_0017890340805030347693 o-- C_0010349066952073605459 : +packetsReceived
+C_0017890340805030347693 o-- C_0010349066952073605459 : +packetsCorrupted
+C_0017890340805030347693 o-- C_0005703986554947373109 : +dataReceived
+C_0017890340805030347693 o-- C_0005703986554947373109 : +dataCorrupted
+C_0017890340805030347693 o-- C_0010349066952073605459 : +packetsSent
+C_0017890340805030347693 o-- C_0005703986554947373109 : +dataSent
+C_0011808837223480598865 ..> C_0001275076681856179721
+C_0011808837223480598865 ..> C_0017890340805030347693
+C_0011808837223480598865 ..|> C_0010286479397526495991
+C_0007303218860355575300 ..> C_0001275076681856179721
+C_0007303218860355575300 ..> C_0000162703614957357143
+C_0007303218860355575300 ..> C_0013172502064191320957
+C_0007303218860355575300 ..> C_0000723133310700534793
+C_0007303218860355575300 ..> C_0011808837223480598865
+C_0007303218860355575300 ..> C_0017890340805030347693
+C_0001271681202276591091 ..> C_0001275076681856179721
+C_0001271681202276591091 ..> C_0000162703614957357143
+C_0001271681202276591091 ..> C_0013172502064191320957
+C_0001271681202276591091 ..> C_0000723133310700534793
+C_0002180975388864908253 ..> C_0007303218860355575300
+C_0002180975388864908253 ..|> C_0011140302862299070030
+C_0012141478295566698368 ..> C_0002180975388864908253
+C_0012141478295566698368 ..> C_0001271681202276591091
+C_0012141478295566698368 ..> C_0009194554853436451460
+C_0012141478295566698368 ..|> C_0008839159018802479930
+C_0009194554853436451460 ..> C_0013069770258147578243
+C_0009194554853436451460 ..> C_0001275076681856179721
+C_0009194554853436451460 ..> C_0000162703614957357143
+C_0009194554853436451460 ..> C_0013172502064191320957
+C_0009194554853436451460 ..> C_0000723133310700534793
+C_0009194554853436451460 ..> C_0004001668839936140075
+C_0012141478295566698368 <|-- C_0009194554853436451460
+C_0012950509632165636408 <|-- C_0009194554853436451460
+C_0010286479397526495991 ..> C_0001275076681856179721
+C_0015251845947426937680 o-- C_0010286479397526495991 : -values_
+C_0015798704804133110247 ..> C_0012840769052112322537
+C_0015798704804133110247 --> C_0012782362847443494988 : -os_
+C_0002785967449649660056 <|-- C_0007118392337150395745
+C_0013209094413487711357 ..|> C_0007118392337150395745
+C_0009166925722896823160 <|-- C_0013209094413487711357
+C_0002785967449649660056 <|-- C_0016674062258957193252
+C_0006287391464698701328 ..> C_0012840769052112322537
+C_0006287391464698701328 ..|> C_0016674062258957193252
+C_0009166925722896823160 <|-- C_0006287391464698701328
+C_0002785967449649660056 <|-- C_0003724642157303074132
+C_0008543833834983315116 ..> C_0005346879438759544677
+C_0008543833834983315116 ..|> C_0003724642157303074132
+C_0009166925722896823160 <|-- C_0008543833834983315116
+C_0008295616038026314040 ..> C_0013028038644581934680
+C_0008295616038026314040 ..> C_0001275076681856179721
+C_0008295616038026314040 o-- C_0005820013041203055912 : #left_
+C_0008295616038026314040 o-- C_0016251970052706588167 : #right_
+C_0007172408094915294144 ..> C_0013028038644581934680
+C_0002785967449649660056 <|-- C_0003589956688787328878
+C_0010181556741836481452 ..> C_0007932273471488736152
+C_0010181556741836481452 ..|> C_0003589956688787328878
+C_0009166925722896823160 <|-- C_0010181556741836481452
+C_0002785967449649660056 <|-- C_0003958097254058230554
+C_0001778640447425162599 ..> C_0017096192105151754852
+C_0001778640447425162599 ..|> C_0003958097254058230554
+C_0009166925722896823160 <|-- C_0001778640447425162599
+C_0002785967449649660056 <|-- C_0001969217826127562843
+C_0014025468633764315063 ..> C_0012300240799191839889
+C_0014025468633764315063 ..|> C_0001969217826127562843
+C_0009166925722896823160 <|-- C_0014025468633764315063
+C_0002785967449649660056 <|-- C_0007859608980708527739
+C_0015159360120864128455 ..> C_0010957948077403816313
+C_0015159360120864128455 ..> C_0010455722369565428401
+C_0015159360120864128455 ..> C_0004811301819044024366
+C_0015159360120864128455 ..|> C_0007859608980708527739
+C_0009166925722896823160 <|-- C_0015159360120864128455
+C_0004961477316647142997 ..> C_0010957948077403816313
+C_0004961477316647142997 ..> C_0007070474464116181135
+C_0004961477316647142997 ..> C_0015405065996646700243
+C_0004961477316647142997 ..> C_0009945799118906734303
+C_0004961477316647142997 ..|> C_0007859608980708527739
+C_0009166925722896823160 <|-- C_0004961477316647142997
+C_0002785967449649660056 <|-- C_0011749926717872403817
+C_0018231043327051668118 ..> C_0016807274725055242098
+C_0018231043327051668118 ..|> C_0011749926717872403817
+C_0009975951887633166926 <|-- C_0018231043327051668118
+C_0007563406993271463263 ..> C_0017301367494642339867
+C_0007563406993271463263 ..|> C_0011749926717872403817
+C_0009975951887633166926 <|-- C_0007563406993271463263
+C_0002785967449649660056 <|-- C_0008175345052455287538
+C_0001997610129769237826 ..> C_0006290002827945438574
+C_0001997610129769237826 ..|> C_0008175345052455287538
+C_0009166925722896823160 <|-- C_0001997610129769237826
+C_0002785967449649660056 <|-- C_0003357885005899714375
+C_0002753357962043618260 ..> C_0015276268077206572759
+C_0002753357962043618260 ..|> C_0003357885005899714375
+C_0009166925722896823160 <|-- C_0002753357962043618260
+C_0015078483726432396451 o-- C_0001275076681856179721 : +testDir
+C_0002785967449649660056 <|-- C_0018060951739520694026
+C_0018416593695100838874 ..> C_0012618300953678354318
+C_0018416593695100838874 ..> C_0004430406160281984455
+C_0018416593695100838874 ..|> C_0018060951739520694026
+C_0009166925722896823160 <|-- C_0018416593695100838874
+C_0001020200601652707434 ..> C_0010871203999333115866
+C_0017614144533568309161 ..> C_0012415743977570969849
+C_0002481139442857516266 ..|> C_0008956538216400024781
+C_0017475076386776221102 ..> C_0001275076681856179721
+C_0017475076386776221102 ..> C_0002481139442857516266
+C_0012949798472407589075 ..|> C_0014663711081847961636
+C_0004934163269875422839 ..> C_0001275076681856179721
+C_0004934163269875422839 ..> C_0012949798472407589075
+C_0001615357547103002269 ..> C_0001275076681856179721
+C_0001615357547103002269 ..> C_0002481139442857516266
+C_0001615357547103002269 ..|> C_0016251970052706588167
+C_0008395348751897730245 ..> C_0001275076681856179721
+C_0008395348751897730245 ..> C_0012949798472407589075
+C_0008395348751897730245 ..|> C_0016251970052706588167
+C_0015116365060122692688 ..> C_0002481139442857516266
+C_0004758537526048551464 ..> C_0012949798472407589075
+C_0008512558841133812862 ..> C_0002481139442857516266
+C_0014009399528624393172 ..> C_0012949798472407589075
+C_0008701292039570110576 o-- C_0001275076681856179721 : +id
+C_0005148644649595111135 ..> C_0008701292039570110576
+C_0005148644649595111135 --> C_0012782362847443494988 : -os_
+C_0002785967449649660056 <|-- C_0001803074732784199712
+C_0000308010660944835977 ..|> C_0001803074732784199712
+C_0009166925722896823160 <|-- C_0000308010660944835977
+C_0002785967449649660056 <|-- C_0016658348566368638777
+C_0013120488232555458968 ..> C_0008701292039570110576
+C_0013120488232555458968 ..|> C_0016658348566368638777
+C_0009166925722896823160 <|-- C_0013120488232555458968
+C_0014398845583627520482 o-- C_0001275076681856179721 : +id
+C_0002785967449649660056 <|-- C_0012114598196147316949
+C_0004011947688747552240 ..> C_0014398845583627520482
+C_0004011947688747552240 ..|> C_0012114598196147316949
+C_0009166925722896823160 <|-- C_0004011947688747552240
+C_0010871203999333115866 ..> C_0008843406913308057517
+C_0002785967449649660056 <|-- C_0001816636100447124443
+C_0016657619319262718352 ..|> C_0001816636100447124443
+C_0009166925722896823160 <|-- C_0016657619319262718352
+C_0002785967449649660056 <|-- C_0005533134232035993657
+C_0015141976106184398961 ..|> C_0005533134232035993657
+C_0009166925722896823160 <|-- C_0015141976106184398961
+C_0012884555383035663909 ..> C_0001275076681856179721
+C_0012884555383035663909 ..> C_0008701292039570110576
+C_0012884555383035663909 ..> C_0014398845583627520482
+C_0012884555383035663909 o-- C_0008843406913308057517 : -json_
+C_0015415451670847828667 --+ C_0012884555383035663909
+C_0015415451670847828667 ..> C_0004822627011371164501
+C_0003483473160485131400 ..> C_0001275076681856179721
+C_0003483473160485131400 ..> C_0017614144533568309161
+C_0003483473160485131400 ..> C_0012322212928576280879
+C_0003483473160485131400 ..> C_0010478178572889493679
+C_0003483473160485131400 ..> C_0016657843338292946743
+C_0003483473160485131400 ..> C_0004260947219628560954
+C_0003483473160485131400 ..> C_0015625435119362590644
+C_0003483473160485131400 ..> C_0017475076386776221102
+C_0003483473160485131400 ..> C_0004934163269875422839
+C_0003483473160485131400 ..> C_0001615357547103002269
+C_0003483473160485131400 ..> C_0008395348751897730245
+C_0003483473160485131400 ..> C_0015116365060122692688
+C_0003483473160485131400 ..> C_0004758537526048551464
+C_0003483473160485131400 ..> C_0008512558841133812862
+C_0003483473160485131400 ..> C_0014009399528624393172
+C_0003483473160485131400 ..> C_0011700714670214200523
+C_0003483473160485131400 ..> C_0002760424051573831251
+C_0003483473160485131400 ..> C_0004232611612597203419
+C_0003483473160485131400 ..> C_0002758898732580817746
+C_0003483473160485131400 ..> C_0010753965135633812092
+C_0003483473160485131400 --> C_0008843406913308057517 : #p_
+C_0002785967449649660056 <|-- C_0005858728248611077480
+C_0008389645539418627706 ..|> C_0005858728248611077480
+C_0009166925722896823160 <|-- C_0008389645539418627706
+C_0008822349375121146920 ..> C_0008843406913308057517
+C_0010871203999333115866 <|-- C_0008822349375121146920
+C_0007055588601913548918 ..|> C_0010651970394024998587
+C_0010976483168152860821 ..|> C_0017837550338172777761
+C_0016929019808385924744 ..> C_0005482661784610379705
+C_0016929019808385924744 o-- C_0000343239904209990740 : -agg_
+C_0016929019808385924744 --> C_0016929019808385924744 : -instance_
+C_0004455846555117346042 --+ C_0016929019808385924744
+C_0001347152004389415025 ..> C_0001275076681856179721
+C_0001347152004389415025 ..|> C_0015625435119362590644
+C_0015206398994527808845 ..> C_0001347152004389415025
+C_0015206398994527808845 ..|> C_0008701292039570110576
+C_0007799755374329255294 o-- C_0015206398994527808845 : +plugins
+C_0003911895599859110451 ..> C_0014663246273671943175
+C_0003911895599859110451 ..> C_0008843406913308057517
+C_0014365146155445944203 ..> C_0001275076681856179721
+C_0014365146155445944203 ..> C_0003911895599859110451
+C_0014365146155445944203 ..|> C_0016251970052706588167
+C_0011157316963592740002 ..> C_0007799755374329255294
+C_0011157316963592740002 ..|> C_0008822349375121146920
+C_0009185723470686767680 ..> C_0008843406913308057517
+C_0009185723470686767680 ..> C_0005705696531821621419
+C_0009185723470686767680 ..> C_0018374402636167681931
+C_0009185723470686767680 ..> C_0001275076681856179721
+C_0009185723470686767680 o-- C_0014365146155445944203 : -pluginCreators_
+C_0011157316963592740002 <|-- C_0009185723470686767680
+C_0002785967449649660056 <|-- C_0013758210545487039578
+C_0014598968275229283285 ..> C_0007055588601913548918
+C_0014598968275229283285 ..|> C_0013758210545487039578
+C_0009166925722896823160 <|-- C_0014598968275229283285
+C_0002785967449649660056 <|-- C_0008581834415901654607
+C_0013881424357272374790 ..> C_0010976483168152860821
+C_0013881424357272374790 ..|> C_0008581834415901654607
+C_0009166925722896823160 <|-- C_0013881424357272374790
+C_0001190815256257322949 ..> C_0012950509632165636408
+C_0001190815256257322949 ..|> C_0006592648460203373488
+C_0006531934893186424282 ..> C_0001190815256257322949
+C_0006531934893186424282 ..|> C_0011611421470239515537
+C_0004158711190580997697 ..> C_0013069770258147578243
+C_0004158711190580997697 ..> C_0000343239904209990740
+C_0004158711190580997697 o-- C_0006531934893186424282 : -runnableObjects_
+C_0018374402636167681931 <|-- C_0004158711190580997697
+C_0000625404512531737675 ..> C_0013069770258147578243
+C_0000625404512531737675 ..|> C_0015625435119362590644
+C_0015867217510380289680 ..> C_0013069770258147578243
+C_0015867217510380289680 ..> C_0000625404512531737675
+C_0015867217510380289680 --> C_0000343239904209990740 : -agg_
+C_0002217378351284568569 ..> C_0000343239904209990740
+C_0015771998079653783310 o-- C_0013069770258147578243 : +runStage
+C_0018286519554268830041 ..> C_0013069770258147578243
+C_0018286519554268830041 o-- C_0017614144533568309161 : -timeout_
+C_0012950509632165636408 ..> C_0013069770258147578243
+
+'Generated with clang-uml, version 0.6.3
+'LLVM version Ubuntu clang version 15.0.7
+@enduml

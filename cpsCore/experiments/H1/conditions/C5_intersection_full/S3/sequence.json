@@ -1,0 +1,14 @@
+[
+  {
+    "order": 16,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "order": 24,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  }
+]

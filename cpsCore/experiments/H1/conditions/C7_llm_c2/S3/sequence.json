@@ -1,0 +1,128 @@
+[
+  {
+    "order": 0,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "Aggregator::aggregate sets object handle for MicroSimulator via ObjectHandleContainer.setFromAggregationIfNotSet"
+  },
+  {
+    "order": 1,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "Aggregator::aggregate sets object handle for MultiThreadingScheduler via ObjectHandleContainer.setFromAggregationIfNotSet"
+  },
+  {
+    "order": 2,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "Aggregator::aggregate sets object handle for AggregatableRunner via ObjectHandleContainer.setFromAggregationIfNotSet"
+  },
+  {
+    "order": 3,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "Aggregator::aggregate sets object handle for SignalHandler via ObjectHandleContainer.setFromAggregationIfNotSet"
+  },
+  {
+    "order": 4,
+    "source": "Aggregation",
+    "target": "Synchronization",
+    "interaction": "AggregatableRunner.notifyAggregationOnUpdate",
+    "note": "Aggregator::aggregate notifies AggregatableRunner of updated aggregation"
+  },
+  {
+    "order": 5,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "Aggregator.getAll",
+    "note": "Inside AggregatableRunner::notifyAggregationOnUpdate to fetch IRunnableObject instances"
+  },
+  {
+    "order": 6,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "MultiThreadingScheduler::schedule logs 'Scheduling ...' for the scheduled task"
+  },
+  {
+    "order": 7,
+    "source": "Synchronization",
+    "target": "Utilities",
+    "interaction": "MultiThreadingScheduler.run",
+    "note": "AggregatableRunner.runAllStages invokes scheduler run at stage INIT"
+  },
+  {
+    "order": 8,
+    "source": "Synchronization",
+    "target": "Utilities",
+    "interaction": "MultiThreadingScheduler.run",
+    "note": "AggregatableRunner.runAllStages invokes scheduler run at stage NORMAL"
+  },
+  {
+    "order": 9,
+    "source": "Synchronization",
+    "target": "Utilities",
+    "interaction": "MultiThreadingScheduler.run",
+    "note": "AggregatableRunner.runAllStages invokes scheduler run at stage FINAL"
+  },
+  {
+    "order": 10,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "Inside MultiThreadingScheduler::run(FINAL): logs 'Starting Scheduler in new thread'"
+  },
+  {
+    "order": 11,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "MultiThreadingScheduler::runSchedule in new invoker thread: 'Starting Scheduling'"
+  },
+  {
+    "order": 12,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "MultiThreadingScheduler::runSchedule loop: 'Waking up at ...' before executing the task"
+  },
+  {
+    "order": 13,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "MultiThreadingScheduler::runSchedule loop: 'Executing task ...' for the scheduled task"
+  },
+  {
+    "order": 14,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "MultiThreadingScheduler::stop: 'Joining <eventName>' before joining the task thread"
+  },
+  {
+    "order": 15,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "MultiThreadingScheduler::stop flush after 'Joining' log"
+  },
+  {
+    "order": 16,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "MultiThreadingScheduler::stop: 'Joined <eventName>' after thread join"
+  },
+  {
+    "order": 17,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "MultiThreadingScheduler::stop flush after 'Joined' log"
+  }
+]

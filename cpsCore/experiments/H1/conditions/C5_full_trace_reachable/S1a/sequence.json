@@ -1,0 +1,50 @@
+[
+  {
+    "order": 18,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "order": 19,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "order": 22,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 25,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 28,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 31,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 35,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "order": 37,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  }
+]

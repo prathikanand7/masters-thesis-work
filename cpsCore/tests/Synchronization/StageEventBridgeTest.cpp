@@ -44,13 +44,13 @@ TEST_CASE("Stage Event Bridge Pub-Sub Routing")
 {
 	StageEventBridge bridge;
 
-	// --- Fault path: publish with no listener attached, log suppressed ---
-	{
-		CPSLogger::LogLevelScope log(LogLevel::NONE);
-		bridge.publishStage(RunStage::INIT);
-		// CPSLOG_ERROR "no listener connected" fires here but is suppressed;
-		// source-visible (static), absent from a runtime trace of this run.
-	}
+// --- Fault path: publish with no listener attached, log suppressed ---
+        {
+                CPSLogger::LogLevelScope log(LogLevel::NONE);
+                bridge.publishStage(RunStage::INIT);
+                // CPSLOG_ERROR "no listener connected" fires here but is suppressed;
+                // source-visible (static, confirmed by Neo4j traversal), absent from trace.
+        }
 
 	// --- Dynamic-only path: attach listener, publish, cross-component delivery ---
 	StageEventListener listener;

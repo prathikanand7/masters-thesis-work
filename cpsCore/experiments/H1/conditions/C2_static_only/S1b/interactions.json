@@ -1,0 +1,22 @@
+[
+  {
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "flush"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "instance"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream"
+  }
+]

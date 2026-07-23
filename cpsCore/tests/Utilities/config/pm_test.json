@@ -31,7 +31,6 @@
 		"test1": 8,
 		"test2": 10
 	},
-	"single_enum": "test2",
 	"optional1": 7,
 	"eigen_matrix": [
 		0,

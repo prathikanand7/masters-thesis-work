@@ -1,0 +1,37 @@
+[
+  {
+    "order": 0,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "Aggregator.getAll",
+    "note": "runner1 thread: SynchronizedRunner::runSynchronized(agg1) retrieves runnable objects at start"
+  },
+  {
+    "order": 1,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "Aggregator.getAll",
+    "note": "runner2 thread: SynchronizedRunner::runSynchronized(agg2) retrieves runnable objects at start"
+  },
+  {
+    "order": 2,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "runner2 completes INIT stage and flushes"
+  },
+  {
+    "order": 3,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "master.runStage(INIT) times out waiting for the second runner and logs CPSLOG_ERROR"
+  },
+  {
+    "order": 4,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "runner1 finishes long INIT stage (after ~2s) and flushes"
+  }
+]

@@ -1,0 +1,794 @@
+\chapter{Evaluation}\label{ch:analysis}
+
+This chapter evaluates the \ac{GDI} pipeline against the three hypotheses
+(H1, H2, H3) that operationalise the research questions from
+\cref{ch:introduction}. It reports the design and results of each
+experiment on the CPSCore case study, a complementary practitioner
+session on a second industrial codebase and a discussion of threats to
+validity, including several methodological risks caught during the
+experiments themselves.
+
+\section{Evaluation Design}\label{sec:eval-design}
+
+\begin{itemize}
+  \item \textbf{H1} (\cref{sec:h1}) compares reconstruction accuracy
+    across conditions C1--C9 (\cref{sec:conditions}) on four scenarios
+    (\cref{sec:scenarios}), all occurring naturally in CPSCore (S1a, S1b,
+    S2, S3).
+  \item \textbf{H2} (\cref{sec:h2}) compares guided against full
+    instrumentation on structural compression, noise and coverage, with a
+    blinded expert rating of the resulting diagrams.
+  \item \textbf{H3} (\cref{sec:h3}) tests whether the reconstructed models
+    improve an agent's performance on a scenario-comprehension task,
+    relative to reasoning over raw source code.
+\end{itemize}
+
+\Cref{sec:rq-answers} draws the two research questions' answers together
+from these experiments.
+\Cref{sec:practitioner} reports a fourth, exploratory data point:
+practitioner feedback from a second, much larger industrial codebase,
+kept separate from H1--H3 since it was not run as a controlled or
+pre-registered comparison.
+
+\section{H1: Does Combining Static and Dynamic Evidence Improve Reconstruction Accuracy?}\label{sec:h1}
+
+\textbf{Hypothesis.} Guided instrumentation constrained by a Neo4j
+reachability filter (C5) achieves higher reconstruction accuracy than any
+single-source or unconstrained condition; full-trace instrumentation with
+the same filter (C6) matches C5, confirming the filter alone is
+sufficient regardless of instrumentation strategy.
+
+\subsection{Metric}
+
+For every condition and scenario, the generated \sysml sequence diagram
+is compared against a manually authored reference diagram over
+\emph{interaction edges} (unique ordered $\langle\text{sender},
+\text{receiver}\rangle$ pairs):
+
+\[
+  P = \frac{|\text{gen} \cap \text{ref}|}{|\text{gen}|}, \quad
+  R = \frac{|\text{gen} \cap \text{ref}|}{|\text{ref}|}, \quad
+  F_1 = \frac{2PR}{P + R}
+\]
+
+Reference diagrams were authored before any condition was scored against
+them, to avoid tuning the reference to a particular output.
+This formulation follows the standard information-retrieval
+convention~\cite{manning:ir}, mirrors its recent use for comparing
+static against dynamically-sampled call graphs~\cite{helm:totalrecall},
+and matches the convention used within the sequence-diagram
+reconstruction literature itself~\cite{taniguchi:seqtrace}.
+
+A second metric scores the same generated output against the same
+reference for \emph{execution order}, which the edge-set metric above
+discards entirely (two conditions can share an identical interaction
+set while disagreeing completely on the order events fired). Let
+$\text{gen}$ and $\text{ref}$ now denote \emph{ordered} event lists,
+with repetitions preserved, and let $\mathrm{LCS}(\text{gen},
+\text{ref})$ be their longest common subsequence -- the longest run of
+events appearing in both lists in the same relative order, though not
+necessarily contiguously:
+
+\[
+  P = \frac{|\mathrm{LCS}(\text{gen}, \text{ref})|}{|\text{gen}|}, \quad
+  R = \frac{|\mathrm{LCS}(\text{gen}, \text{ref})|}{|\text{ref}|}, \quad
+  F_1 = \frac{2PR}{P + R}
+\]
+
+Precision here penalises a condition for inserting extra events (e.g.\
+uncorroborated static edges, or setup-phase trace events the
+scenario-scoped ground truth excludes); recall penalises it for
+dropping or misordering genuine ones. Both metrics are reported
+throughout this section: the edge-set metric answers whether a
+condition identifies the right \emph{interactions}; the LCS metric
+answers whether it also gets their \emph{order} right.
+
+\subsection{Results}\label{sec:h1-results}
+
+\begin{table}[htb]
+\centering
+\caption{H1 per-scenario results (interaction edges): precision / recall
+  / F1 by condition. Scenarios S1a, S1b, S2, S3 all occur naturally in
+  CPSCore (\cref{sec:scenarios}).}
+\label{tab:h1-per-scenario}
+\small
+\begin{tabular}{@{} l c c c c @{}}
+\toprule
+\textbf{Condition} & \textbf{S1a} & \textbf{S1b} & \textbf{S2} & \textbf{S3} \\
+\midrule
+C1: LLM-only            & 1.00/1.00/1.00 & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .75/1.00/.86 \\
+C2: Static-only         & .50/1.00/.67   & .75/1.00/.86   & 1.00/1.00/1.00 & 1.00/.33/.50 \\
+C3: Unfiltered trace    & .29/1.00/.44   & .38/1.00/.55   & .50/1.00/.67   & .30/1.00/.46 \\
+C4: Guided-only         & .67/1.00/.80   & .75/1.00/.86   & 1.00/1.00/1.00 & 1.00/1.00/\textbf{1.00} \\
+C5: Guided+Reach        & 1.00/1.00/\textbf{1.00} & 1.00/1.00/\textbf{1.00} & 1.00/1.00/\textbf{1.00} & 1.00/1.00/\textbf{1.00} \\
+C6: FullTrace+Reach     & 1.00/1.00/\textbf{1.00} & 1.00/1.00/\textbf{1.00} & 1.00/1.00/\textbf{1.00} & 1.00/1.00/\textbf{1.00} \\
+C7: LLM+C2              & 1.00/1.00/1.00 & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .50/1.00/.67 \\
+C8: LLM+C3              & 1.00/1.00/1.00 & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .50/.67/.57 \\
+C9: LLM+C4              & .67/1.00/.80   & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .33/.33/.33 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htb]
+\centering
+\caption{H1 per-scenario results (execution-order LCS metric): precision /
+  recall / F1 by condition, over the same four scenarios.}
+\label{tab:h1-per-scenario-seq}
+\small
+\begin{tabular}{@{} l c c c c @{}}
+\toprule
+\textbf{Condition} & \textbf{S1a} & \textbf{S1b} & \textbf{S2} & \textbf{S3} \\
+\midrule
+C1: LLM-only            & 1.00/1.00/1.00 & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .71/.77/.74 \\
+C2: Static-only         & .50/.25/.33    & .75/.60/.67    & 1.00/1.00/1.00 & 1.00/.08/.14 \\
+C3: Unfiltered trace    & .21/1.00/.34   & .18/1.00/.30   & .50/1.00/.67   & .25/1.00/.40 \\
+C4: Guided-only         & .67/1.00/.80   & .56/1.00/.72   & 1.00/1.00/1.00 & .77/1.00/.87 \\
+C5: Guided+Reach        & 1.00/1.00/\textbf{1.00} & 1.00/1.00/\textbf{1.00} & 1.00/1.00/\textbf{1.00} & 1.00/1.00/\textbf{1.00} \\
+C6: FullTrace+Reach     & 1.00/1.00/\textbf{1.00} & 1.00/1.00/\textbf{1.00} & 1.00/1.00/\textbf{1.00} & 1.00/1.00/\textbf{1.00} \\
+C7: LLM+C2              & 1.00/1.00/1.00 & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .56/.77/.64 \\
+C8: LLM+C3              & 1.00/1.00/1.00 & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .62/.62/.62 \\
+C9: LLM+C4              & 1.00/1.00/1.00 & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .58/.54/.56 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htb]
+\centering
+\caption{H1 macro-averaged results across all four scenarios, interaction
+  edges and execution-order LCS metric.}
+\label{tab:h1-results}
+\small
+\begin{tabular}{@{} l ccc ccc @{}}
+\toprule
+& \multicolumn{3}{c}{\textbf{Interactions}}
+& \multicolumn{3}{c}{\textbf{Sequence (LCS)}} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+\textbf{Condition} & P & R & F1 & P & R & F1 \\
+\midrule
+C1: LLM-only          & 0.938 & \textbf{1.000} & 0.964 & 0.929 & 0.942 & 0.935 \\
+C2: Static-only       & 0.812 & 0.833 & 0.756 & 0.812 & 0.482 & 0.536 \\
+C3: Unfiltered trace  & 0.365 & \textbf{1.000} & 0.530 & 0.284 & \textbf{1.000} & 0.428 \\
+C4: Guided-only       & 0.854 & \textbf{1.000} & 0.914 & 0.747 & \textbf{1.000} & 0.846 \\
+C5: Guided+Reach      & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
+C6: FullTrace+Reach   & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
+C7: LLM+C2            & 0.875 & \textbf{1.000} & 0.917 & 0.889 & 0.942 & 0.911 \\
+C8: LLM+C3            & 0.875 & 0.917 & 0.893 & 0.904 & 0.904 & 0.904 \\
+C9: LLM+C4            & 0.750 & 0.833 & 0.783 & 0.896 & 0.885 & 0.890 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+F1 aggregation: macro-average across the four scenarios throughout.
+
+\subsection{Discussion: C5 and C6 Achieve Perfect Scores}\label{sec:h1-c4c2}
+
+Two conditions achieve F1~$=$~1.000 on both metrics across all four
+scenarios: \textbf{C5 (guided~+~reachability)} and \textbf{C6
+(full-trace~+~reachability)}. This confirms the central role of the
+reachability filter, not the instrumentation strategy: replacing guided
+with full-trace instrumentation while keeping the filter (C6~vs.~C5)
+leaves every score unchanged.
+
+The mechanism is straightforward. \texttt{trace\_slice.txt} probes fire
+whenever an instrumented function is called --- including during
+test-fixture setup before the scenario logic starts. Without the filter
+(C4), \texttt{Aggregator.add}~$\to$~\texttt{RAIILogStream.stream} events
+appear for S1a and S1b because those sites fire during setup. The
+reachability filter keeps only events whose caller is reachable from the
+scenario entry point via \texttt{CppCalls*0..8}: setup-phase callers are
+not reachable, so their events are dropped. This eliminates C4's two
+remaining false positives on S1a and S1b, yielding perfect scores.
+
+S2 and S3 have no setup-phase noise in \texttt{trace\_slice.txt}, so C4
+already achieves F1~$=$~1.000 there; C5 matches it. The filter adds
+value exactly where needed and is otherwise a no-op.
+
+\subsection{Discussion: Guided vs.\ Unfiltered and Static Limits}\label{sec:h1-c4c3}
+
+C4 (guided-only, 0.914\,/\,0.846 macro) substantially outperforms C3
+(unfiltered trace, 0.530\,/\,0.428): \texttt{trace\_slice.txt} instruments
+only cross-component architectural call sites, so intra-component calls
+never appear there, while \texttt{full\_trace.txt} captures all calls
+including numerous intra-component ones. C3's false positives are real
+runtime events; they are simply not scenario-relevant.
+
+C2 (static-only, 0.756\,/\,0.536 macro) is structurally capped on S3 by
+an indirect dispatch: \texttt{Utilities}~$\to$~\texttt{Logging:stream} is
+routed through a \texttt{std::function}-wrapped thread with no resolvable
+static call site, so \texttt{CppCalls} never records it. C2's precision
+on S3 is 1.000 (it reports no extraneous edges, only an incomplete set);
+its recall is 0.333 (one of three genuine edges). No Cypher refinement
+can recover a call site that is structurally absent from the call graph.
+C5 and C6 recover it because the trace captures the executed call.
+
+\subsection{Discussion: LLM-Augmented Conditions Underperform Their Counterparts}\label{sec:h1-c5}
+
+C7 (LLM~+~C2 candidates) substantially recovers C2's recall
+gap, matching C1's interactions macro-F1 on three of four scenarios. It
+still fails on S3: the \ac{LLM} adds static-analysis-derived edges it
+cannot verify from source alone, introducing two false positives
+(F1~$=$~0.667 on S3 interactions).
+
+C8 (LLM~+~C3) partially denoises the raw trace: S3's complex
+intra-component noise is the hardest case, leaving residual false
+positives (F1~$=$~0.571 on S3 interactions vs.\ C3's~0.462).
+
+C9 (LLM~+~C4) actually hurts: macro interactions F1 drops from C4's
+0.914 to~0.783. On S3, the \ac{LLM} over-filters --- it misclassifies a
+genuine interaction as setup-phase noise and drops it
+(F1~$=$~0.333 on S3 interactions). This is the general risk when the
+prior is already precise: the \ac{LLM} cannot reliably distinguish
+genuine from spurious edges in a clean input, and errors become
+counterproductive.
+
+Which condition to prefer in practice: C5 or C6 guarantee perfect
+reconstruction where Neo4j is available; C4 is the strongest deterministic option without the Neo4j-based reachability filter; C7 is the best LLM-only option when a static prior
+is available and recall matters more than precision on S3.
+
+\section{H2: Does Guided Instrumentation Improve Scenario Focus?}\label{sec:h2}
+
+\textbf{Hypothesis.} Code-graph-guided instrumentation
+(\cref{sec:guided-vs-full}) suppresses irrelevant execution detail
+relative to full, unguided instrumentation.
+
+H2 has a quantitative arm (structural compression, noise, coverage, and
+a complementary reconstruction-accuracy check reusing the H1 conditions
+and metrics) and a qualitative arm (blinded expert rating). All were
+needed: H2 is fundamentally a claim about human-perceived usability,
+which the quantitative metrics alone cannot establish.
+
+\subsection{Metrics}
+
+Let $G_{\text{full}}$, $G_{\text{guided}}$ denote the property-graph
+subsets from full and guided instrumentation, and $R$ the
+scenario-relevant reference node set (shared with H1):
+
+\[
+  \text{NodeReduction} = 1 - \frac{|V(G_{\text{guided}})|}{|V(G_{\text{full}})|},
+  \qquad
+  \text{EdgeReduction} = 1 - \frac{|E(G_{\text{guided}})|}{|E(G_{\text{full}})|}
+\]
+
+\[
+  \text{Noise}(G) = \frac{|V(G) \setminus R|}{|V(G)|},
+  \qquad
+  \text{Coverage}(G) = \frac{|V(G) \cap R|}{|R|}
+\]
+
+Noise and Coverage are the retained-set analogues of $1-\text{Precision}$
+and Recall~\cite{manning:ir}; the noise concept is adapted from its use
+in architecture recovery evaluation~\cite{constantinou:noise}, applied
+here to instrumentation scoping rather than clustering. A configuration
+that reduces noise by discarding relevant nodes along with irrelevant
+ones is not an improvement; coverage rules that failure mode out.
+
+\subsection{Quantitative Results}\label{sec:h2-results}
+
+\begin{table}[htb]
+\centering
+\caption{H2 aggregate results: guided vs.\ full instrumentation (mean across
+  S1a, S1b, S2, S3).}
+\label{tab:h2-results}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\textbf{Metric} & \textbf{Full} & \textbf{Guided} & \textbf{Reduction} \\
+\midrule
+Nodes (lifelines)     & 6.0 & 3.0 & $-50\%$ \\
+Interaction edges     & 9.0 & 2.7 & $-70\%$ \\
+Coverage              & 1.000 & 1.000 & $0\%$ \\
+Noise                 & 0.704 & 0.000 & $-100\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Guided instrumentation reduced retained nodes by 50\% and interaction
+edges by 70\%, driving noise to 0 while holding coverage at 1.000: every
+scenario-relevant interaction survived the reduction. Full-trace false
+positives are real runtime events from non-primary components active in
+the same test run (\eg \texttt{Aggregation$\to$Logging:stream}),
+architecturally valid but irrelevant to the scenario at hand.
+
+The quantitative arm above is therefore scoped
+to S1--S4, where full instrumentation actually produces excess events
+for guided instrumentation to remove.
+
+\subsection{Qualitative Arm: Blinded Expert Rating}\label{sec:h2-qual}
+
+Structural compression alone cannot establish that guided instrumentation
+produces a \emph{more usable} diagram. That is a claim about human
+perception. A blinded A/B protocol tested this directly: six external
+domain engineers, with no prior knowledge of the codebase, independently
+rated diagrams from both configurations without being told which was
+which, using a rating form and a private decode key (held separately) to
+keep the assignment blind, with the A/B label randomised per scenario.
+All six returned completed forms scoring S1--S3 on accuracy, readability
+and practical usefulness, plus free-text comments and an overall
+preference.
+
+\paragraph{Results}
+
+\begin{table}[htb]
+\centering
+\caption{H2 qualitative results: mean blinded expert ratings (1--5 scale,
+  $n=6$ raters) for full vs.\ guided instrumentation, per scenario and
+  rating dimension.}
+\label{tab:h2-qual-results}
+\begin{tabular}{@{} l cc cc cc @{}}
+\toprule
+ & \multicolumn{2}{c}{\textbf{Accuracy}} & \multicolumn{2}{c}{\textbf{Readability}} & \multicolumn{2}{c}{\textbf{Usefulness}} \\
+\textbf{Scenario} & Full & Guided & Full & Guided & Full & Guided \\
+\midrule
+S1 & 2.33 & 4.67 & 2.33 & 4.83 & 3.17 & 4.50 \\
+S2 & 2.33 & 4.17 & 2.33 & 4.83 & 2.67 & 2.83 \\
+S3 & 2.50 & 5.00 & 2.67 & 5.00 & 3.00 & 4.67 \\
+\midrule
+\textbf{Mean} & \textbf{2.39} & \textbf{4.61} & \textbf{2.44} & \textbf{4.89} & \textbf{2.94} & \textbf{4.00} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Guided instrumentation was never rated below full instrumentation on
+accuracy or readability by any rater on any scenario (34 of 36
+comparisons strictly preferred, 2 exact ties). Across all
+$6 \times 9 = 54$ rater--scenario--dimension comparisons, guided was
+rated strictly higher in 47, tied in 6, and lower in exactly 1. Averaged
+across all scenarios and dimensions, guided scored 4.50 against 2.59 for
+full instrumentation.
+
+The larger panel did not change the direction of the effect but
+surfaced heterogeneity a two-rater sample could not. Usefulness is
+unanimous for guided on S1 and S3 but genuinely split on S2, the one
+scenario where guided instrumentation collapses seven repeated
+\texttt{Configuration}$\to$\texttt{Logging} property-read calls into a
+single edge: three raters tied it, one preferred full, two preferred
+guided. Free-text comments suggest this reflects a real trade-off:
+collapsing repeated reads discards a \emph{count} some raters consider
+useful for debugging, independent of accuracy or readability. Full
+per-rater decomposition and comments are in
+\cref{sec:appendix-h2-perrater}.
+
+Taken together, guided instrumentation compresses the graph without
+losing scenario-relevant nodes (quantitative arm) and is rated more
+accurate and more readable by every one of six domain experts, on every
+scenario (qualitative arm). The one qualification is usefulness on S2,
+where the reduction discards a property-read count several raters found
+independently useful for debugging.
+
+\section{H3: Do Reconstructed Models Improve Task Performance?}\label{sec:h3}
+
+\textbf{Hypothesis.} Agents equipped with reconstructed structural and
+sequence diagrams perform scenario-comprehension tasks more accurately
+than agents relying only on source code and traces.
+
+H3 was scoped to a single downstream task (Scenario Comprehension) to
+keep the evaluation tractable. A single holistic experiment isolated
+source code, execution traces, and a rendered diagram individually and
+in combination, across all four scenarios, S1--S4.
+
+\subsection{Protocol}
+
+Ground truth for this rescoring is the same automatically derived,
+scenario-scoped interaction set used throughout H1
+(\texttt{gt\_interactions.json} per scenario, \cref{sec:scenarios}),
+converted into expected components and expected interactions. Rescoring against the same ground
+truth H1 uses keeps the two hypotheses consistent with each other. For
+each scenario, an agent was prompted to identify components, enumerate
+interactions and explain the execution flow under one of five
+conditions:
+
+\begin{description}
+  \item[Source only.] Source snippets only.
+  \item[Trace only.] Runtime trace subset only.
+  \item[Diagram only.] A rendered \sysml v2 diagram (structural and
+    sequence, \texttt{gen\_sysml.py}, \cref{sec:sysml-generation}) only.
+  \item[Source + Trace.] Both.
+  \item[Source + Trace + Diagram.] All three.
+\end{description}
+
+Component and interaction recall apply the same formulation as H1: a
+response is credited for a ground-truth interaction only if the source
+component, target component and bare method name are all genuinely
+attributed to that specific interaction, not merely present somewhere
+in the response text. Completeness is scored 1--5 against
+\texttt{scoring/rubric.md} by a single non-blind rater applying the
+ground truth above.
+
+\subsection{Holistic Comparison}
+\label{sec:h3-holistic}
+
+\begin{table}[htb]
+\centering
+\caption{H3 holistic comparison: five conditions across all four scenarios, S1--S4.}
+\label{tab:h3-holistic}
+\small
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\textbf{Condition} & \textbf{Component recall} & \textbf{Interaction recall} & \textbf{Completeness (1--5)} \\
+\midrule
+Source only               & 0.833 & 0.444 & 3.00 \\
+Trace only                 & \textbf{1.000} & 0.778 & 4.00 \\
+Diagram only               & \textbf{1.000} & 0.778 & 4.25 \\
+Source + Trace              & \textbf{1.000} & \textbf{1.000} & 4.75 \\
+Source + Trace + Diagram    & \textbf{1.000} & \textbf{1.000} & \textbf{5.00} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Diagram-inclusive conditions are never worse than their non-diagram
+counterparts, and are often better. Diagram only clearly beats source
+only (0.778 vs.\ 0.444 interaction recall) and ties trace only, while
+adding the diagram to source+trace lifts completeness further (5.00
+vs.\ 4.75) at no cost to recall. Source only is the weakest condition
+throughout, missing a component and interactions on S1 and S4 that
+trace or diagram evidence make explicit.
+
+The one shared limitation is S3: source only, trace only and diagram
+only each misattribute one of two \texttt{stream} interactions to
+\texttt{Synchronization} rather than their true source component,
+capping single-evidence interaction recall there at 1 of 3. Only
+combining source and trace resolves it, by letting the agent
+cross-reference the trace's specific caller against the source code's
+specific class -- which is why source+trace and source+trace+diagram
+are the only conditions to reach perfect recall.
+
+\subsection{H3 Conclusion}
+
+H3 is supported: diagram-inclusive conditions are never worse than
+their non-diagram counterparts and clearly outperform source only, the
+weakest condition on every measure. Diagram only ties trace only on
+recall but edges ahead on completeness, and adding the diagram to
+source+trace raises completeness further without cost to recall. The
+one qualification is S3, where a diagram alone -- like source or trace
+alone -- cannot resolve which component actually originates a shared
+interaction name; only combining source and trace does that.
+\cref{sec:rq-answers} revisits \rqthree in light of this result.
+
+\section{Practitioner Validation: A Second Industrial Codebase}\label{sec:practitioner}
+
+H1--H3 validate the approach in depth on one system (CPSCore) under
+controlled conditions. This section reports a complementary, exploratory
+data point. \emph{Renaissance MCP}, the tool built in this project,
+exposes the Renaissance static-extraction backend and graph-querying
+approach as an MCP integration inside GitHub Copilot, and was trialled
+by practitioners at an industrial partner on a second \Cpp\ codebase
+several orders of magnitude larger than CPSCore.
+
+This is not a repeat of H1/H2/H3: it is an unblinded, semi-structured
+hands-on session and interview study with four engineers, exercising
+only the static-extraction and graph-querying capability. No runtime
+instrumentation or dynamic analysis was involved, so it speaks to the
+static half of the approach only, and is reported because it bears
+directly on external validity: whether the static-analysis capability
+holds up on a second, much larger system. Codebase and defect details
+are kept generic to avoid disclosing partner-internal specifics.
+
+\subsection{Session Design}
+
+Each session had four parts: tool installation, an \emph{estimation
+game} (guessing then checking quantitative facts about the codebase), a
+\emph{scenario exercise} investigating a real, previously-resolved
+engineering issue, and a wrap-up discussion on the tool's diagram
+outputs.
+
+\begin{table}[htb]
+\centering
+\caption{Estimation-game answers, illustrating codebase scale on the
+  second industrial system.}
+\label{tab:renaissance-scale}
+\begin{tabular}{@{} l r @{}}
+\toprule
+\textbf{Query} & \textbf{Answer} \\
+\midrule
+Method declarations on the largest class (a test helper) & 923 \\
+Header files not included elsewhere (excl.\ externals)   & 9,606 \\
+Inclusions of the most-included header file              & 2,053 \\
+Calls to the most-called function                         & 23,846 \\
+Events declared by a representative event-heavy interface & 118 \\
+Call sites of a representative header-declared method      & 0 (unused) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The scale here (\cref{tab:renaissance-scale}) contrasts with CPSCore's
+2,574 static interactions and 121 components (\cref{tab:impl-summary}).
+
+\subsection{Scenario Exercise: A Real Engineering Issue}\label{sec:scenario-exercise}
+
+The exercise centred on a previously-resolved defect chosen for matching
+this thesis's target problem class: an implicit, event-driven
+interaction invisible without reconstructing the call/event chain.
+
+\textbf{Defect summary (generalised, anonymised).} A control service
+exposes interfaces to a client via proxy objects created on connect. On
+disconnect, most proxies are freed; one was not, due to a missing reset
+in connection-handling code. After a later restart, the stale proxy
+silently stopped delivering change-notification events. The defect was
+visible only by tracing the event path from the reconnect handler,
+through the stale proxy, to the downstream handler.
+
+\textbf{Task.} Participants used the tool to answer three questions
+about the already-fixed codebase: which files changed, which test
+exercises the fix, and where the proxy objects are used. All three are
+answerable from the static call/containment graph alone, making this a
+check on the same static capability underlying \rqone\ and \rqtwo, now
+on an unfamiliar, industrial-scale codebase. Participants correctly
+identified the modified file, the relevant test, and the proxy's
+construction/release sites, the components underlying the actual fix.
+
+\subsection{Interview Findings}\label{sec:interview-findings}
+
+Four practitioners were interviewed: a software designer (P1), a product
+owner for an embedded control service (P2), a senior architect for
+inter-component synchronisation (P3), and an algorithm engineer (P4).
+Interviews covered general usefulness and six diagram types: class
+structure (class diagram, polymetric view), object interaction (call
+graph, dependency diagram), and system overview (structural, sequence
+diagram).
+
+All four use AI coding assistants daily and saw value in
+architecture/dependency information. P3 reported completing an
+investigation in a five-minute session that had previously taken roughly
+five months, a striking self-report, but a single, unverified,
+retrospective comparison, reported as anecdote rather than measured
+effect. P2 noted the graph-based tool located a stub implementation
+whose concrete definition lived outside the visible workspace, a failure
+mode of code-search-based assistants. P4 found it most useful for
+onboarding onto unfamiliar code and locating coverage gaps.
+
+Feedback on diagrams converged on a pattern. Dependency and structural
+diagrams were consistently rated useful, and in P3's case judged cleaner
+than the team's existing modelling-tool output. Sequence diagrams were
+valued for surfacing unexpected race conditions and cross-component
+effects (P1, P3, P4), but all three found event/message labels (\eg a
+generic \texttt{Subscribe}) too abstract without inline detail, and
+requested source class/line number on hover. The class diagram and
+polymetric view drew the most mixed feedback: three of four preferred
+the plain class diagram, and the polymetric view's size-based encoding
+was repeatedly flagged as measuring the wrong thing (P2, P4 suggested
+cyclomatic complexity or requirements traceability instead). Call graphs
+were the most polarising output: redundant with existing build-system
+views for P4, not what P3 expected, while P2 rated the equivalent
+dependency diagram positively for indicating ``hops'' between
+components.
+
+Three requests recurred across interviews, independent of diagram type:
+interactivity (static diagrams compared unfavourably to tools allowing
+search/filter/collapse, P1--P3); non-code context such as timing,
+deployment configuration and product variant (P2, P4), a direct
+instance of the construct-validity limitation already noted for this
+thesis's own evaluation, since the graph
+only contains what was extracted; and invocation friction, with some
+participants needing unusually explicit phrasing to trigger the tool
+(P1, P4).
+
+\subsection{Relationship to This Thesis's Contribution}
+
+The class diagram and polymetric view are contributed by other \ac{GDI}
+members and fall outside this thesis's scope; they are reported only as
+context. The findings most relevant here are the positive reception of
+the dependency and structural diagrams (descended from the interface
+dependency table, \cref{sec:idt}) and the actionable critique of
+sequence-diagram labelling (relevant to \sysml generation,
+\cref{sec:sysml-generation}). The hover-detail request is a low-effort
+extension of the existing \texttt{sourceLineNumber} property already
+carried on \texttt{CppCalls} edges (\cref{sec:utility}), noted as future
+work (\cref{sec:future-work}).
+
+The proxy-leak defect (\cref{sec:scenario-exercise}) is an interaction
+architecturally present in source but only exercised under a specific
+failure condition (reconnect after a missed release). Participants
+resolved it using only the static graph, the same evidence source as
+C2, which recovers architecturally-present interactions regardless of
+whether they were exercised in any particular run
+(\cref{sec:h1-c4c2}). This is informal, but convergent, evidence that
+static extraction alone remains useful for fault-path investigation on a
+second, much larger codebase.
+
+The same architecture also motivates, without measuring, a prediction
+about combining on this system (\cref{sec:cpscore-scale,sec:h1-c4c2}).
+S1a and S1b show that the guided+reachability filter (C5) eliminates
+false positives by scoping the trace to only the functions reachable
+from the scenario's entry points in the static call graph -- not by
+requiring agreement between two independently-erring sources. Unlike
+CPSCore, this codebase uses proxy objects, virtual interfaces (118
+events on one representative interface) and dynamic
+connect/disconnect, conditions under which static analysis is more
+likely to over- or under-approximate on its own -- exactly the setting
+where the static call graph's reachability scope may cut a broader set
+of irrelevant trace events. P2's stub-resolution observation, where the
+graph-based tool located a definition invisible to code search, is
+consistent with static reachability carrying signal here; but the
+session collected no dynamic evidence, so it cannot confirm whether
+the guided+reachability filter would achieve perfect F1 on this
+codebase. That mechanism was measured only on CPSCore, via S1a, S1b,
+S2 and S3 (\cref{sec:h1-c4c2}). Testing the guided+reachability
+pipeline on a system of this scale and dispatch complexity is left to
+future work (\cref{sec:future-work}).
+
+\section{Discussion: Cross-Cutting Pattern}\label{sec:discussion}
+
+A single pattern runs through the H1 results: additional evidence helps
+when it disagrees \emph{productively} with the primary source, by
+independently confirming which of each source's edges are genuine, and
+is otherwise redundant or actively harmful.
+
+\begin{description}
+  \item[H1.] Guided instrumentation combined with the static-graph
+    reachability filter (C5) achieves perfect F1~$=$~1.000 on all four
+    scenarios. Guided instrumentation alone without the filter (C4)
+    reaches macro F1~$=$~0.914, already exceeding either source alone;
+    the reachability scope closes the remaining gap. The full-trace
+    variant with the same filter (C6) also reaches 1.000, confirming
+    the filter is the decisive factor, not the instrumentation
+    strategy.
+  \item[H2.] Guided instrumentation removes noise without losing
+    coverage, and the panel confirms this translates into perceived
+    usability -- except on S2, where the removed information was itself
+    useful for debugging.
+  \item[H3.] Diagram-inclusive conditions beat source alone and are
+    never worse than their non-diagram counterparts, but the diagram
+    alone still shares source and trace's S3 attribution error; only
+    combining source and trace resolves it, by letting the agent
+    cross-reference the trace's specific caller against the source
+    code's specific class (\cref{sec:h3-holistic}).
+  \item[Practitioner session.] The proxy-leak defect was resolved using
+    only the static graph; with no dynamic evidence collected, this
+    speaks to static extraction's standalone value, not to the
+    guided+reachability mechanism itself (\cref{sec:practitioner}).
+\end{description}
+
+The pipeline's precision benefit is therefore conditional on the static
+call graph providing an accurate reachability scope for the scenario's
+entry points -- useful for engineers deciding when the guided+reachability
+strategy is appropriate. H3 adds a downstream caveat: a reconstructed
+diagram summarises what the pipeline concluded, but attributing an
+interaction to its specific source component still calls for
+cross-referencing source and trace directly.
+
+This generates a testable prediction: on a codebase with more complex
+dispatch (proxy objects, virtual interfaces, unlike CPSCore), the static
+call graph's reachability scope may identify a broader set of irrelevant
+trace events, giving the filter more false positives to suppress while
+still preserving the scenario's genuine edges. The practitioner
+codebase looks like such a system; testing the guided+reachability
+pipeline there remains future work (\cref{sec:future-work}).
+
+\section{Answering the Research Questions}\label{sec:rq-answers}
+
+\subsection*{\rqone: Hybrid vs. Individual Sources}
+
+\textit{Does combining a static call graph with runtime execution traces
+reconstruct scenario-specific Interaction Models more accurately than
+either source alone?}
+
+Combining improves reconstruction to perfect accuracy across all
+four scenarios. Condition~C5 (guided instrumentation + static
+reachability filter) achieves F1~$=$~1.000 on every scenario
+(S1a, S1b, S2, S3), against 0.756 for static alone (C2), 0.530 for
+unfiltered dynamic alone (C3), and 0.914 for guided dynamic without the
+filter (C4, \cref{sec:h1-c4c2}). Condition~C6 (full-trace + same
+reachability filter) also reaches 1.000, confirming the reachability
+scope is sufficient regardless of instrumentation strategy. S1a and
+S1b -- found-in-the-wild instances of the same test exercising its
+happy path and timeout branch respectively -- show the mechanism holds
+without special construction. Whether this generalises beyond CPSCore
+depends on whether the static call graph accurately captures
+scenario-relevant reachability, which the practitioner session
+(\cref{sec:practitioner}) motivates but does not confirm.
+
+\subsection*{\rqtwo: Guided Instrumentation}
+
+\textit{Does guiding trace collection with the static call graph remove
+reconstruction noise without losing scenario coverage?}
+
+Applying the scenario scope \emph{before} instrumentation reduces
+retained nodes by 50\% and edges by 70\% while holding coverage at
+1.000. The blinded expert rating confirms this translates into
+perceived usability, with one qualification: collapsing repeated reads
+on S2 discards a count several raters found useful for debugging
+(\cref{sec:h2-qual}).
+
+\subsection*{\rqthree: Sufficiency for Comprehension}
+
+\textit{How well does a reconstructed \sysml Interaction Model
+consolidate static and dynamic evidence into a single artefact sufficient
+for system-behaviour comprehension?}
+
+H3 (\cref{sec:h3}) supports the diagram's value but not its strict
+sufficiency: diagram-inclusive conditions beat source only and are
+never worse than their non-diagram counterparts, yet the diagram alone
+still ties trace only and shares its S3 attribution error
+(\cref{sec:h3-holistic}). Combining source and trace resolves that
+case; adding the diagram on top raises completeness further at no cost
+to recall. A reconstructed diagram is therefore a useful complement to
+the underlying evidence, not a sufficient replacement for it.
+
+\section{Engineering Utility}\label{sec:utility}
+
+Beyond precision/recall, a tool development thesis's primary claim is
+that the tool is useful to engineers. Three utility properties were
+observed during development.
+
+\paragraph{Pipeline automation.} The full path from \Cpp\ source to a
+\sysml sequence diagram runs by chaining twelve agent skills
+(\cref{tab:skills}), all following a fixed rule set
+(\cref{sec:pipeline-overview,sec:evidence-synthesis}). Every skill
+produces an auditable intermediate artefact (a CSV, the final
+\texttt{.sysml} file, or \texttt{interactions.json}/\texttt{sequence.json}
+for the reachability filter step) rather than acting invisibly, and works from the live
+schema rather than hardcoded labels, so an engineer can inspect, verify
+or override any step without rerunning extraction
+(\cref{sec:skill-design}).
+
+\paragraph{Scale.} A single Cypher query extracted 2,574 ordered
+interactions from CPSCore -- several working days of manual effort --
+and identified the nine caller functions across five files to
+instrument; \texttt{csp\_matcher} then wrapped those call sites (three
+find/replace rules plus a logging-macro patch) and captured the trace,
+with no prior knowledge of the codebase required.
+
+\paragraph{Correctness preservation.} Inserting \texttt{csp\_matcher}
+probes did not alter CPSCore's observable behaviour: all 1,425 test
+assertions passed after instrumentation, and the tool's reversibility
+property (\cref{sec:csp-matcher}) restores the source tree to a
+byte-identical pre-instrumentation state.
+
+\section{Threats to Validity}
+
+\subsection{Internal Validity}
+
+\begin{description}
+  \item[Reference diagram subjectivity.] Reference diagrams reflect a
+    single engineer's understanding per scenario; a different reviewer
+    might choose different granularity or lifeline selection.
+
+  \item[Instrumentation coverage.] Targets were selected by inspecting
+    the static graph, not coverage analysis; a different entry-point
+    selection would likely change the trace and H1/H2 result.
+\end{description}
+
+\subsection{External Validity}
+
+\begin{description}
+  \item[Single controlled system for H1/H2/H3.] CPSCore is a
+    moderate-scale, cleanly modular framework. The practitioner session
+    offers encouraging but unblinded, four-participant qualitative
+    evidence of transfer, not a repeat of the controlled comparisons;
+    applying the full hypothesis tests to a second system remains the
+    strongest way to strengthen external validity.
+
+  \item[No scenario exercises the filter at its limit.] All
+    four scenarios are found-in-the-wild,
+    strengthening confidence that the guided+reachability
+    mechanism (\cref{sec:h1-c4c2}) generalises beyond constructed cases.
+    This also means no scenario exercises a path where the reachability
+    filter removes a genuine edge that C4 would have retained; every
+    C4 false positive is setup-phase boilerplate absent from the
+    scenario's architectural scope. Whether the filter can suppress
+    false positives on a scenario with genuine architectural paths
+    outside the entry-point traversal remains untested and is
+    left to future work (\cref{sec:future-work}).
+
+  \item[H3's interaction scorer does not verify attribution.] The
+    automated check credits a ground-truth item if its source, target
+    and method name appear anywhere in a response, without verifying
+    they describe the same interaction -- a gap that mattered on S3,
+    where two ground-truth interactions share the bare name
+    \texttt{stream} with different sources. Figures reported here were
+    corrected by manually reading each response
+    (\cref{sec:h3-holistic}); a stricter, structurally-aware matcher is
+    left to future work.
+\end{description}
+
+\subsection{Construct Validity}
+
+\begin{description}
+  \item[Edge-level evaluation metric.] The primary H1 metric measures
+    precision/recall over unique $\langle\text{sender},\,
+    \text{receiver}\rangle$ pairs, abstracting over message count and
+    ordering; a complementary LCS-based execution-order metric
+    (\cref{sec:h1}) addresses ordering directly. Neither metric weights
+    message content or repetition count, so a diagram with the right
+    calls in the right order but the wrong volume would still score
+    perfectly on both.
+\end{description}

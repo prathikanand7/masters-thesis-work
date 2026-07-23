@@ -283,3 +283,26 @@ substitute for both.
 **Ground truth for H3 = H1 reference diagrams.**
 Do not construct a separate ground truth. Run `scoring/derive_ground_truth.py` to
 convert H1 `elements.json` into H3 JSON format (already run; files in `scoring/ground_truth/`).
+
+---
+
+## Planned addition: full-trace trace-only condition (needs XRay traces)
+
+All current conditions that include a trace use `trace_slice.txt` (guided,
+scenario-scoped). The "trace only" condition (A') therefore receives a clean,
+noise-free trace. The planned addition is:
+
+**A'' — Full trace only:** give the agent the per-test full trace (all events that
+fire during that specific test, not just the guided slice) and score normally.
+
+This answers: *does the agent's comprehension degrade when given a noisy full trace,
+or can it filter the irrelevant calls itself?*
+
+- If A'' scores the same as A': the agent absorbs the noise and guided instrumentation
+  only matters for human readers (H2), not for the LLM pipeline.
+- If A'' scores lower: guided instrumentation helps both humans (H2) and the LLM
+  downstream task (H3), making the full chain — instrumentation scope → trace quality
+  → agent performance — measurable end-to-end.
+
+Requires: per-test full traces from LLVM XRay (see H2 README, "Future work" section).
+No harness changes needed beyond swapping `trace_slice.txt` for the full trace file.

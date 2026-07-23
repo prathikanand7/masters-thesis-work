@@ -1,0 +1,69 @@
+@startuml gt-derivation
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ArrowColor #444444
+skinparam rectangleFontSize 12
+skinparam noteFontSize 11
+
+skinparam rectangle<<tool>> {
+    BackgroundColor #D6EAF8
+    BorderColor #2980B9
+    FontColor #1A5276
+}
+skinparam rectangle<<artifact>> {
+    BackgroundColor #FDFEFE
+    BorderColor #888888
+    FontStyle italic
+}
+skinparam rectangle<<config>> {
+    BackgroundColor #F9EBEA
+    BorderColor #C0392B
+    FontColor #641E16
+    FontStyle italic
+}
+skinparam rectangle<<python>> {
+    BackgroundColor #D5F5E3
+    BorderColor #1E8449
+    FontColor #1A5276
+}
+skinparam rectangle<<gt>> {
+    BackgroundColor #D5F5E3
+    BorderColor #1E8449
+    FontColor #1A5276
+}
+
+top to bottom direction
+
+' Design-time: C++ source + Renaissance
+rectangle "C++ source" <<artifact>> as CPP
+rectangle "Renaissance\n(+ clang-exp)" <<tool>> as REN
+rectangle "Instrumentation\nsites (arch call sites)" <<artifact>> as SITES
+
+' Test execution: runtime trace
+rectangle "trace_slice.txt\n(runtime events at arch sites)" <<artifact>> as TRACE
+
+' Human: excalidraw -> instrumentation sites + arch filters
+actor "Architect" as Human
+rectangle "Excalidraw\nscenario diagrams" <<artifact>> as EXCAL
+rectangle "arch_filters.py\n. SCENARIO_ENTRY\n. REACHABILITY" <<config>> as CONFIG
+
+' GT derivation (Neo4j-free)
+rectangle "derive_gt_arch.py\n(SCENARIO_ENTRY filter;\nNeo4j-free)" <<python>> as DERIVE
+rectangle "gt_interactions.json\n(unique cross-component triples)" <<gt>> as GTIN
+rectangle "gt_sequence.json\n(ordered; entry-pt callers only)" <<gt>> as GTSEQ
+
+' Arrows
+CPP -down-> REN
+Human -down-> EXCAL
+EXCAL -right-> SITES : "arch call sites"
+EXCAL -down-> CONFIG
+SITES -right-> REN : "instrument"
+REN -down-> TRACE : "instrumented\ntest run"
+
+TRACE -down-> DERIVE
+CONFIG -right-> DERIVE : "SCENARIO_ENTRY"
+
+DERIVE -down-> GTIN
+DERIVE -right-> GTSEQ
+
+@enduml

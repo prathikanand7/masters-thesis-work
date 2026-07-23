@@ -1,49 +1,156 @@
-// === PropertyMapper.hpp (include/cpsCore/Configuration/PropertyMapper.hpp) ===
+// S2 — Optional Test (Configuration property mapping)
+// PropertyMapper reads optional int properties from a JSON config and logs via Logging.
+
+// === tests/Configuration/PropertyMapperTest.cpp ===
 // Component: Configuration
-// PropertyMapper uses RAIILogStream (Logging) on every property operation.
 
-#include "cpsCore/Logging/CPSLogger.h"   // → pulls in RAIILogStream
-
-template <typename PODType>
-bool PropertyMapper::add(const std::string& key, PODType& val, bool mandatory)
+TEST_CASE("Optional test")
 {
-    if (auto it = p_.find(key); it != p_.end() && !it->is_null())
-    {
-        val = it->template get<PODType>();
-        CPSLOG_TRACE << "Property " << key << " = " << val;  // → Logging:stream
-        return true;
-    }
-    mandatoryCheck(key, mandatory);
-    return false;
+	CPSLogger::instance()->setLogLevel(LogLevel::NONE);
+	std::ifstream file(test_info::test_dir() + "Utilities/config/pm_test.json");
+	REQUIRE(file.is_open());
+	auto config = Configuration::parse(file);
+
+	PropertyMapper pm(config);
+	Optional<int> opt1;
+	Optional<int> opt2;
+	pm.addOptional<int>("optional1", opt1, true);
+	pm.addOptional<int>("optional2", opt2, false);
+
+	CHECK(!opt2.has_value());
+	REQUIRE(opt1.has_value());
+	CHECK(*opt1 == 7);
+
+	CPSLogger::instance()->setLogLevel(LogLevel::DEBUG);
 }
 
-template <typename Enum>
-bool PropertyMapper::addEnum(const std::string& key, Enum& e, bool mandatory)
-{
-    if (auto it = p_.find(key); it != p_.end() && it->is_string())
-    {
-        CPSLOG_TRACE << "Property " << key << " = " << str; // → Logging:stream
-        e = EnumMap<Enum>::convert(str);
-        return true;
-    }
-    mandatoryCheck(key, mandatory);
-    return false;
-}
+// === include/cpsCore/Configuration/PropertyMapper.hpp ===
+// Component: Configuration
 
-PropertyMapper PropertyMapper::getChild(const std::string& key, bool mandatory)
+template <typename Type>
+bool PropertyMapper::addOptional(const std::string& key, Optional<Type>& val, bool mandatory)
 {
-    if (auto value = p_.find(key); value != p_.end() && value->is_object())
-        return PropertyMapper(*value);
-    if (mandatory)
-        CPSLOG_ERROR << "PM: mandatory " << key << " missing"; // → Logging:stream
-    return PropertyMapper(empty_);
+	Type v;
+	if (this->addSpecific<Type>(key, v, mandatory))
+	{
+		val = v;
+		return true;
+	}
+	val = std::nullopt;
+	return false;
 }
 
 void PropertyMapper::mandatoryCheck(const std::string& key, bool mandatory)
 {
-    if (mandatory)
-        CPSLOG_ERROR << "PM: mandatory " << key << " missing"; // → Logging:stream
+	if (mandatory)
+		CPSLOG_ERROR << "PM: mandatory " << key << " missing"; // → Logging: RAIILogStream.stream
 }
 
-// All CPSLOG_* macros create RAIILogStream(CPSLogger::instance(), ...).stream
-// → every PropertyMapper method logs via Logging component: RAIILogStream.stream
+// === include/cpsCore/Logging/CPSLogger.h (macro expansion) ===
+// Every CPSLOG_* macro expands to:
+//   RAIILogStream(CPSLogger::instance(), LogLevel::X, __FILE__, __LINE__).stream << ...
+// The .stream member access IS a cross-component call to Logging regardless of log level.
+// CPSLogger::instance() is a singleton accessor — do NOT count it as an interaction.
+
+
+// === tests/Configuration/PropertyMapperTest.cpp ===
+// Component: Configuration
+
+TEST_CASE("Optional test")
+{
+    CPSLogger::instance()->setLogLevel(LogLevel::NONE);
+    std::ifstream file(test_info::test_dir() + "Utilities/config/pm_test.json");
+    REQUIRE(file.is_open());
+    auto config = Configuration::parse(file);
+
+    PropertyMapper pm(config);
+    Optional<int> opt1;
+    Optional<int> opt2;
+    pm.addOptional<int>("optional1", opt1, true);   // "optional1": 7 exists in JSON
+    pm.addOptional<int>("optional2", opt2, false);  // "optional2" absent from JSON
+
+    CHECK(!opt2.has_value());
+    REQUIRE(opt1.has_value());
+    CHECK(*opt1 == 7);
+
+    CPSLogger::instance()->setLogLevel(LogLevel::DEBUG);
+}
+
+// === tests/Utilities/config/pm_test.json (relevant excerpt) ===
+// { "optional1": 7 }   ← "optional2" key is absent
+
+// === include/cpsCore/Configuration/PropertyMapper.hpp ===
+// Component: Configuration
+
+// addOptional delegates to addSpecific
+template <typename Type>
+bool PropertyMapper::addOptional(const std::string& key, Optional<Type>& val, bool mandatory)
+{
+    Type v;
+    if (this->addSpecific<Type>(key, v, mandatory))
+    {
+        val = v;
+        return true;
+    }
+    val = std::nullopt;
+    return false;
+}
+
+// addSpecific dispatches by type; for plain int it falls through to add<POD>
+template <typename Type>
+bool PropertyMapper::addSpecific(const std::string& key, Type& val, bool mandatory)
+{
+    // ... (enum, vector, map checks omitted — int matches none) ...
+    // else: plain POD
+    return add<Type>(key, val, mandatory);
+}
+
+// add<POD>: key found → CPSLOG_TRACE; key missing → mandatoryCheck
+template <typename PODType>
+bool PropertyMapper::add(const std::string& key,
+    std::enable_if_t<std::is_pod_v<PODType>, PODType>& val, bool mandatory)
+{
+    if (auto it = p_.find(key); it != p_.end() && !it->is_null())
+    {
+        try
+        {
+            val = it->template get<PODType>();
+            CPSLOG_TRACE << "Property " << key << " = " << val;
+            // ^ RAIILogStream(CPSLogger::instance(), LogLevel::TRACE, ...).stream
+            // This IS a cross-component call: Configuration → Logging : RAIILogStream.stream
+            // It fires even when log level is NONE (the call happens; output is suppressed).
+            return true;
+        }
+        catch (const Configuration::exception& e) { }
+    }
+    mandatoryCheck(key, mandatory);
+    return false;
+}
+
+// mandatoryCheck: logs only when mandatory == true
+void PropertyMapper::mandatoryCheck(const std::string& key, bool mandatory)
+{
+    if (mandatory)
+    {
+        CPSLOG_ERROR << "PM: mandatory " << key << " missing";
+        // ^ Configuration → Logging : RAIILogStream.stream  (only if mandatory)
+        mandatoryCheck_ = false;
+    }
+    // if mandatory == false: no log, no cross-component call
+}
+
+// === include/cpsCore/Logging/CPSLogger.h (macro expansion) ===
+// CPSLOG_TRACE expands to:
+//   RAIILogStream(CPSLogger::instance(), LogLevel::TRACE, __FILE__, __LINE__).stream << ...
+// The .stream member access IS the cross-component call regardless of log level.
+
+// EXECUTION SUMMARY for "Optional test":
+//   pm.addOptional<int>("optional1", opt1, true)
+//     → addSpecific<int> → add<int>("optional1", ..., true)
+//     → key "optional1" FOUND (value 7)
+//     → CPSLOG_TRACE fires → Configuration → Logging : RAIILogStream.stream  ← THE interaction
+//
+//   pm.addOptional<int>("optional2", opt2, false)
+//     → addSpecific<int> → add<int>("optional2", ..., false)
+//     → key "optional2" NOT found
+//     → mandatoryCheck("optional2", false) → mandatory==false → no log, no cross-component call

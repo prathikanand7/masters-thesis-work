@@ -1,0 +1,74 @@
+[
+  {
+    "order": 0,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 1,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 2,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 3,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 4,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "Aggregator.getAll"
+  },
+  {
+    "order": 5,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "Aggregator.getAll"
+  },
+  {
+    "order": 6,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush"
+  },
+  {
+    "order": 7,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush"
+  },
+  {
+    "order": 8,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush"
+  },
+  {
+    "order": 9,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush"
+  },
+  {
+    "order": 10,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush"
+  },
+  {
+    "order": 11,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush"
+  }
+]

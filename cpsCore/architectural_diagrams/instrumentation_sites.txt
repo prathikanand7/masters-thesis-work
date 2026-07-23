@@ -1,0 +1,70 @@
+Instrumentation Sites by Interaction Pattern
+=============================================
+Coverage key:
+  [PROBE]        explicit call-site probe injected by apply_tracing -- always fires
+  [MACRO-ERROR]  CPSLOG_ERROR/WARN -- always fires, covered by macro patch
+  [MACRO]        CPSLOG_DEBUG/TRACE -- covered by patched=CPSLOG in CSP repo (unconditional,
+                 probe is injected outside the NODEBUG if(0) guard by apply_tracing)
+                 NOTE: local cpscore/CPSLogger.h is NOT yet patched; events only from CSP repo build
+
+==============================================================================================
+[Sync -> Aggregation: getAll]  (S1a, S1b, S3)
+==============================================================================================
+  [PROBE]       src/Synchronization/SynchronizedRunner.cpp         : 52   SynchronizedRunner::runSynchronized
+  [PROBE]       src/Synchronization/AggregatableRunner.cpp         : 46   AggregatableRunner::notifyAggregationOnUpdate
+
+==============================================================================================
+[Sync -> Logging: flush]  (S1a, S1b)
+==============================================================================================
+  [PROBE]       src/Synchronization/SynchronizedRunner.cpp         : 83   SynchronizedRunner::runSynchronized
+
+==============================================================================================
+[Sync -> Logging: RAIILogStream.stream]  (S1b)
+==============================================================================================
+  [MACRO-ERROR] src/Synchronization/SynchronizedRunnerMaster.cpp   : 100  SynchronizedRunnerMaster::runStage          CPSLOG_ERROR
+
+==============================================================================================
+[Utilities -> Logging: RAIILogStream.stream]  (S3)
+==============================================================================================
+  -- MultiThreadingScheduler --
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 21   ~MultiThreadingScheduler()                  CPSLOG_TRACE
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 31   schedule(task, initialFromNow, name)        CPSLOG_TRACE
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 46   schedule(task, initialFromNow, period, ...) CPSLOG_TRACE
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 69   stop()                                      CPSLOG_DEBUG
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 72   stop()                                      CPSLOG_DEBUG
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 80   stop()                                      CPSLOG_DEBUG
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 83   stop()                                      CPSLOG_DEBUG
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 123  run(RunStage::FINAL)                        CPSLOG_TRACE
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 157  runSchedule()                               CPSLOG_TRACE
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 177  runSchedule()                               CPSLOG_TRACE
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 194  runSchedule()                               CPSLOG_TRACE
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 202  runSchedule()                               CPSLOG_TRACE
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 247  runSchedule() periodicTask                  CPSLOG_DEBUG
+  [MACRO]    src/Utilities/Scheduler/MultiThreadingScheduler.cpp: 277  runSchedule()                               CPSLOG_DEBUG
+  -- MicroSimulator --
+  [MACRO]    src/Utilities/Scheduler/MicroSimulator.cpp         : 63   stop()                                      CPSLOG_DEBUG
+  [MACRO]    src/Utilities/Scheduler/MicroSimulator.cpp         : 102  runSchedule()                               CPSLOG_DEBUG
+  [MACRO]    src/Utilities/Scheduler/MicroSimulator.cpp         : 109  runSchedule()                               CPSLOG_TRACE
+  -- SignalHandler / SignalHandlerSingleton --
+  [PROBE*]      src/Utilities/SignalHandler/SignalHandler.cpp       : 19   subscribeOnSigint()  (* probe exists in CSP repo)
+  [MACRO]    src/Utilities/SignalHandler/SignalHandler.cpp       : 20   subscribeOnSigint()                         CPSLOG_TRACE
+  [MACRO]    src/Utilities/SignalHandler/SignalHandler.cpp       : 27   subscribeOnExit()                           CPSLOG_TRACE
+  [MACRO]    include/cpsCore/Utilities/SignalHandler/SignalHandler.h:62  SignalHandlerSingleton::callSigHandlers()  CPSLOG_DEBUG
+  [MACRO]    include/cpsCore/Utilities/SignalHandler/SignalHandler.h:66  SignalHandlerSingleton::callOnExit()       CPSLOG_DEBUG
+  [MACRO]    include/cpsCore/Utilities/SignalHandler/SignalHandler.h:99  SignalHandlerSingleton::SignalHandlerSingleton() CPSLOG_TRACE
+  [MACRO]    include/cpsCore/Utilities/SignalHandler/SignalHandler.h:115 SignalHandlerSingleton::signalHandleThreadTask() CPSLOG_DEBUG
+
+==============================================================================================
+[Aggregation -> Logging: RAIILogStream.stream]  (S3)
+==============================================================================================
+  [MACRO]    include/cpsCore/Aggregation/ObjectHandleContainer.hpp: 195  setFromAggregationIfNotSet()              CPSLOG_TRACE
+
+==============================================================================================
+[Configuration -> Logging: RAIILogStream.stream]  (S2)  ** dead in NODEBUG **
+==============================================================================================
+  [MACRO]    include/cpsCore/Configuration/PropertyMapper.hpp   : 68   add<PODType>()                              CPSLOG_TRACE
+  [MACRO]    include/cpsCore/Configuration/PropertyMapper.hpp   : 416  add<Enum>()                                 CPSLOG_TRACE
+  [MACRO]    src/Configuration/PropertyMapper.cpp               : 13   add(Duration)                               CPSLOG_TRACE
+  [MACRO]    src/Configuration/PropertyMapper.cpp               : 26   add(string)                                 CPSLOG_TRACE
+  [MACRO]    src/Configuration/PropertyMapper.cpp               : 73   add(enum)                                   CPSLOG_TRACE
+

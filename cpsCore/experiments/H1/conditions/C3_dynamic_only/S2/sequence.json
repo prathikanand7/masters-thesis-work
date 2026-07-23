@@ -1,0 +1,14 @@
+[
+  {
+    "order": 0,
+    "source": "Utilities",
+    "target": "Utilities",
+    "interaction": "getInstance"
+  },
+  {
+    "order": 1,
+    "source": "Configuration",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "order": 9,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 16,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "order": 22,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 24,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  }
+]

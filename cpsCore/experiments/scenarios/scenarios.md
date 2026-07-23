@@ -1,27 +1,50 @@
 # Scenario Definitions
 
-These 3 scenarios are reused verbatim across H1, H2, and H3.  
+These scenarios are reused verbatim across H1, H2, and H3.  
 Do not define separate scenario sets for each hypothesis.
 
 ---
 
-## S1 — Aggregator notification chain
+## S1a — Synchronized Runner Test (happy path)
 
-**Pattern:** Synchronization-triggered notification → Aggregation state update  
+**Test:** `TEST_CASE("Synchronized Runner Test")` in `tests/Synchronization/RunnerTest.cpp`  
+**Pattern:** Master drives two runners through INIT → NORMAL → FINAL; all succeed  
 **CPSCore components involved:** `Synchronization`, `Aggregation`, `Logging`  
 **Key interactions:**
-- `SynchronizedRunner.runSynchronized` → `Aggregator.getAll`
-- `AggregatableRunner.notifyAggregationOnUpdate` → `Aggregator.getAll`
-- Logging calls throughout (`CPSLogger.flush`, `CPSLogger.instance`)
+- `SynchronizedRunner.runSynchronized` → `Aggregator.getAll` (Aggregation)
+- `SynchronizedRunner.runSynchronized` → `CPSLogger.instance` / `CPSLogger.flush` (Logging)
+- `SynchronizedRunnerMaster.runStage` → `RAIILogStream.stream` (Logging)
 
 **Why this stresses the architecture:**  
-Exercises the observer/notification pattern internal to CPSCore — the kind of
-dependency that only shows up dynamically (the boost::signals2-style callback
-chain is not visible in a static include graph).
+Exercises the synchronization pattern: shared-memory coordination between master
+and runner threads, and the runner's dependency on the Aggregation component to
+retrieve runnable objects.
 
 **Trace filter (runtime_traces.txt):**
 ```
 ClientComponent in [Synchronization] AND ServerComponent in [Aggregation, Logging]
+AND ClientFunction contains [SynchronizedRunner, SynchronizedRunnerMaster]
+```
+
+---
+
+## S1b — Synchronized Runner Timeout (failure path)
+
+**Test:** `TEST_CASE("Synchronized Runner Timeout")` in `tests/Synchronization/RunnerTest.cpp`  
+**Pattern:** One runner object exceeds the master's 1-second timeout → failure signal  
+**CPSCore components involved:** `Synchronization`, `Logging`  
+**Key interactions:**
+- `SynchronizedRunnerMaster.runStage` → `RAIILogStream.stream` (Logging) — CPSLOG_WARN on timeout
+
+**Note — static-only-visible interaction:**  
+The test calls `CPSLogger::instance()->setLogLevel(LogLevel::NONE)` before triggering
+the timeout, suppressing all runtime log output. The `CPSLOG_WARN` edge is visible
+in source (C2 static) but absent from `runtime_traces.txt` (C3 dynamic cannot recover it).  
+This makes S1b a deliberate mirror of S4's dynamic-only gap: here the gap is static-only.
+
+**Trace filter (runtime_traces.txt):**
+```
+No events captured — logging is suppressed during this test.
 ```
 
 ---

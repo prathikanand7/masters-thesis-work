@@ -1,0 +1,10 @@
+[
+  {
+    "order": 0,
+    "source": "Configuration",
+    "target": "Logging",
+    "interaction": "stream",
+    "evidence": "static",
+    "method": "entry_order"
+  }
+]

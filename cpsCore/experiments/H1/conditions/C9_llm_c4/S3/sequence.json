@@ -1,0 +1,86 @@
+[
+  {
+    "order": 0,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "sched->schedule(...) in test logs 'Scheduling ...'"
+  },
+  {
+    "order": 1,
+    "source": "Synchronization",
+    "target": "Utilities",
+    "interaction": "MultiThreadingScheduler.run",
+    "note": "AggregatableRunner.runAllStages calls run(INIT) on scheduler"
+  },
+  {
+    "order": 2,
+    "source": "Synchronization",
+    "target": "Utilities",
+    "interaction": "MultiThreadingScheduler.run",
+    "note": "AggregatableRunner.runAllStages calls run(NORMAL) on scheduler"
+  },
+  {
+    "order": 3,
+    "source": "Synchronization",
+    "target": "Utilities",
+    "interaction": "MultiThreadingScheduler.run",
+    "note": "AggregatableRunner.runAllStages calls run(FINAL) on scheduler"
+  },
+  {
+    "order": 4,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "Inside run(FINAL): CPSLOG_TRACE 'Starting Scheduler in new thread'"
+  },
+  {
+    "order": 5,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "runSchedule thread start: CPSLOG_TRACE 'Starting Scheduling'"
+  },
+  {
+    "order": 6,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "runSchedule loop: CPSLOG_TRACE 'Waking up at ...' (first iteration)"
+  },
+  {
+    "order": 7,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "runSchedule loop: CPSLOG_TRACE 'Executing task ...' (first iteration)"
+  },
+  {
+    "order": 8,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "sched->stop(): CPSLOG_DEBUG 'Joining <event>' before join"
+  },
+  {
+    "order": 9,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "sched->stop(): flush immediately after 'Joining' log"
+  },
+  {
+    "order": 10,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "sched->stop(): CPSLOG_DEBUG 'Joined <event>' after join"
+  },
+  {
+    "order": 11,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "sched->stop(): flush immediately after 'Joined' log"
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "source": "Synchronization",
+    "target": "Utilities",
+    "interaction": "MultiThreadingScheduler.run"
+  },
+  {
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush"
+  },
+  {
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  }
+]

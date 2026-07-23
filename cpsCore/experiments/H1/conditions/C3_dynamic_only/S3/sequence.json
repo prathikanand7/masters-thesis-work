@@ -1,0 +1,314 @@
+[
+  {
+    "order": 0,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "order": 1,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "order": 2,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 3,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 4,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "order": 5,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "order": 6,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 7,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 8,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 9,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 10,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "order": 11,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "order": 12,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 13,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 14,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 15,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 16,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "order": 17,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "order": 18,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "add"
+  },
+  {
+    "order": 19,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 20,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 21,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 22,
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 23,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 24,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  },
+  {
+    "order": 25,
+    "source": "Aggregation",
+    "target": "Aggregation",
+    "interaction": "notifyAggregationOnUpdate"
+  },
+  {
+    "order": 26,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 27,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "runStage"
+  },
+  {
+    "order": 28,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 29,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 30,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "runStage"
+  },
+  {
+    "order": 31,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 32,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 33,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 34,
+    "source": "Utilities",
+    "target": "Utilities",
+    "interaction": "subscribeOnExit"
+  },
+  {
+    "order": 35,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 36,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "runStage"
+  },
+  {
+    "order": 37,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 38,
+    "source": "Synchronization",
+    "target": "Synchronization",
+    "interaction": "run"
+  },
+  {
+    "order": 39,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 40,
+    "source": "Utilities",
+    "target": "Utilities",
+    "interaction": "runSchedule"
+  },
+  {
+    "order": 41,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 42,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 43,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 44,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 45,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 46,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 47,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 48,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 49,
+    "source": "Utilities",
+    "target": "Utilities",
+    "interaction": "stop"
+  },
+  {
+    "order": 50,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "order": 51,
+    "source": "Utilities",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  }
+]

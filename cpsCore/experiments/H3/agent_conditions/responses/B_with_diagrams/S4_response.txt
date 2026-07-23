@@ -1,12 +1,15 @@
-1. Components:
+1. Components
 - Synchronization
 - Aggregation
 - Logging
 
-2. Interactions:
+2. Interactions
 - Aggregation → Synchronization : subscribeStage
 - Synchronization → Aggregation : onStageEvent
+- Synchronization → Logging : instance
 - Synchronization → Logging : stream
 
-3. Execution flow:
-StageEventListener (Aggregation) attaches to StageEventBridge (Synchronization) by calling subscribeStage, wiring its onStageEvent as a slot. When publishStage is invoked on StageEventBridge, it first checks for connected listeners; if none, it emits an error via the Logging stream (this path is present in code and suppressed by the test’s log level). With a listener attached, publishStage emits the signal, which at runtime dispatches to StageEventListener.onStageEvent in Aggregation. The handler updates its state (and issues a debug log). The runtime trace captures the dynamic call from Synchronization.publishStage to Aggregation.onStageEvent.
+3. Execution flow
+- The Aggregation component (StageEventListener) attaches to the Synchronization component (StageEventBridge) by calling subscribeStage to register its onStageEvent slot. 
+- When StageEventBridge.publishStage is invoked, it emits the signal, which at runtime triggers Aggregation’s StageEventListener.onStageEvent; this is confirmed by the runtime trace entry. 
+- If publishStage is called with no subscribers, Synchronization performs logging via the Logging component (instance/stream), as identified in the analysis output.

@@ -1,9 +1,14 @@
-"""
-run_c3_dynamic_only.py — H1 Condition 3: Runtime traces only
--------------------------------------------------------------
-Reads each scenario's pre-extracted trace_slice.txt (component-level runtime data).
-Converts rows directly to elements.json.
+"""run_c3_dynamic_only.py — H1 Condition 3: Full runtime trace only (unfiltered)
+---------------------------------------------------------------------------
+Reads each scenario's full_trace.txt with NO filtering whatsoever.
+All events — including intra-component (src==tgt), setup-phase boilerplate,
+and events from any component — are passed through directly.
 No Neo4j static graph is used.
+
+This is the true raw-trace baseline. Compare with:
+  C4: trace_slice.txt, no filter (guided instrumentation only)
+  C5: trace_slice.txt + Neo4j reachability filter (guided reach)
+  C6: full_trace.txt + Neo4j reachability filter
 
 Usage:
     python run_c3_dynamic_only.py --scenario S1
@@ -16,26 +21,30 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from _utils import (SCENARIOS, SCENARIO_PRIMARY, SCENARIO_COMPONENTS,
-                    Element, save_elements, elements_path, load_trace_slice)
+from _utils import (SCENARIOS,
+                    Element, save_elements, save_sequence,
+                    interactions_path, sequence_path, load_full_trace)
 
 LABEL = "C3_dynamic_only"
 
 
 def run_scenario(scenario: str) -> None:
-    rows = load_trace_slice(scenario)
+    rows = load_full_trace(scenario)
     elements: set[Element] = set()
+    ordered_events: list[dict] = []
 
-    primary = SCENARIO_PRIMARY[scenario]
-    allowed = SCENARIO_COMPONENTS[scenario]
-    for row in rows:
+    for pos, row in enumerate(rows):
         src  = row.get("ClientComponent", "").strip()
         tgt  = row.get("ServerComponent",  "").strip()
         intr = row.get("EventName",        "").strip()
-        if src and tgt and intr and src == primary and tgt in allowed and src != tgt:
+        if src and tgt and intr:
             elements.add(Element(src, tgt, intr))
+            ordered_events.append({
+                "order": pos, "source": src, "target": tgt, "interaction": intr
+            })
 
-    save_elements(elements, elements_path(LABEL, scenario))
+    save_elements(elements, interactions_path(LABEL, scenario))
+    save_sequence(ordered_events, sequence_path(LABEL, scenario))
 
 
 def main():

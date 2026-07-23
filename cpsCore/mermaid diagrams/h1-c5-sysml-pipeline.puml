@@ -1,0 +1,96 @@
+@startuml h1-c5-sysml-pipeline
+skinparam backgroundColor transparent
+skinparam defaultFontName Arial
+skinparam ArrowColor #444444
+skinparam rectangleFontSize 12
+
+skinparam rectangle<<tool>> {
+    BackgroundColor #D6EAF8
+    BorderColor #2980B9
+    FontColor #1A5276
+}
+skinparam rectangle<<artifact>> {
+    BackgroundColor #FDFEFE
+    BorderColor #888888
+    FontStyle italic
+}
+skinparam rectangle<<query>> {
+    BackgroundColor #FEF9E7
+    BorderColor #F39C12
+    FontColor #7D6608
+}
+skinparam rectangle<<filter>> {
+    BackgroundColor #D5F5E3
+    BorderColor #1E8449
+    FontColor #1A5276
+}
+skinparam rectangle<<sysml>> {
+    BackgroundColor #FDFEFE
+    BorderColor #888888
+    FontStyle italic
+}
+
+top to bottom direction
+
+rectangle "C++ source" <<artifact>> as CPP
+rectangle "Scenario entry points" <<artifact>> as ENTRY
+
+' ── Phase 1: Static Analysis (Renaissance) ───────────────────────────────
+package "Phase 1 — Static Analysis (Renaissance)" #FEF9E7 {
+    rectangle "Renaissance" <<tool>> as REN
+    database "Neo4j\ncode graph" as NEO
+    rectangle "Cypher: global\ncross-component CppCalls" <<query>> as CYPHER
+    rectangle "Cypher: scenario-scoped\nCppCalls* 1..8 hops from entry" <<query>> as TRAV
+}
+    rectangle "Instrumentation\nsites" <<artifact>> as SITES
+    rectangle "Reachable function\nset (per scenario)" <<artifact>> as REACH
+
+' ── Phase 2: Guided Instrumentation ──────────────────────────────────────
+package "Phase 2 — Guided\nInstrumentation" #E8F8F5 {
+    rectangle "Guided instrumentation\n(clang-exp)" <<tool>> as CLANGEXP
+}
+    rectangle "trace_slice.txt\n(runtime events at arch sites)" <<artifact>> as SLICE
+
+' ── Phase 3: C5 — Reachability Filter ────────────────────────────────────
+package "Phase 3 — C5: Runtime\nReachability Filter" #EBF5FB {
+    rectangle "Scope filter\n(caller ∈ reachable set)" <<filter>> as RFILT
+}
+    rectangle "interactions.json" <<artifact>> as INTR
+    rectangle "sequence.json" <<artifact>> as SEQ
+
+' ── Phase 4: SysML v2 Generation ─────────────────────────────────────────
+package "Phase 4 — SysML v2\nGeneration" #FDF2F8 {
+    rectangle "gen_sysml.py" <<tool>> as GENSYSML
+}
+    rectangle "interactions.sysml" <<sysml>> as ISYSML
+    rectangle "sequence.sysml" <<sysml>> as SSYSML
+    rectangle "views.sysml" <<sysml>> as VSYSML
+
+' ── Arrows ────────────────────────────────────────────────────────────────
+CPP -right-> REN
+REN -right-> NEO
+
+NEO -right-> CYPHER : "all arch pairs"
+CYPHER -right-> SITES
+SITES -right-> CLANGEXP
+CLANGEXP -down-> SLICE
+SLICE -down-> RFILT
+
+TRAV <-left- ENTRY
+NEO -down-> TRAV : "scenario scoped"
+TRAV -right-> REACH
+
+
+
+
+REACH -right-> RFILT: "reachability\nscope"
+RFILT -right-> INTR
+RFILT -right-> SEQ
+
+INTR -right-> GENSYSML
+SEQ -down-> GENSYSML
+GENSYSML -down-> ISYSML
+GENSYSML -right-> SSYSML
+GENSYSML -down-> VSYSML
+
+@enduml

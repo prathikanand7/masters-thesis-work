@@ -65,113 +65,12 @@ active in the same test run: `Aggregation→Logging:stream`, `Configuration→Lo
 `Framework→Logging:stream`, `Utilities→Logging:stream`, and in some scenarios
 additional Synchronization calls irrelevant to the specific scenario.
 
-### Circularity analysis for guided noise=0
+### Analysis notes
 
-**Guided noise=0 has two components — one by construction, one empirical:**
-
-- *By construction (boundary):* the slice filter and the H1 reference share the
-  same scope constraint (`ClientComponent == primary`,
-  `ServerComponent ∈ SCENARIO_COMPONENTS`). Any call from a non-primary component
-  (e.g. `Aggregation→Logging`) is excluded from both the guided trace and the
-  reference by definition. It is not possible for the guided trace to produce an
-  out-of-scope FP, so noise from out-of-scope calls is 0 by construction, not
-  empirically.
-
-- *Empirical (within scope):* within the shared boundary, the guided trace could
-  still have produced FPs if the runtime contained primary-to-target calls with
-  interaction names not in the source-read reference. **S3 is the concrete test
-  case:** the full trace contains `Synchronization→Logging:flush` and
-  `Synchronization→Logging:instance` within scope (primary=Synchronization,
-  target=Logging), but the S3 reference specifies only `getAll`, `stream`,
-  `convert` — `flush` and `instance` are in scope but not in the reference.
-  The guided slice correctly excluded them (they were not selected by the
-  `client_function` filter in the S3 slice definition). FP=0 within scope on
-  S3 is therefore a tested result, not a trivially absent possibility.
-  S1 and S2 have no within-scope calls outside their reference (in_scope=ref
-  for both), so the claim is exercised by S3 alone in this scenario set.
-
-**Correct framing:** "Guided instrumentation excludes all non-primary-driver calls
-by the scope constraint. Within that scope, no spurious interactions were observed
-at runtime (FP=0 within scope, N=3 scenarios). Full instrumentation captures 5–8
-additional real-but-off-target calls per scenario (noise ratio 0.56–0.89)."
-
-**What this does not prove:** that the scope constraint itself is the right one
-to apply. The constraint is motivated by the experimental design (study primary
-driver interactions), not independently validated as "the correct boundary."
-
-### Coverage = 1.000 for guided — is this independent?
-
-Yes. The H1 reference was built by reading source files independently of the
-slicing tool. Coverage=1.000 for guided means the runtime trace exercises all
-source-visible reference interactions — a genuine, non-circular finding.
-FN=0 across all three scenarios: no reference interaction was missed by the
-guided trace.
-
-### Small-N caveat
-
-Results are over 3 happy-path scenarios. The within-scope FP=0 finding is
-exercised by S3 (which has 2 real within-scope calls outside the reference);
-S1 and S2 pose no within-scope naming ambiguity at all. The claim therefore
-rests on one scenario's evidence within the current set. A scenario with
-richer conditional logic (e.g. multiple overloaded call sites, a callback
-dispatch that resolves differently at runtime) could reveal a slicing miss
-that S1–S3 did not exercise. FN=0 across all three scenarios is similarly
-a small-sample result; one scenario with complex conditional coverage could
-expose a guided-trace miss.
-
-### S4: a discovered scoring artifact (full-trace coverage is not genuine here)
-
-S4 was added to H2 for the same reason it was added to H1: it is the one
-scenario where static and dynamic evidence each miss a *different* edge
-(`stream` vs. `onStageEvent`, see H1 §H1c). Unlike S1–S3, whose
-`full_trace.txt` is a direct copy of `runtime_traces.txt` (a single capture
-that already contains those scenarios' own code paths), S4's production code
-(`StageEventBridge`/`StageEventListener`) did not exist when
-`runtime_traces.txt` was captured. Its `full_trace.txt` was therefore
-constructed by *appending* S4's own captured row (`onStageEvent`) to the
-pre-existing `runtime_traces.txt` baseline — the honest simulation of "what a
-full-instrumentation run across the whole, now-larger test suite would
-capture."
-
-Scoring this file produced an unexpected result: **S4-full shows TP=2,
-coverage=1.000 — appearing to recover `stream` as well.** Inspecting the
-matched row shows this is **not genuine**: the pre-existing baseline already
-contains six unrelated `Synchronization→Logging:stream` rows (from
-`SimpleRunner.runStage`, `SynchronizedRunnerMaster.runStage`, and similar —
-real calls from *other* scenarios' code, captured under normal logging
-conditions, not from `StageEventBridge::publishStage`). Because the H1/H2/H3
-scoring convention matches on the bare
-`(source, target, interaction-name)` triple only — deliberately, to mirror how
-an agent or a human describes an interaction — any one of those six
-pre-existing rows satisfies the S4 reference's `Synchronization→Logging:stream`
-requirement, even though none of them is the S4 fault-path log call, which
-remains genuinely absent (still suppressed by
-`CPSLogger::LogLevelScope(LogLevel::NONE)` inside the S4 test, exactly as
-designed). **The guided trace does not have this problem**, precisely
-because it is scoped to only the rows captured during the S4 test itself
-(1 row, `onStageEvent`) — it correctly reports FN=1, coverage=0.500.
-
-**Correct interpretation:** treat S4-guided (coverage=0.500) as the honest
-answer for both instrumentation strategies — neither recovers `stream` for
-the *right* reason. S4-full's coverage=1.000 is retained in the table above
-(the script output is not edited) but must be read as a **finding about the
-scoring convention**, not about instrumentation strategy: pooling trace
-events across an entire, unscoped test suite increases the chance that some
-unrelated call elsewhere in the codebase coincidentally matches a reference
-triple by bare name alone. This is the same generic risk noted for C2/C4's
-S3 precision deficit (\cref{sec:h1-corrections} in the thesis), but appearing
-here as a **false positive in the opposite direction — inflated coverage
-rather than inflated noise.**
-
-**Why this strengthens, not weakens, the H2 argument:** it shows a full,
-unscoped instrumentation strategy can produce a diagram that looks more
-complete than it is, for reasons entirely unrelated to the scenario being
-studied. Guided instrumentation cannot exhibit this failure mode by
-construction — its trace file only ever contains rows from the scenario's
-own execution. This is a stronger form of the noise argument: full
-instrumentation isn't just noisier, it can be **unverifiably, coincidentally
-over-credited** under a coarse (but necessary, agent-friendly) matching
-convention.
+- **Noise=0 for guided is partly by construction.** The scope constraint (`ClientComponent == primary`, `ServerComponent ∈ SCENARIO_COMPONENTS`) is shared between the guided filter and the H1 reference — out-of-scope FPs are impossible by definition. The within-scope part is empirical: S3 has 2 real in-scope calls (`flush`, `instance`) that the reference does not include; the guided slice correctly excluded them. S1/S2 have no within-scope ambiguity, so S3 is the only real test of this.
+- **Coverage=1.000 for guided is independent.** H1 reference built from source-reading, not from the trace tool. FN=0 on all 3 scenarios is genuine.
+- **Small N.** Within-scope FP=0 exercised by S3 alone. One scenario with complex conditional logic or overloaded call sites could expose a slicing miss.
+- **S4 full-trace coverage=1.000 is a scoring artifact.** The baseline corpus contains 6 unrelated `Sync→Log:stream` rows from other tests. These coincidentally match S4's reference triple by bare name. Guided is not affected — it contains only S4's own captured row. Use S4-guided (coverage=0.500) as the honest number for both strategies.
 
 ### Summary (mean across S1–S3; S4 reported separately as constructed)
 
@@ -192,45 +91,21 @@ scoring-convention artifact rather than a comparable data point.
 
 ## Expert rating results (perceptual arm — complete, n=6 raters)
 
-The rating form (`expert_rating/rating_form.md`) presented both diagrams to raters
-in randomised A/B order per scenario (see `decode_key.txt`). Three scenarios, three
-criteria (Accuracy, Readability, Usefulness), 1–5 scale. Six raters returned
-completed forms (2 in the original round; 4 more collected afterward to
-strengthen the sample).
+Rating form: two diagrams per scenario in randomised A/B order, 3 criteria (Accuracy, Readability, Usefulness), 1–5 scale. 6 raters (2 original round, 4 added later).
 
-**Mean rating per scenario/dimension (Full vs. Guided, n=6):**
+**Mean rating (Full / Guided):**
 
-| Scenario | Accuracy (F/G) | Readability (F/G) | Usefulness (F/G) |
+| Scenario | Accuracy | Readability | Usefulness |
 |---|:---:|:---:|:---:|
 | S1 | 2.33 / 4.67 | 2.33 / 4.83 | 3.17 / 4.50 |
 | S2 | 2.33 / 4.17 | 2.33 / 4.83 | 2.67 / 2.83 |
 | S3 | 2.50 / 5.00 | 2.67 / 5.00 | 3.00 / 4.67 |
 | **Mean** | **2.39 / 4.61** | **2.44 / 4.89** | **2.94 / 4.00** |
 
-**Aggregate across all 6×9=54 rater×scenario×dimension comparisons:** guided
-rated strictly higher in **47**, tied in **6**, and rated strictly lower in
-exactly **1**. Grand mean: guided 4.50 vs. full 2.59.
-
-**What the ratings show:**
-- Accuracy/Readability: guided is never rated below full by any rater on any
-  scenario (34/36 strictly higher, 2 ties — both rater R4, on S2 and S3
-  accuracy). This effect is unanimous in direction across all six raters.
-- Usefulness: unanimous on S1 and S3 (guided preferred by all 6). Genuinely
-  mixed on S2: 3 raters (R1–R3) tied — each independently citing the same
-  reason, that collapsing 7 repeated property-read calls into 1 edge loses a
-  count they consider useful for debugging; 1 rater (R4) rated full *higher*
-  on usefulness, citing a different concern ("not clear what triggers a
-  logging event"); 2 raters (R5, R6) rated guided higher.
-- Convergent feature requests: R3 and R6 independently suggested a way to
-  toggle/filter high-volume `stream` events; R2 suggested recording the
-  specific property value per `stream` call to preserve debugging value in
-  the collapsed S2 edge; R3 proposed a two-stage workflow (full diagram for
-  overview, guided diagram to reason about the scenario).
-
-**Conclusion:** H2's perceptual arm is confirmed, more robustly than the
-original 2-rater round suggested — expanding the panel to 6 raters preserved
-the direction of every effect and sharpened (rather than resolved) the one
-qualification: usefulness on S2 is a genuine three-way split, not a clean tie.
+- Guided rated higher in **47/54** comparisons, tied 6, lower 1. Grand mean: guided 4.50 vs. full 2.59.
+- **Accuracy + Readability:** unanimous across all 6 raters on all 3 scenarios (34/36 strictly higher, 2 ties on S2/S3 accuracy by rater R4).
+- **Usefulness:** unanimous on S1/S3. Genuinely split on S2 — 3 raters tied (collapsing 7 repeated `stream` calls loses count they want for debugging), 1 rated full higher (unclear trigger), 2 rated guided higher.
+- Convergent requests: toggle for high-volume `stream` events (R3, R6 independently); record property value per `stream` call (R2); two-stage workflow — full for overview, guided for scenario reasoning (R3).
 
 ## Condition definitions
 
@@ -238,3 +113,144 @@ qualification: usefulness on S2 is a genuine three-way split, not a clean tie.
 |---|---|---|
 | Full | All call sites instrumented; entire test run captured | `runtime_traces.txt` (27 events) + S4's own captured row for S4 |
 | Guided | Slice-selected call sites only; primary-driver filter applied | `scenarios/SX/trace_slice.txt` |
+
+---
+
+## Problems with this approach
+
+**P1 — Full trace is not per-test scoped.**
+The "full" condition is the same 27-event file for S1, S2, and S3. These events come from the entire test suite, not from each scenario's individual test run. Noise figures (56–89%) are therefore inflated by events from unrelated tests, not only by events active during the scenario under study. Real per-test full traces would likely show lower noise, making the full/guided comparison more conservative (still in guided's favour, but smaller gap).
+Fix: generate full traces with LLVM XRay per test case (see "Future work"). Output goes to `experiments/scenarios/SX/full_trace_xray.txt` alongside the existing `trace_slice.txt`.
+
+**P2 — Human study showed the same full diagram for every scenario.**
+Because the full trace is identical for S1/S2/S3, raters saw the exact same mermaid diagram as "full" three times in a row. A rater who noticed this could infer the A/B assignment immediately, breaking the blinding.
+Fix: redo the study with per-test full traces, giving each scenario a distinct full diagram. The existing results are kept as-is — the effect was strong enough to survive this flaw.
+
+**P3 — Noise=0 for guided is not a clean empirical finding.**
+The scope constraint is shared between the guided filter and the reference, so out-of-scope FPs are impossible by construction. Only the within-scope part (exercised by S3 alone) is a real finding.
+Fix: report as "within-scope FP=0 (N=1 scenario that had ambiguous calls)". Do not claim "noise=0" without qualification.
+
+**P4 — S4 full-trace coverage=1.000 is a scoring artifact.**
+Unrelated `stream` rows from other tests coincidentally match S4's reference triple by bare name. The full trace looks more complete than it is.
+Fix: per-test XRay traces eliminate this entirely — the full trace would only contain rows from the S4 test execution, so the spurious `stream` rows would not appear.
+
+**P5 — No LLM reconstruction arm.**
+H2 only measures human perception. Whether guided instrumentation also improves machine reconstruction quality (C3 F1) is untested — that is the missing cell between H1 and H3.
+Fix: run C3 with per-test full trace as input, score against H1 GT, compare to current C3 (which uses guided trace). See H1 README "Planned addition".
+
+---
+
+## Mapping to H1 scenario naming
+
+H1 was later refactored to split S1 into S1a (happy path) and S1b (timeout/failure path).
+H2 uses only the pre-existing tests; S1b is not applicable here because it has no
+runtime trace (logging is fully suppressed during the timeout test, so there is nothing
+to instrument or compare).
+
+| H2 scenario | H1 equivalent | Description |
+|---|---|---|
+| S1 | S1a | Synchronized Runner Test — happy path |
+| S2 | S2 | Configuration property mapping |
+| S3 | S3 | Multi-component runner orchestration |
+| S4 | S4 | Stage Event Bridge Pub-Sub Routing (constructed) |
+
+**The expert rating study (perceptual arm) used S1/S2/S3 only.** The rating results
+are directly reusable under the new naming with S1 → S1a. No re-labelling of the
+rating data is needed.
+
+---
+
+## Known limitation: full-trace scope
+
+The current `full_trace.txt` for S1/S2/S3 is the same file — a verbatim copy of
+the entire `runtime_traces.txt` corpus (27 events from all components, all tests
+combined). This means:
+
+- **Quantitatively:** the full-trace noise figures (56–89%) partly reflect calls
+  from *other* scenarios' tests captured in the same run, not only noise from the
+  test under study. The guided/full comparison is valid in direction but the full
+  baseline is not strictly scoped to the scenario's own test execution.
+- **Perceptually (human study):** raters received the same "full" mermaid diagram
+  for every scenario (S1, S2, S3), since the underlying 9-edge diagram is identical.
+  This creates a risk that raters noticed the repetition and inferred the A/B
+  assignment. The unanimous direction of the accuracy and readability results
+  suggests the effect was real regardless, but the study design is imperfect.
+
+**For a methodologically stronger future study**, the full trace should be scoped to
+the events that fire during *that specific test's execution only* — not the whole
+corpus. This would give each scenario a distinct full-trace diagram, and would reduce
+noise figures to only the off-target calls active in that one test.
+
+---
+
+## Future work: per-test full traces via LLVM XRay
+
+Scripts are in `instrumentation/`:
+
+| File | Purpose |
+|---|---|
+| `run_xray.sh` | WSL shell script — builds with XRay, runs each test, calls converter |
+| `xray_to_traces.py` | Post-processes symbolized XRay YAML → pipe-delimited trace format |
+
+**Prerequisites (WSL):**
+```bash
+sudo apt install clang llvm   # Clang >= 8, includes llvm-xray
+pip install pyyaml
+```
+
+**Run:**
+```bash
+cd /path/to/cpsCore
+bash experiments/H2/instrumentation/run_xray.sh
+# Writes experiments/H2/instrumentation/SX/full_trace.txt per scenario
+```
+
+**What it does:**
+1. Builds CPSCore test binary with `-fxray-instrument -fxray-instruction-threshold=1`
+2. Runs each Catch2 test case in isolation with `XRAY_OPTIONS="patch_premain=true"`
+3. Symbolizes the XRay binary log via `llvm-xray convert --symbolize --output-format=yaml`
+4. `xray_to_traces.py` reconstructs caller→callee pairs from entry/exit events (per-thread call stack), filters to cross-component pairs, maps class names to CPSCore components, emits the pipe-delimited format
+
+**What this fixes vs. current approach:**
+- Each scenario gets a distinct full trace (only events from its own test run)
+- No cross-test contamination → noise figures will be accurate
+- S4 full-trace coverage artifact disappears (no unrelated `stream` rows in the corpus)
+
+---
+
+## LLM redo plan
+
+The quantitative arm (metrics) and the expert rating (human study) are complete and
+reusable as described above. The part that should be redone with improved traces is
+an **LLM-based reconstruction comparison**: given either the full or guided trace as
+input to a condition-C3/C6-style pipeline, does guided instrumentation produce better
+LLM reconstruction quality?
+
+This fills a gap in the chain across the three hypotheses:
+
+```
+Instrumentation scope → Trace quality → Reconstruction F1 → Agent task performance
+       H2 (human)          [missing]          H1                     H3
+```
+
+- **H2** (this experiment) measures human perception of full vs. guided diagrams.
+- **H1** measures reconstruction F1 but always uses the guided trace as input — it
+  never tests what happens when a noisy full trace is fed into the pipeline.
+- **H3** measures how a reconstructed diagram helps an agent on a downstream task,
+  but always receives the H1 C5/C6 output — it does not vary instrumentation scope.
+
+The missing link: does instrumentation scope propagate through to reconstruction
+quality, or does the LLM absorb the noise? For example, on S3 the full trace
+contains `flush` and `instance` (real but off-target Sync→Log calls) alongside the
+three true interactions. Feeding that to C3 or C6 would likely produce FPs in the
+reconstruction. Feeding the guided trace would not. Scoring the difference against
+`gt_interactions.json` would quantify the "instrumentation scope effect on
+reconstruction F1" — directly complementing H2's human perception result.
+
+To run:
+1. Generate per-test-scoped full traces (via XRay or by filtering `runtime_traces.txt`
+   to scenario-specific `ClientFunction` values)
+2. Run C3 (dynamic-only) with full trace as input → score against H1 GT → F1_full
+3. Run C3 with guided trace as input → score against H1 GT → F1_guided
+4. Compare F1_full vs. F1_guided: quantifies how much instrumentation scope matters
+   for the reconstruction step, independently of the LLM's reasoning ability

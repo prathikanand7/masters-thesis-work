@@ -1,40 +1,132 @@
-// === SimpleRunner.cpp ===
+// S3 — MultiThreaded Test 1 (multi-component runner orchestration)
+// AggregatableRunner drives MicroSimulator + MultiThreadingScheduler through
+// INIT→NORMAL→FINAL; scheduler dispatches a task; interactions span
+// Synchronization, Aggregation, Utilities, and Logging.
+
+// === tests/Utilities/Scheduler/SchedulerTest.cpp ===
+// Component: Synchronization / Utilities
+
+TEST_CASE("MultiThreaded Test 1")
+{
+auto tp = std::make_shared<MicroSimulator>();
+auto sched = std::make_shared<MultiThreadingScheduler>();
+auto runner = std::make_shared<AggregatableRunner>();
+auto sigHand = std::make_shared<SignalHandler>();
+Aggregator::aggregate({tp, sched, runner, sigHand});
+
+CPSLogger::instance()->setLogLevel(LogLevel::ERROR);
+
+int count1 = 0;
+sched->schedule(std::bind(schedulingCount, boost::ref(count1)), Milliseconds(0));
+
+runner->runAllStages();
+
+std::this_thread::sleep_for(std::chrono::milliseconds(10));
+CHECK(count1 == 1);
+
+sched->stop();
+CPSLogger::instance()->setLogLevel(LogLevel::WARN);
+}
+
+// === src/Synchronization/AggregatableRunner.cpp ===
 // Component: Synchronization
 
-#include "cpsCore/Logging/CPSLogger.h"       // Logging
-#include "cpsCore/Aggregation/Aggregator.h"  // Aggregation
-#include "cpsCore/Utilities/EnumMap.hpp"     // Utilities
-
-bool SimpleRunner::runStage(RunStage stage)
+void AggregatableRunner::notifyAggregationOnUpdate(const Aggregator& agg)
 {
-    CPSLOG_DEBUG << "Running stage " << EnumMap<RunStage>::convert(stage);
-    //                                    ^^^--- Utilities: EnumMap.convert
-    //                ^^^--- Logging: RAIILogStream.stream (via CPSLOG_DEBUG)
-
-    auto runnableObjects = agg_.getAll<IRunnableObject>();
-    //                          ^^^--- Aggregation: Aggregator.getAll
-
-    bool error = false;
-    for (auto it : runnableObjects)
-        if (it->run(stage)) error = true;
-    return error;
+runnableObjects_ = agg.getAll<IRunnableObject>(); // → Aggregation: Aggregator.getAll
 }
 
-bool SimpleRunner::runStages(const std::vector<RunStage>& stages)
+bool AggregatableRunner::runAllStages()
 {
-    for (auto stage : stages)
-    {
-        CPSLOG_DEBUG << "Run stage " << EnumMap<RunStage>::convert(stage);
-        //                               ^^^--- Utilities: EnumMap.convert
-        //            ^^^--- Logging: RAIILogStream.stream
-        if (runStage(stage))
-        {
-            CPSLOG_ERROR << "Run stage " << EnumMap<RunStage>::convert(stage) << " failed";
-            return true;
-        }
-    }
-    return false;
+if (runStage(RunStage::INIT))   return true;
+if (runStage(RunStage::NORMAL)) return true;
+if (runStage(RunStage::FINAL))  return true;
+return false;
 }
 
-// All CPSLOG_* macros create RAIILogStream(CPSLogger::instance(), ...).stream
-// → Logging component: RAIILogStream.stream
+// === src/Utilities/Scheduler/MultiThreadingScheduler.cpp ===
+// Component: Utilities
+
+Event MultiThreadingScheduler::schedule(const std::function<void()>& task,
+                                         Duration initialFromNow, const std::string& eventName)
+{
+// ...
+CPSLOG_TRACE << "Scheduling " << eventName << " at ..."; // → Utilities→Logging: RAIILogStream.stream
+// ...
+}
+
+void MultiThreadingScheduler::stop()
+{
+// ...
+for (auto& event: events_)
+{
+CPSLOG_DEBUG << "Joining " << event.second->eventName; // → Utilities→Logging: RAIILogStream.stream
+CPSLogger::instance()->flush();                         // → Utilities→Logging: CPSLogger.flush
+event.second->periodicThread.join();
+CPSLOG_DEBUG << "Joined " << event.second->eventName;  // → Utilities→Logging: RAIILogStream.stream
+CPSLogger::instance()->flush();
+}
+// ...
+}
+
+bool MultiThreadingScheduler::run(RunStage stage)
+{
+switch (stage) {
+case RunStage::INIT:
+if (!checkIsSet<ITimeProvider>())
+{
+CPSLOG_ERROR << "MultiThreadingScheduler deps missing."; // → Utilities→Logging: RAIILogStream.stream
+return true;
+}
+break;
+case RunStage::NORMAL:
+if (auto sigHand = get<SignalHandler>())
+sigHand->subscribeOnExit([this] { stop(); });
+break;
+case RunStage::FINAL:
+CPSLOG_TRACE << "Starting Scheduler in new thread"; // → Utilities→Logging: RAIILogStream.stream
+invokerThread_ = std::thread([this] { runSchedule(); });
+break;
+}
+return false;
+}
+
+void MultiThreadingScheduler::runSchedule()
+{
+// ...
+CPSLOG_TRACE << "Starting Scheduling"; // → Utilities→Logging: RAIILogStream.stream
+for (;;)
+{
+// ...
+CPSLOG_TRACE << "Waking up at ..."; // → Utilities→Logging: RAIILogStream.stream
+CPSLOG_TRACE << "Executing task ..."; // → Utilities→Logging: RAIILogStream.stream
+// ...
+}
+}
+
+// === include/cpsCore/Aggregation/ObjectHandleContainer.hpp ===
+// Component: Aggregation — called during Aggregator::aggregate() and notifyAggregationOnUpdate()
+
+template <class Object, class... Others>
+void ObjectHandleContainer<Object, Others...>::setFromAggregationIfNotSet(const Aggregator& agg)
+{
+// ...
+if (object_.lock())
+{
+CPSLOG_TRACE << "ObjectHandleContainer: Set object of type " << Object::typeId
+             << " from Aggregator."; // → Aggregation→Logging: RAIILogStream.stream
+}
+others_.setFromAggregationIfNotSet(agg);
+}
+
+// === include/cpsCore/Logging/CPSLogger.h (macro expansion) ===
+// IMPORTANT: ALL CPSLOG_* calls (TRACE, DEBUG, WARN, ERROR) create a RAIILogStream
+// object and call .stream on it — this IS a cross-component call to Logging regardless
+// of the current log level. The log level only controls whether output is printed,
+// NOT whether RAIILogStream.stream is invoked. So:
+//   - CPSLOG_TRACE in schedule()   → Utilities → Logging : RAIILogStream.stream
+//   - CPSLOG_DEBUG in stop()       → Utilities → Logging : RAIILogStream.stream
+//   - CPSLOG_TRACE in runSchedule() → Utilities → Logging : RAIILogStream.stream
+//   - CPSLOG_TRACE in ObjectHandleContainer → Aggregation → Logging : RAIILogStream.stream
+// CPSLogger::instance() is a singleton accessor — do NOT count it as an interaction.
+// CPSLogger::flush() IS a cross-component call: Utilities → Logging : CPSLogger.flush

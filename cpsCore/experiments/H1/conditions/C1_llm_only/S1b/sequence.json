@@ -1,0 +1,37 @@
+[
+  {
+    "order": 0,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "Aggregator.getAll",
+    "note": "runner1 thread enters SynchronizedRunner::runSynchronized(agg1) and retrieves IRunnableObject list before stages"
+  },
+  {
+    "order": 1,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "Aggregator.getAll",
+    "note": "runner2 thread enters SynchronizedRunner::runSynchronized(agg2) and retrieves IRunnableObject list before stages"
+  },
+  {
+    "order": 2,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "runner2 completes INIT in SynchronizedRunner::runSynchronized and flushes logs"
+  },
+  {
+    "order": 3,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "SynchronizedRunnerMaster::runStage times out waiting for runner1; CPSLOG_ERROR invokes RAIILogStream.stream"
+  },
+  {
+    "order": 4,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "CPSLogger.flush",
+    "note": "runner1 finishes slow INIT in SynchronizedRunner::runSynchronized (after ~2s) and flushes logs despite failure having been set"
+  }
+]

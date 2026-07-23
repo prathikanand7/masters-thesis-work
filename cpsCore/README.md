@@ -50,3 +50,69 @@ Utilities contain all helper classes which can be Aggregatable, Configurable, an
 
 ## References
 Theile, M., Dantsker, O., Nai, R., Caccamo, M., & Yu, S. (2020). uavAP: A Modular Autopilot Framework for UAVs. In AIAA AVIATION 2020 FORUM (p. 3268).
+
+---
+
+## Architectural Communication Analysis (Renaissance + clang-exp)
+
+CPSCore uses a two-stage static+dynamic analysis pipeline to extract and instrument
+architectural communications between components.
+
+### Stage 1 — Renaissance: extract cross-component call pairs from the Neo4j graph
+
+The following Cypher query extracts all direct cross-component function calls from the
+Renaissance graph. It returns every caller→callee pair where caller and callee belong to
+different top-level CPSCore components, excluding test code.
+
+Output: `interface_dependency_table.csv` — one row per unique cross-component call.
+
+```cypher
+WITH ['Aggregation', 'Configuration', 'Synchronization', 'Logging', 'Utilities', 'Framework'] AS validComponents
+
+MATCH (callerFunc)-[:Source]->(callerFile)-[:ParentFolder]->(callerFolder)
+MATCH (calleeFile)-[:ParentFolder]->(calleeFolder)
+MATCH (callerFunc)-[:CppCalls]->(calleeDecl)
+MATCH (calleeDecl)-[:Source]->(calleeFile)
+
+WHERE last(split(callerFolder.name, '/')) IN validComponents
+  AND last(split(calleeFolder.name, '/')) IN validComponents
+  AND last(split(callerFolder.name, '/')) <> last(split(calleeFolder.name, '/'))
+  AND NOT toLower(callerFolder.name) CONTAINS 'test'
+  AND NOT toLower(calleeFolder.name) CONTAINS 'test'
+
+WITH callerFunc,
+     last(split(callerFolder.name, '/')) AS callerComponent,
+     calleeDecl.name AS calleeFunction,
+     last(split(calleeFolder.name, '/')) AS calleeComponent,
+     split(last(split(calleeDecl.name, '/')), '.')[0] AS interface
+
+RETURN DISTINCT last(split(callerFunc.name, '/')) AS `Caller Function`,
+                callerComponent AS `Client`,
+                last(split(calleeFunction, '/')) AS `Callee Function`,
+                interface AS `Interface`,
+                calleeComponent AS `Server`
+ORDER BY callerComponent, `Caller Function`
+```
+
+The input rows have the format:
+
+```
+callerFunc.name,                                                                          callerFolder,   calleeFunction,                                                                calleeFolder
+"cpp_funcdef//src/Synchronization/SynchronizedRunner.cpp/SynchronizedRunner.runSynchronized", "Synchronization", "cpp_funcdec//include/cpsCore/Aggregation/Aggregator.h/Aggregator.getAll", "Aggregation"
+```
+
+### Stage 2 — clang-exp: generate guided instrumentation
+
+`clang-exp` (at `C:\Code\clang-exp`) takes `interface_dependency_table.csv` as input,
+generates concrete syntax patterns for each caller→callee pair, locates the matching
+call sites in the source using static analysis, and instruments only those sites.
+
+Running the instrumented binary against a specific test produces `trace_slice.txt`
+(the **guided trace**) — events scoped to architecturally-relevant cross-component calls.
+
+Running the binary with blanket instrumentation (e.g. LLVM XRay) against the same test
+produces the **full trace** — all function calls, including intra-component and
+non-architectural ones.
+
+The H2 experiment compares these two instrumentation strategies on the same test runs.
+See `experiments/H2/README.md` for the full comparison.

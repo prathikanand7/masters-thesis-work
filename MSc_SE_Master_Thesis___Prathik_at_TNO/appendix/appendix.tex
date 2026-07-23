@@ -92,28 +92,38 @@ bool is_trace_remove(int n, const char* const* ns,
 }
 \end{minted}
 
-\section{Ground-Truth Reference Diagrams (S1--S4)}
+\section{Ground-Truth Reference Diagrams (S1, S2, S3, S4)}
 \label{sec:appendix-groundtruth}
 
-The manually authored \sysml reference diagrams used as ground truth
-for the H1 evaluation (\cref{sec:h1-results}), reauthored independently
-and validated against Doxygen-generated call graphs to avoid the
-ground-truth circularity risk described in \cref{sec:h1-corrections}.
-Each scenario has a structural diagram (component connectivity) and a
-sequence diagram (message interactions), given below in \sysml textual
-notation. \Cref{fig:s1-groundtruth,fig:s2-groundtruth,fig:s3-groundtruth,fig:s4-groundtruth}
-show the hand-drawn diagrams these listings were transcribed from: an
-annotated view of the relevant source directories, classes and call
-sites, with the exercising test case, that a reviewer produced by
-reading CPSCore's source directly, independent of the pipeline under
-evaluation.
+The reference edge/sequence sets used as ground truth for the H1
+evaluation (\cref{sec:h1-results}) are derived automatically by
+\texttt{derive\_gt.py} from three independent sources -- static
+reachability from each scenario's entry-point functions, the
+per-test-case \texttt{trace\_slice.txt} runtime capture, and
+architectural edge validation against the clang-uml package diagram --
+scoped to calls reachable from the scenario's own entry points so that
+test-fixture setup and teardown are excluded (\cref{sec:appendix-generated}
+reproduces the pipeline's own edge output for comparison). This
+automatic derivation superseded an earlier, single manually authored
+S1 reference diagram that merged two distinct test cases
+(\texttt{SynchronizedRunnerTest} and its timeout branch) into one
+scenario and retained the \texttt{CPSLogger::instance()} accessor call
+that Stage~3's extraction rules exclude elsewhere (\cref{sec:idt}); S1
+is accordingly now scored as two separate instances, S1 and S4. \Cref{fig:s1-groundtruth,%
+fig:s2-groundtruth,fig:s3-groundtruth,fig:s4-groundtruth} show the
+hand-drawn diagrams used to validate this derivation against
+independent, Doxygen-cross-checked source inspection: an annotated view
+of the relevant source directories, classes and call sites, with the
+exercising test case, that a reviewer produced by reading CPSCore's
+source directly, independent of the pipeline under evaluation. Each
+diagram is scoped to its own scenario instance, matching the \sysml
+listings below.
 
 \begin{figure}[htb]
 \centering
 \includegraphics[width=\textwidth]{figures/s1-ground-truth.png}
-\caption{S1 ground truth, drawn from direct source inspection: the
-  Synchronization/Aggregation/Logging call chain and the exercising test
-  case (\texttt{SynchronizedRunnerTest}).}
+\caption{Source annotation for S1: the Synchronization/Aggregation/Logging
+  call chain exercised by \texttt{SynchronizedRunnerTest}'s happy path.}
 \label{fig:s1-groundtruth}
 \end{figure}
 
@@ -123,10 +133,7 @@ evaluation.
 package 'S1-Structural' {
 
     part def Synchronization {
-        part aggregatableRunner : AggregatableRunner;
-        part simpleRunner       : SimpleRunner;
         part synchronizedRunner : SynchronizedRunner;
-        part syncRunnerMaster   : SynchronizedRunnerMaster;
     }
 
     part def Aggregation {
@@ -134,8 +141,7 @@ package 'S1-Structural' {
     }
 
     part def Logging {
-        part cpsLogger     : CPSLogger;
-        part raiiLogStream : RAIILogStream;
+        part cpsLogger : CPSLogger;
     }
 
     interface def IAggregator {
@@ -144,28 +150,13 @@ package 'S1-Structural' {
     }
 
     interface def ICPSLogger {
-        in feature flush    : 'flush';
-        in feature instance : 'instance';
-    }
-
-    interface def IRAIILogStream {
-        in feature stream : 'stream';
+        in feature flush : 'flush';
     }
 
     connection : IAggregator
-        connect Synchronization::aggregatableRunner to Aggregation::aggregator;
-    connection : IAggregator
-        connect Synchronization::simpleRunner       to Aggregation::aggregator;
-    connection : IAggregator
-        connect Synchronization::synchronizedRunner  to Aggregation::aggregator;
-
-    connection : IRAIILogStream
-        connect Synchronization::simpleRunner        to Logging::raiiLogStream;
-    connection : IRAIILogStream
-        connect Synchronization::syncRunnerMaster    to Logging::raiiLogStream;
-
+        connect Synchronization::synchronizedRunner to Aggregation::aggregator;
     connection : ICPSLogger
-        connect Synchronization::synchronizedRunner  to Logging::cpsLogger;
+        connect Synchronization::synchronizedRunner to Logging::cpsLogger;
 }
 \end{minted}
 
@@ -174,32 +165,27 @@ package 'S1-Structural' {
 \begin{minted}[fontsize=\footnotesize]{text}
 package 'S1-Sequence' {
 
-    part sync  : Synchronization;
-    part agg   : Aggregation;
-    part log   : Logging;
+    part sync : Synchronization;
+    part agg  : Aggregation;
+    part log  : Logging;
 
-    message m1 from sync.syncRunnerMaster to log.raiiLogStream
-        : 'RAIILogStream.stream';
+    // SynchronizedRunnerTest: 2x getAll followed by 6x flush
+    message m1 from sync.synchronizedRunner to agg.aggregator
+        : 'Aggregator.getAll';
     message m2 from sync.synchronizedRunner to agg.aggregator
         : 'Aggregator.getAll';
     message m3 from sync.synchronizedRunner to log.cpsLogger
         : 'CPSLogger.flush';
     message m4 from sync.synchronizedRunner to log.cpsLogger
-        : 'CPSLogger.instance';
-    message m5 from sync.aggregatableRunner to agg.aggregator
-        : 'Aggregator.getAll';
-    message m6 from sync.simpleRunner to agg.aggregator
-        : 'Aggregator.getAll';
-    message m7 from sync.simpleRunner to log.raiiLogStream
-        : 'RAIILogStream.stream';
-    message m8 from sync.simpleRunner to log.raiiLogStream
-        : 'RAIILogStream.stream';
-    message m9 from sync.simpleRunner to log.raiiLogStream
-        : 'RAIILogStream.stream';
-    message m10 from sync.syncRunnerMaster to log.raiiLogStream
-        : 'RAIILogStream.stream';
-    message m11 from sync.syncRunnerMaster to log.raiiLogStream
-        : 'RAIILogStream.stream';
+        : 'CPSLogger.flush';
+    message m5 from sync.synchronizedRunner to log.cpsLogger
+        : 'CPSLogger.flush';
+    message m6 from sync.synchronizedRunner to log.cpsLogger
+        : 'CPSLogger.flush';
+    message m7 from sync.synchronizedRunner to log.cpsLogger
+        : 'CPSLogger.flush';
+    message m8 from sync.synchronizedRunner to log.cpsLogger
+        : 'CPSLogger.flush';
 }
 \end{minted}
 
@@ -262,8 +248,8 @@ package 'S2-Sequence' {
 \centering
 \includegraphics[width=\textwidth]{figures/s3-ground-truth.png}
 \caption{S3 ground truth, drawn from direct source inspection: the
-  multi-component fan-out from \texttt{SimpleRunner.runStage} into
-  Aggregation, Utilities and Logging.}
+  multi-component fan-out from \texttt{AggregatableRunner} into
+  Aggregation, Utilities and Logging (\cref{sec:scenarios}).}
 \label{fig:s3-groundtruth}
 \end{figure}
 
@@ -273,8 +259,7 @@ package 'S2-Sequence' {
 package 'S3-Structural' {
 
     part def Synchronization {
-        part simpleRunner    : SimpleRunner;
-        part syncMaster      : SynchronizedRunnerMaster;
+        part aggregatableRunner : AggregatableRunner;
     }
 
     part def Aggregation {
@@ -282,7 +267,7 @@ package 'S3-Structural' {
     }
 
     part def Utilities {
-        part enumMap : EnumMap;
+        part scheduler : MultiThreadingScheduler;
     }
 
     part def Logging {
@@ -294,23 +279,20 @@ package 'S3-Structural' {
         out feature response : 'ObjectList';
     }
 
-    interface def IEnumMap {
-        in  feature convert : 'convert';
-        out feature label   : 'string';
-    }
-
     interface def IRAIILogStream {
         in feature stream : 'stream';
     }
 
     connection : IAggregator
-        connect Synchronization::simpleRunner to Aggregation::aggregator;
-    connection : IEnumMap
-        connect Synchronization::simpleRunner to Utilities::enumMap;
+        connect Synchronization::aggregatableRunner to Aggregation::aggregator;
     connection : IRAIILogStream
-        connect Synchronization::simpleRunner to Logging::raiiLogStream;
+        connect Aggregation::aggregator to Logging::raiiLogStream;
+    // Utilities::scheduler dispatches via a std::function-wrapped thread
+    // with no resolvable static call site -- invisible to C2, recovered
+    // only by the runtime trace (C3), the S3 shortfall discussed in
+    // sec:h1-c4c2.
     connection : IRAIILogStream
-        connect Synchronization::syncMaster to Logging::raiiLogStream;
+        connect Utilities::scheduler to Logging::raiiLogStream;
 }
 \end{minted}
 
@@ -324,17 +306,33 @@ package 'S3-Sequence' {
     part util : Utilities;
     part log  : Logging;
 
-    message m1 from sync.simpleRunner to agg.aggregator
+    message m1 from agg.aggregator to log.raiiLogStream
+        : 'RAIILogStream.stream';
+    message m2 from sync.aggregatableRunner to agg.aggregator
         : 'Aggregator.getAll';
-    message m2 from sync.simpleRunner to util.enumMap
-        : 'EnumMap.convert';
-    message m3 from sync.simpleRunner to log.raiiLogStream
+    message m3 from agg.aggregator to log.raiiLogStream
         : 'RAIILogStream.stream';
-    message m4 from sync.simpleRunner to util.enumMap
-        : 'EnumMap.convert';
-    message m5 from sync.simpleRunner to log.raiiLogStream
+    message m4 from sync.aggregatableRunner to agg.aggregator
+        : 'Aggregator.getAll';
+    // Utilities::scheduler's worker thread logs 9 further times,
+    // dynamic-only-visible (see structural connection above)
+    message m5 from util.scheduler to log.raiiLogStream
         : 'RAIILogStream.stream';
-    message m6 from sync.syncMaster to log.raiiLogStream
+    message m6 from util.scheduler to log.raiiLogStream
+        : 'RAIILogStream.stream';
+    message m7 from util.scheduler to log.raiiLogStream
+        : 'RAIILogStream.stream';
+    message m8 from util.scheduler to log.raiiLogStream
+        : 'RAIILogStream.stream';
+    message m9 from util.scheduler to log.raiiLogStream
+        : 'RAIILogStream.stream';
+    message m10 from util.scheduler to log.raiiLogStream
+        : 'RAIILogStream.stream';
+    message m11 from util.scheduler to log.raiiLogStream
+        : 'RAIILogStream.stream';
+    message m12 from util.scheduler to log.raiiLogStream
+        : 'RAIILogStream.stream';
+    message m13 from util.scheduler to log.raiiLogStream
         : 'RAIILogStream.stream';
 }
 \end{minted}
@@ -342,54 +340,53 @@ package 'S3-Sequence' {
 \begin{figure}[htb]
 \centering
 \includegraphics[width=\textwidth]{figures/s4-ground-truth.png}
-\caption{S4 ground truth, drawn from direct source inspection: the
-  constructed \texttt{StageEventBridge}/\texttt{StageEventListener}
-  publish-subscribe boundary, annotated with which edge is
-  static-only-visible (suppressed fault-path log) and which is
-  dynamic-only-visible (\texttt{boost::signals2} dispatch), the
-  precondition S4 was built to isolate (\cref{sec:h1-c4c3}).}
+\caption{Source annotation for S4: the same call chain as S1, exercised
+  instead by \texttt{SynchronizedRunnerTest}'s timeout branch, which
+  additionally logs via \texttt{RAIILogStream.stream()}.}
 \label{fig:s4-groundtruth}
 \end{figure}
 
-\subsection{S4: Stage Event Pub-Sub Bridge, Structural}
+\subsection{S4: Aggregator Notification Chain, Timeout Path, Structural}
 
 \begin{minted}[fontsize=\footnotesize]{text}
 package 'S4-Structural' {
 
     part def Synchronization {
-        part stageEventBridge : StageEventBridge;
+        part synchronizedRunner : SynchronizedRunner;
     }
 
     part def Aggregation {
-        part stageEventListener : StageEventListener;
+        part aggregator : Aggregator;
     }
 
     part def Logging {
+        part cpsLogger     : CPSLogger;
         part raiiLogStream : RAIILogStream;
     }
 
-    interface def IStageEventListener {
-        in feature onStageEvent : 'onStageEvent';
+    interface def IAggregator {
+        in  feature request  : 'getAll';
+        out feature response : 'ObjectList';
+    }
+
+    interface def ICPSLogger {
+        in feature flush : 'flush';
     }
 
     interface def IRAIILogStream {
         in feature stream : 'stream';
     }
 
-    // Fault path: publishStage() with no listener connected logs
-    // CPSLOG_ERROR. Source-visible unconditionally, but suppressed at
-    // runtime by LogLevel::NONE -- STATIC-ONLY-VISIBLE.
+    connection : IAggregator
+        connect Synchronization::synchronizedRunner to Aggregation::aggregator;
+    connection : ICPSLogger
+        connect Synchronization::synchronizedRunner to Logging::cpsLogger;
     connection : IRAIILogStream
-        connect Synchronization::stageEventBridge to Logging::raiiLogStream;
-
-    // Dynamic path: publishStage() fires a boost::signals2 signal with
-    // no static call edge to the connected slot -- DYNAMIC-ONLY-VISIBLE.
-    connection : IStageEventListener
-        connect Synchronization::stageEventBridge to Aggregation::stageEventListener;
+        connect Synchronization::synchronizedRunner to Logging::raiiLogStream;
 }
 \end{minted}
 
-\subsection{S4: Stage Event Pub-Sub Bridge, Sequence}
+\subsection{S4: Aggregator Notification Chain, Timeout Path, Sequence}
 
 \begin{minted}[fontsize=\footnotesize]{text}
 package 'S4-Sequence' {
@@ -398,31 +395,38 @@ package 'S4-Sequence' {
     part agg  : Aggregation;
     part log  : Logging;
 
-    // 1. publishStage(INIT), before any listener is attached, wrapped in
-    //    LogLevelScope(LogLevel::NONE): a real call, absent from trace.
-    message m1 from sync.stageEventBridge to log.raiiLogStream
+    // SynchronizedRunnerTest, timeout branch: 2x getAll, then flush,
+    // the timeout log, and one further flush
+    message m1 from sync.synchronizedRunner to agg.aggregator
+        : 'Aggregator.getAll';
+    message m2 from sync.synchronizedRunner to agg.aggregator
+        : 'Aggregator.getAll';
+    message m3 from sync.synchronizedRunner to log.cpsLogger
+        : 'CPSLogger.flush';
+    message m4 from sync.synchronizedRunner to log.raiiLogStream
         : 'RAIILogStream.stream';
-
-    // 2. publishStage(NORMAL), after attachTo(): dispatches over
-    //    boost::signals2 with no static call edge to the handler.
-    message m2 from sync.stageEventBridge to agg.stageEventListener
-        : 'StageEventListener.onStageEvent';
+    message m5 from sync.synchronizedRunner to log.cpsLogger
+        : 'CPSLogger.flush';
 }
 \end{minted}
 
-\section{Generated Pipeline Output (C5: Full Pipeline)}
+
+\section{Generated Pipeline Output}
 \label{sec:appendix-generated}
 
-Representative output from the full pipeline condition (C5: static +
-dynamic + scenario scoping, \cref{sec:h1-results}), shown as
-component-interaction edge lists (\texttt{elements.json}) extracted
-from the scenario-scoped edge set.
+Representative output from the deterministic pipeline (the
+scenario-scoped intersection of the static and dynamic edge sets,
+condition C5, \cref{sec:h1-results}), shown as component-interaction
+edge lists (\texttt{interactions.json}) extracted from the
+scenario-scoped edge set.
 
-\subsection{C5 Edge Lists by Scenario}
+\subsection{C5 (Intersection) Edge Lists by Scenario}
 
 \begin{table}[h]
 \centering
-\caption{Generated component-interaction edges under condition~C5 (full pipeline).}
+\caption{Generated component-interaction edges under condition~C5
+  (intersection, the best-performing evaluated condition on interaction
+  edges, \cref{sec:h1-results}).}
 \label{tab:c5-edges}
 \begin{tabular}{llll}
 \toprule
@@ -430,16 +434,25 @@ from the scenario-scoped edge set.
 \midrule
 S1 & Synchronization & Aggregation & getAll \\
 S1 & Synchronization & Logging     & flush \\
-S1 & Synchronization & Logging     & stream \\
 \midrule
-S2 & Configuration   & Logging     & RAIILogStream.stream \\
+S2 & Configuration   & Logging     & stream \\
 \midrule
-S3 & Synchronization & Aggregation & getAll \\
-S3 & Synchronization & Logging     & stream \\
-S3 & Synchronization & Utilities   & convert \\
+S3 & Synchronization & Aggregation & getAll$^\dagger$ \\
+\midrule
+S4 & Synchronization & Aggregation & getAll \\
+S4 & Synchronization & Logging     & flush \\
+S4 & Synchronization & Logging     & stream \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+$^\dagger$ S3 is the one scenario where intersection under-recovers:
+its other two ground-truth edges
+(\texttt{Aggregation}$\to$\texttt{Logging:stream},
+\texttt{Utilities}$\to$\texttt{Logging:stream}) are dispatched through a
+\texttt{std::function}-wrapped thread invisible to C2, so intersection
+collapses to C2's own recall (P/R/F1~$=$~1.000/0.333/0.500,
+\cref{sec:h1-c4c3}).
 
 \subsection{Generated SysML~v2 Sequence Model (Excerpt)}
 
@@ -575,117 +588,75 @@ Rendered versions of the diagrams from the preceding sections. Source
   \label{fig:signal-tracing}
 \end{figure}
 
-\subsection{S1--S4 under Condition C5 (Full Pipeline)}
+\subsection{Rendered Diagrams: S1, S2, S3, S4 (Illustrative)}
 \label{sec:appendix-c5-rendered}
 
-The figures below are the actual, current rendered artefacts for each
-scenario under condition C5 (\cref{sec:h1-results}): the structural
-diagram (part-definition hierarchy, \texttt{draw-sysml-structural-model}),
-the interconnection diagram (the assembled system with real port-to-port
+The figures below are rendered artefacts for all four scenarios: the
+interconnection diagram (the assembled system with real port-to-port
 \texttt{connect} statements, the same artefact discussed in
-\cref{sec:sysml-generation}), and the sequence diagram
-(\texttt{draw-sysml-sequence-model}), all generated from
-\texttt{elements.json}/\texttt{sequence.json}
-(\cref{sec:agentic-synthesis-impl}). Compare against the ground-truth
+\cref{sec:sysml-generation}) and the sequence diagram
+(\texttt{draw-sysml-sequence-model}). They are rendered from the tagged
+union (condition C4, \cref{sec:evidence-synthesis}), the pipeline's most
+permissive combination, not from the higher-precision intersection (C5):
+so they may not match \cref{tab:c5-edges}'s deterministic C5 edge lists
+exactly (S1's interconnection diagram, for instance, additionally
+includes the static-only and trace-only edges that C5's intersection
+filters out, \cref{sec:h1-c4c2}). Compare against the ground-truth
 diagrams in \cref{sec:appendix-groundtruth}.
 
 \begin{figure}[htbp]
   \centering
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figures/s1-structural.png}
-    \caption{Structural (part-definition hierarchy).}
-    \label{fig:s1-struct}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figures/s1-interconnection.png}
-    \caption{Interconnection (assembled port connections).}
-    \label{fig:s1-interconnection}
-  \end{subfigure}
-  \caption{S1 (Aggregator notification chain): structural (left) and interconnection (right) diagrams, condition C5.}
+  \includegraphics[width=0.75\textwidth]{figures/s1a-interconnection.png}
+  \caption{S1 (Aggregator notification chain): interconnection diagram.}
+  \label{fig:s1-interconnection}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.6\textwidth]{figures/s1-sequence.png}
-  \caption{S1 sequence diagram: message interactions, condition C5.}
+  \includegraphics[width=0.6\textwidth]{figures/s1a-sequence.png}
+  \caption{S1 sequence diagram: message interactions.}
   \label{fig:s1-seq}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figures/s2-structural.png}
-    \caption{Structural (part-definition hierarchy).}
-    \label{fig:s2-struct}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figures/s2-interconnection.png}
-    \caption{Interconnection (assembled port connections).}
-    \label{fig:s2-interconnection}
-  \end{subfigure}
-  \caption{S2 (Configuration property mapping): structural (left) and interconnection (right) diagrams, condition C5.}
+  \includegraphics[width=0.75\textwidth]{figures/s2-interconnection.png}
+  \caption{S2 (Configuration property mapping): interconnection diagram.}
+  \label{fig:s2-interconnection}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.6\textwidth]{figures/s2-sequence.png}
-  \caption{S2 sequence diagram: Configuration property mapping (linear chain), condition C5.}
+  \caption{S2 sequence diagram: Configuration property mapping.}
   \label{fig:s2-seq}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figures/s3-structural.png}
-    \caption{Structural (part-definition hierarchy).}
-    \label{fig:s3-struct}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figures/s3-interconnection.png}
-    \caption{Interconnection (assembled port connections).}
-    \label{fig:s3-interconnection}
-  \end{subfigure}
-  \caption{S3 (multi-component runner orchestration): structural (left) and interconnection (right) diagrams, condition C5.}
+  \includegraphics[width=0.75\textwidth]{figures/s3-interconnection.png}
+  \caption{S3 (multi-component runner orchestration): interconnection diagram.}
+  \label{fig:s3-interconnection}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.6\textwidth]{figures/s3-sequence.png}
-  \caption{S3 sequence diagram: multi-component runner orchestration, condition C5.}
+  \caption{S3 sequence diagram: multi-component runner orchestration.}
   \label{fig:s3-seq}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figures/s4-structural.png}
-    \caption{Structural (part-definition hierarchy).}
-    \label{fig:s4-struct}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figures/s4-interconnection.png}
-    \caption{Interconnection (assembled port connections).}
-    \label{fig:s4-interconnection}
-  \end{subfigure}
-  \caption{S4 (stage event pub-sub bridge): structural (left) and interconnection (right) diagrams, condition C5. Both the suppressed fault-path edge and the \texttt{boost::signals2} dispatch edge are present, recovered only because C5 combines static and dynamic evidence (\cref{sec:h1-c4c3}).}
+  \includegraphics[width=0.75\textwidth]{figures/s4-interconnection.png}
+  \caption{S4 (Aggregator notification chain, timeout path): interconnection diagram.}
+  \label{fig:s4-interconnection}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.6\textwidth]{figures/s4-sequence.png}
-  \caption{S4 sequence diagram: stage event pub-sub bridge, condition C5.}
+  \caption{S4 sequence diagram: Aggregator notification chain, timeout path.}
   \label{fig:s4-seq}
 \end{figure}
 
@@ -722,7 +693,7 @@ the diagram cold considers extraneous; the two need not coincide.
 
 S2 shows the same pattern in reverse: the guided diagram collapses seven
 repeated \texttt{Configuration}$\to$\texttt{Logging} property-read calls
-into a single edge (\cref{tab:h2-per-scenario}), and five of six raters
+into a single edge, and five of six raters
 rated it more accurate and more readable for matching the two components
 named in the scenario. Usefulness is where the panel genuinely splits.
 Three raters (R1--R3) tied it, each independently citing the same
@@ -752,8 +723,10 @@ failed alternative.
 
 The following figures show the SysML v2 diagrams generated for the
 CPSCore case study: structural (component connectivity) and sequence
-(interaction flow) diagrams, all produced under condition C5 (full
-pipeline).
+(interaction flow) diagrams for the 14 bulk, whole-codebase scenarios
+(\cref{sec:sysml-impl}), generated directly from the unscoped static
+sequence dependency table rather than from any scenario-scoped H1
+condition.
 
 \subsection{Structural Diagrams}
 

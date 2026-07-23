@@ -98,24 +98,6 @@ grep "Synchronization" trace_output.txt | head -10
 grep "14:23" trace_output.txt
 ```
 
-### Steps 3-4, automated
-
-`scripts/collect_traces.py` does the rebuild and the run in one step, and
-writes the result straight to `runtime_traces.txt` (repo root) in the
-pipe-delimited schema used elsewhere in this repo -- `EventTimestamp|
-EventName|ClientComponent|ClientFunction|ServerComponent|ServerFunction|
-RelationshipType|InterfaceNames` -- instead of a raw `trace_output.txt` you
-then have to `grep`/`cut` by hand:
-
-```bash
-# from WSL -- the test binary is a Linux ELF
-python3 .github/skills/add-runtime-instrumentation/scripts/collect_traces.py
-```
-
-Requires Step 2 (instrumentation) to already be applied; it does not apply
-instrumentation itself. See `SKILL.md` for the full option list
-(`--cpscore-root`, `--build-dir`, `--skip-build`).
-
 ### Step 6: Remove Instrumentation (Optional)
 
 ```powershell

@@ -1,0 +1,247 @@
+\chapter{Conclusion}\label{ch:conclusion}
+
+\section{Summary \& Findings}
+
+This thesis addressed the reconstruction of scenario-specific Interaction
+Models from \Cpp\ codebases and execution traces in event-driven systems.
+Static analysis alone tends to produce over-approximate, scenario-agnostic
+graphs; trace-based analysis alone tends to under-complete them, since
+runtime instrumentation is rarely exhaustive. No prior approach appeared
+to address publish-subscribe topology recovery and scenario-scoped
+call-graph querying together, or to target \sysml\ as the output
+formalism.
+
+The approach builds a static call graph in \neo, including
+topology-resolved IDC pub-sub edges. A scenario description is first
+translated into a Cypher query that narrows the static graph to that
+scenario's relevant components, producing both a static dependency table
+and a reachable function set. Guided instrumentation then captures
+\texttt{trace\_slice.txt} at the architecture-level call sites. A
+Neo4j-based reachability filter (Phase~3, condition~C5) scopes the trace to
+events whose caller is in the reachable function set, removing
+setup-phase boilerplate and writing \texttt{interactions.json} and
+\texttt{sequence.json}. The resulting interactions are then projected
+into \sysml\ textual notation.
+
+The approach was developed and evaluated on \emph{CPSCore}, an
+open-source event-driven \Cpp\ framework, across four found-in-the-wild
+scenarios drawn from its existing test suite, including two instances of
+the same underlying scenario (its happy path and its timeout branch).
+
+The three hypotheses tested to answer the research questions were
+confirmed, with an important qualification on \emph{when} and
+\emph{how well} each effect holds:
+
+\begin{description}
+  \item[H1 (confirmed).] \textbf{C5 (guided~+~reachability) and C6
+    (full-trace~+~reachability) achieve perfect F1 on both interaction-set
+    and execution-order metrics across all four scenarios}
+    (macro-F1~$=$~1.000\,/\,1.000). The reachability filter is the key
+    mechanism: C5 and C6 differ only in instrumentation strategy yet
+    score identically, confirming the filter is sufficient regardless of
+    how the trace is collected. \textbf{C4 (guided-only, 0.914\,/\,0.846) is
+    the strongest baseline without the Neo4j-based reachability filter}, substantially outperforming
+    unfiltered tracing (C3, 0.530\,/\,0.428); the gap is explained entirely
+    by intra-component false positives in C3's input.
+    \textbf{C2 (static-only) is structurally capped on S3} by indirect
+    thread dispatch (macro-F1~$=$~0.756): no static call site exists for
+    the \\texttt{Utilities}$\\to$\\texttt{Logging} edge, so the trace-based
+    conditions are the only ones that recover it.
+    \textbf{LLM-augmented conditions (C7--C9) performed worse than
+    their non-augmented counterparts}: C7 recovers most of C2's recall but
+    still fails on S3; C9 degrades C4's already-precise output
+    (0.783~vs.~0.914), confirming that LLM post-processing is
+    counterproductive when the prior is clean.
+
+  \item[H2 (confirmed).] Code-graph-guided instrumentation eliminates
+    all measured noise (50\% fewer retained nodes, 70\% fewer edges)
+    without losing coverage, and a blinded six-rater panel rated the
+    guided output strictly higher in 47 of 54 comparisons, with the one
+    reversal traceable to a specific trade-off: collapsing repeated
+    property-read calls into a single edge.
+
+  \item[H3 (supported).] Diagram-inclusive conditions were never worse
+    than their non-diagram counterparts on the scenario-comprehension
+    task tested, and clearly outperformed source code alone (the
+    weakest condition, missing a component and interactions that trace
+    or diagram evidence made explicit). The reconstructed diagram alone
+    tied with runtime traces alone on interaction recall (0.778),
+    sharing the same attribution error on one scenario; only combining
+    source code with runtime traces reached perfect recall, and adding
+    a diagram on top raised completeness further without cost to
+    recall. A reconstructed diagram is, on this task, a useful
+    complement to the underlying evidence rather than a strictly
+    sufficient replacement for it on its own.
+\end{description}
+
+As an exploratory complement, a hands-on session and interview study with
+four engineers on a second, much larger industrial codebase
+(\cref{sec:practitioner}) offers encouraging evidence that the static
+half of the approach holds at industrial scale, though the session
+exercised only static extraction and graph querying, with no runtime
+tracing involved. The key scenario there was a proxy-leak defect whose
+root cause was an implicit event-driven interaction, invisible without
+reconstructing the call chain, resolved using only the static graph,
+consistent with static extraction remaining useful for fault-path
+investigation independent of runtime access. The industrial system's
+architecture (proxy-based, virtual interfaces, dynamic service binding)
+is the kind where static analysis is more likely to carry its own
+independent errors, which H1 would predict gives the static-graph
+reachability filter more trace events to suppress
+(\cref{sec:cpscore-scale,sec:h1-c4c2}); since no dynamic
+evidence was collected there, this remains a motivated prediction rather
+than a measured result.
+
+Taken together, a single pattern runs through the H1 results
+(\cref{sec:discussion}): additional evidence helps when it disagrees
+productively with the primary source, by independently confirming which
+of its edges are genuine, and is otherwise redundant -- and even a
+successfully combined, high-precision reconstruction is not automatically
+a sufficient basis for a downstream comprehension task, which H3 shows
+needs the underlying source and trace evidence directly. This generates a
+falsifiable prediction for future work: on systems with cross-module
+virtual dispatch, static analysis should carry independent errors even
+on happy-path scenarios, giving intersection more independent error to
+cancel across a wider range of scenarios than the single instance
+(\texttt{std::function} dispatch) exercised here
+(\cref{sec:future-work}).
+
+\section{Practical Implications}
+
+The pipeline lets an engineer working on an event-driven \Cpp\ system
+obtain a scenario-specific \sysml\ interaction diagram through
+natural-language queries against the property graph, rather than
+manually tracing call chains, cross-referencing headers and correlating
+log output over several working days. \Cref{sec:utility} quantifies this
+on CPSCore (2,574 interactions extracted in a single query, nine caller
+functions instrumented automatically, without any manual call-graph
+reading); switching to a new target requires only re-running the static
+extractor, since the skills query the live schema rather than hardcoded
+labels. The practitioner session (\cref{sec:practitioner}) suggests this
+transfer cost is low in practice: four engineers on a much larger
+industrial codebase used the tool productively within a single session,
+and rated the structural and dependency diagrams consistently useful for
+architectural comprehension.
+
+\section{Contributions}
+
+\paragraph{Research contributions.}
+\begin{enumerate}
+  \item \textbf{A static property graph and a separate trace pipeline}
+    whose interaction edge sets are compared while keeping track of
+    which evidence each interaction came from: static, dynamic, or
+    both. Keeping the sources separate but comparable is what lets the
+    evaluation report exactly where each edge originated
+    (\cref{sec:pg-schema}).
+
+  \item \textbf{A scenario-scoping method} that trims the call graph to
+    the interactions relevant to one scenario, using plain
+    scenario-scoped Cypher queries, without re-running the analysis from
+    scratch (\cref{sec:combine-scope}).
+
+  \item \textbf{An evidence-based account of when combining static and
+    dynamic analysis helps}, and when it does not, summarised above for
+    H1--H3 (\cref{sec:h1-results,sec:h2-results,sec:h3-holistic}).
+\end{enumerate}
+
+\paragraph{Engineering artefacts.}
+\begin{enumerate}\setcounter{enumi}{3}
+  \item A \textbf{small, reversible instrumentation tool}
+    (\texttt{csp\_matcher}) that inserts and removes trace probes
+    automatically, driven by a simple find/replace specification
+    (\cref{sec:csp-matcher}).
+
+  \item A \textbf{set of twelve natural-language agent skills} that
+    together run the whole pipeline, from source code to \sysml\ diagram,
+    on any codebase without code changes, every one following a fixed
+    rule set given its inputs
+    (\cref{sec:skill-design,sec:evidence-synthesis}).
+
+  \item A \textbf{way to recover publish-subscribe wiring} that ordinary
+    call-graph analysis cannot see, by matching subscription and
+    publication call sites that share a channel identifier
+    (\cref{sec:macro-resolution}).
+\end{enumerate}
+
+\section{Limitations \& Threats to Validity}
+
+The most significant limitation is scale: all three hypotheses were
+evaluated on a single open-source system ($\approx$13\,kLOC) across four
+scenarios. CPSCore's absence of cross-module virtual dispatch means its
+static call graph disagrees with the trace on \emph{which} edges are
+genuine in only one scenario (an indirect thread dispatch), which is
+presumably why intersection's recall shortfall is concentrated there
+rather than spread across every scenario; in a larger system with
+virtual dispatch or dynamic plugin loading, where static analysis is
+more likely to carry its own independent errors on a wider range of
+scenarios, intersection's precision advantage would have more
+disagreement to cancel, but its recall shortfall could also be more
+widespread. The practitioner session on an industrial-scale codebase
+offers encouraging qualitative evidence of transfer, but does not
+substitute for a controlled replication.
+
+H3's diagram-inclusive conditions were shown diagrams rendered from the
+guided-only condition~(C4) rather than from the
+guided+reachability condition~(C5) (\cref{sec:h3-holistic}). Its interaction-recall figures also
+depend on a manual correction to the automated scorer, which cannot
+tell a genuinely-attributed interaction from one whose components merely
+co-occur in the response text. The H2 six-rater panel preserved effect direction on
+every dimension, though a larger sample would strengthen confidence in
+magnitude. Ground-truth diagrams are inherently subjective, and the
+edge-set metric does not capture message content or count even where
+the execution-order metric captures ordering.
+
+\section{Future Work}\label{sec:future-work}
+
+\begin{description}
+  \item[Controlled evaluation on a second system.]
+    The practitioner session (\cref{sec:practitioner}) suggests the
+    static approach transfers to larger, industrial codebases, but only
+    qualitatively. A natural first step would be applying the full,
+    pre-registered H1/H2/H3 tests to that codebase or to other
+    event-driven \Cpp\ systems (\eg using ROS~2 or MQTT for
+    publish-subscribe) to turn this encouraging signal into a controlled
+    generalisability result, ideally on a system with cross-module
+    virtual dispatch so that static analysis carries independent errors
+    on more than the single scenario type observed here.
+ 
+  \item[Diagram labelling and interactivity.]
+    The practitioner interviews (\cref{sec:interview-findings})
+    independently converged on two requests: richer, less abstract
+    event/message labels on sequence diagrams (\eg inline source class
+    and line number on hover), and interactive exploration (search,
+    filter, collapse/expand) rather than static, one-shot diagrams. Both
+    are natural extensions of the source-location data the pipeline
+    already carries (\cref{sec:utility}).
+
+  \item[Temporal ordering accuracy.]
+    The current evaluation abstracts over message ordering. A metric
+    accounting for the relative order of interactions would give a more
+    complete picture.
+
+  \item[Incremental updates.]
+    As the codebase evolves, the \ac{PG} should ideally be updatable
+    incrementally rather than rebuilt from scratch. Neo4j's support for
+    live graph updates makes this tractable, though the
+    scenario-scoping invalidation logic would need careful design.
+
+  \item[LLM-assisted diagram naming.]
+    Function names in the generated diagrams are currently taken
+    verbatim from source. A post-processing step using an \ac{LLM} could
+    produce more readable message labels.
+
+  \item[Integration with Renaissance DB.]
+    The \ac{GDI} project's architecture model database (Renaissance DB)
+    could serve as a richer source of module-level metadata, potentially
+    reducing the number of unresolved black-box components.
+\end{description}
+
+\section{Reproducibility}
+
+The complete source code, experiment data, skill definitions, and scoring
+scripts used in this thesis are available at:
+
+\begin{center}
+\url{https://github.com/prathikanand7/masters-thesis-work.git}
+\url{https://ci.tno.nl/gitlab/anand_krishnan.prathik-tno/cpscore.git}
+\end{center}

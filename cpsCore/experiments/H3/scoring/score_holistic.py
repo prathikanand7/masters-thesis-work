@@ -23,10 +23,10 @@ import json
 import pathlib
 
 H3_DIR   = pathlib.Path(__file__).parent.parent
-GT_DIR   = pathlib.Path(__file__).parent / "ground_truth"
+SCEN_DIR = pathlib.Path(__file__).parent.parent.parent / "scenarios"  # experiments/scenarios/
 RESP_DIR = H3_DIR / "agent_conditions" / "responses"
 
-SCENARIOS = ["S1", "S2", "S3", "S4"]
+SCENARIOS = ["S1a", "S2", "S3", "S4"]  # S1b pending new response collection
 
 CONDITIONS = {
     "source":              "C_source_only",
@@ -42,9 +42,11 @@ def _bare(name: str) -> str:
 
 
 def load_ground_truth(scenario: str) -> dict:
-    path = GT_DIR / f"{scenario}_ground_truth.json"
+    path = SCEN_DIR / scenario / "gt_interactions.json"
     with open(path, encoding="utf-8") as f:
-        return json.load(f)
+        interactions = json.load(f)
+    components = sorted({e["source"] for e in interactions} | {e["target"] for e in interactions})
+    return {"components": components, "interactions": interactions}
 
 
 def score_components(response: str, gt_components: list) -> tuple:

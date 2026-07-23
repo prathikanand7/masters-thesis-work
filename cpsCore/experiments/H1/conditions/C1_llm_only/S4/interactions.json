@@ -1,0 +1,22 @@
+[
+  {
+    "source": "Aggregation",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  },
+  {
+    "source": "Aggregation",
+    "target": "Synchronization",
+    "interaction": "StageEventBridge.subscribeStage"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "StageEventListener.onStageEvent"
+  },
+  {
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream"
+  }
+]

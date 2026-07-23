@@ -137,18 +137,14 @@ were never observed. This is the same gap identified in \cref{ch:introduction}.
 \textcite{cornelissen:systematic} conduct a systematic review of dynamic
 analysis for program comprehension and independently identify the lack of
 integration with static information as a major open problem.
-\textcite{kienle:reconstructing} survey the requirements that architecture
-reconstruction tools must satisfy. They argue that effective tools need to
-combine static structure with dynamic (trace) information to identify the
-active subset of a system relevant to a given scenario.
-Rather than presenting a concrete extraction technique, their contribution is
-a requirements framework against which reconstruction tools can be evaluated.
-It does not address \Cpp\ or publish-subscribe indirection specifically.
-More recently, \textcite{abdelmalek:survey} surveys and categorises approaches
-for reverse-engineering behavioural UML diagrams and identifies hybrid
-static-dynamic techniques as a promising direction. However, the work
-remains a categorisation exercise and stops short of a concrete method for
-reconstructing scenario-specific models from incomplete traces.
+More recently, \textcite{abdelmalek:survey} survey and categorise approaches
+for reverse-engineering behavioural UML diagrams, grouping them into static,
+dynamic and hybrid analysis, and themselves propose a hybrid approach that
+uses static analysis to identify system entry points and guide dynamic
+instrumentation. Neither their survey nor their proposed approach addresses
+\Cpp\ or publish-subscribe indirection specifically, and their hybrid
+technique still requires exercising the target behaviour at runtime rather
+than reconstructing scenario-specific models from incomplete traces.
 
 Overall, hybrid analysis is widely acknowledged as beneficial. However,
 existing approaches primarily enrich or organise already-observed runtime
@@ -212,8 +208,6 @@ Santos \etal \cite{santos:roscompgraph}
 Syst\"{a} \cite{systa:reverse}
   & \checkmark & \checkmark & \checkmark & $\times$ & $\times$ \\
 Labiche \etal \cite{labiche:hybrid}
-  & \checkmark & \checkmark & \checkmark & $\times$ & $\times$ \\
-Kienle \& M\"{u}ller \cite{kienle:reconstructing}
   & \checkmark & \checkmark & \checkmark & $\times$ & $\times$ \\
 \midrule
 \textbf{This thesis}

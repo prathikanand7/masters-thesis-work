@@ -1,0 +1,9 @@
+[
+  {
+    "order": 0,
+    "source": "Configuration",
+    "target": "Logging",
+    "interaction": "RAIILogStream.stream",
+    "note": "CPSLOG_TRACE in PropertyMapper::add<int> when pm.addOptional(\"optional1\", ..., true) finds key in JSON"
+  }
+]

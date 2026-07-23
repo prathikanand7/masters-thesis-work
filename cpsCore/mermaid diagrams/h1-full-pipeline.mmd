@@ -1,0 +1,26 @@
+%%{init: {'theme': 'base', 'flowchart': {'rankSpacing': 50, 'nodeSpacing': 25}}}%%
+flowchart TD
+    classDef tool fill:#D6EAF8,stroke:#2980B9,color:#1A5276
+    classDef artifact fill:#FDFEFE,stroke:#888888,font-style:italic
+    classDef query fill:#FEF9E7,stroke:#F39C12,color:#7D6608
+    classDef db fill:#D5F5E3,stroke:#1E8449
+
+    CPP["C++ source"]:::artifact --> REN["Renaissance"]:::tool
+    REN --> NEO[("Neo4j\ncode graph")]:::db
+    NEO -->|"all arch pairs"| CYPHER["Cypher: global\ncross-component CppCalls"]:::query
+    NEO -->|"scenario scoped"| TRAV["Cypher: scenario-scoped\nCppCalls* 1..6 hops from entry"]:::query
+
+    ENTRY["Scenario entry points"]:::artifact --> TRAV
+    TRAV --> C2OUT["Static edges\n(tagged: also in trace?)"]:::artifact
+
+    CYPHER --> CLANGEXP["Guided instrumentation\n(clang-renaissance)"]:::tool
+    CLANGEXP --> SLICE["Guided trace\n(execution order + caller fn)"]:::artifact
+
+    SRC["C++ code snippets"]:::artifact --> LLM["LLM synthesis\n(C6 only)"]:::tool
+    C2OUT -->|"separate section:\nSTATIC EVIDENCE"| LLM
+    SLICE -->|"separate section:\nDYNAMIC EVIDENCE"| LLM
+    LLM --> INTR["Interactions"]:::artifact
+    LLM --> SEQ["Sequence"]:::artifact
+
+    NEO ~~~ CYPHER
+    ENTRY ~~~ CLANGEXP

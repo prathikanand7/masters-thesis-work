@@ -1,0 +1,7 @@
+[
+  {
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll"
+  }
+]

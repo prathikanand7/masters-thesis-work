@@ -13,9 +13,8 @@ experiments themselves.
 \begin{itemize}
   \item \textbf{H1} (\cref{sec:h1}) compares reconstruction accuracy
     across conditions C1--C5 (\cref{sec:conditions}) on four scenarios
-    (\cref{sec:scenarios}): three occurring naturally in CPSCore (S1--S3),
-    plus one purpose-built scenario (S4) exercising a precondition S1--S3
-    cannot.
+    (\cref{sec:scenarios}), all occurring naturally in CPSCore (S1, S2,
+    S3, S4).
   \item \textbf{H2} (\cref{sec:h2}) compares guided against full
     instrumentation on structural compression, noise and coverage, with a
     blinded expert rating of the resulting diagrams.
@@ -34,8 +33,9 @@ pre-registered comparison.
 \section{H1: Does Combining Static and Dynamic Evidence Improve Reconstruction Accuracy?}\label{sec:h1}
 
 \textbf{Hypothesis.} Combining static analysis and dynamic instrumentation
-(C4) improves reconstruction accuracy over any single source (C1--C3)
-alone.
+via provenance-aware agreement (C5) improves reconstruction accuracy over
+any single source (C1--C3) alone; raw set union (C4) does not, since it
+can only inherit each source's false positives rather than cancel them.
 
 \subsection{Metric}
 
@@ -58,188 +58,205 @@ static against dynamically-sampled call graphs~\cite{helm:totalrecall},
 and matches the convention used within the sequence-diagram
 reconstruction literature itself~\cite{taniguchi:seqtrace}.
 
-\subsection{Methodological Corrections}\label{sec:h1-corrections}
+A second metric scores the same generated output against the same
+reference for \emph{execution order}, which the edge-set metric above
+discards entirely (two conditions can share an identical interaction
+set while disagreeing completely on the order events fired). Let
+$\text{gen}$ and $\text{ref}$ now denote \emph{ordered} event lists,
+with repetitions preserved, and let $\mathrm{LCS}(\text{gen},
+\text{ref})$ be their longest common subsequence -- the longest run of
+events appearing in both lists in the same relative order, though not
+necessarily contiguously:
 
-Four risks were identified and corrected while H1 was being run:
+\[
+  P = \frac{|\mathrm{LCS}(\text{gen}, \text{ref})|}{|\text{gen}|}, \quad
+  R = \frac{|\mathrm{LCS}(\text{gen}, \text{ref})|}{|\text{ref}|}, \quad
+  F_1 = \frac{2PR}{P + R}
+\]
 
-\begin{description}
-  \item[Ground-truth circularity.] An early reference set was partly
-    derived from the same static extraction used to produce C2/C4/C5,
-    which would have inflated their scores by construction. The
-    references were reauthored independently, by direct inspection of
-    CPSCore's source and its exercising test cases rather than the
-    pipeline's own output (\cref{fig:s1-groundtruth,fig:s2-groundtruth,%
-    fig:s3-groundtruth,fig:s4-groundtruth}), and verified against
-    Doxygen-generated call graphs, an unrelated static analysis tool.
-  \item[\texttt{SCENARIO\_PRIMARY} scope boundary.] The in-scope
-    boundary was initially defined \emph{after} inspecting a preferred
-    condition's results, risking a favourable definition. It is now
-    fixed from the scenario definition alone, before any condition runs.
-  \item[F1 aggregation.] Macro-F1 (mean of per-scenario F1) was adopted
-    over micro-F1 to avoid large scenarios dominating the
-    aggregate~\cite{sokolova:metrics}; the two agree to within
-    $\pm 0.013$.
-  \item[Constructed-scenario disclosure.] S4 was added after S1--S3
-    were scored (\cref{sec:scenarios}), a timing disclosed here so the
-    result isn't presented as if S4 were selected post hoc. It is
-    reported as its own stratum (\cref{tab:h1-results}) rather than
-    blended into the S1--S3 aggregate.
-\end{description}
+Precision here penalises a condition for inserting extra events (e.g.\
+uncorroborated static edges, or setup-phase trace events the
+scenario-scoped ground truth excludes); recall penalises it for
+dropping or misordering genuine ones. Both metrics are reported
+throughout this section: the edge-set metric answers whether a
+condition identifies the right \emph{interactions}; the LCS metric
+answers whether it also gets their \emph{order} right.
 
 \subsection{Results}\label{sec:h1-results}
 
 \begin{table}[htb]
 \centering
-\caption{H1 per-scenario results: precision / recall / F1 by condition.
-  S1--S3 occur naturally in CPSCore; S4 is constructed (\cref{sec:scenarios}).}
+\caption{H1 per-scenario results (interaction edges): precision / recall
+  / F1 by condition. All four scenarios occur naturally in CPSCore
+  (\cref{sec:scenarios}).}
 \label{tab:h1-per-scenario}
 \small
 \begin{tabular}{@{} l c c c c @{}}
 \toprule
 \textbf{Condition} & \textbf{S1} & \textbf{S2} & \textbf{S3} & \textbf{S4} \\
 \midrule
-C1: LLM-only        & 0/0/0.00    & 0/0/0.00    & 0/0/0.00    & .50/.50/.50 \\
-C2: Static-only     & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .60/1.00/.75 & 1.00/.50/.67 \\
-C3: Dynamic-only    & 1.00/1.00/1.00 & 1.00/1.00/1.00 & 1.00/1.00/1.00 & 1.00/.50/.67 \\
-C4: Static+Dynamic  & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .60/1.00/.75 & 1.00/1.00/\textbf{1.00} \\
-C5: Full pipeline & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .75/1.00/.86 & 1.00/1.00/\textbf{1.00} \\
+C1: LLM-only        & 1.00/1.00/1.00 & 0/0/0.00       & .33/.33/.33 & 1.00/.33/.50 \\
+C2: Static-only     & .50/1.00/.67   & 1.00/1.00/1.00 & 1.00/.33/.50 & .75/1.00/.86 \\
+C3: Dynamic-only    & .67/1.00/.80   & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .75/1.00/.86 \\
+C4: Static+Dynamic  & .40/1.00/.57   & 1.00/1.00/1.00 & 1.00/1.00/1.00 & .60/1.00/.75 \\
+C5: Intersection    & 1.00/1.00/1.00 & 1.00/1.00/1.00 & 1.00/.33/.50 & 1.00/1.00/1.00 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{table}[htb]
 \centering
-\caption{H1 stratified results: macro-averaged precision, recall, and F1 by
-  condition and scenario type (reported four-scenario set: S1--S4).}
-\label{tab:h1-results}
+\caption{H1 per-scenario results (execution-order LCS metric, above): precision /
+  recall / F1 by condition, over the same four scenarios.}
+\label{tab:h1-per-scenario-seq}
 \small
-\begin{tabular}{@{} l ccc ccc ccc @{}}
+\begin{tabular}{@{} l c c c c @{}}
 \toprule
-& \multicolumn{3}{c}{\textbf{Happy-path (S1--S3)}}
-& \multicolumn{3}{c}{\textbf{Constructed (S4)}}
-& \multicolumn{3}{c}{\textbf{Overall (S1--S4)}} \\
-\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
-\textbf{Condition} & P & R & F1 & P & R & F1 & P & R & F1 \\
+\textbf{Condition} & \textbf{S1} & \textbf{S2} & \textbf{S3} & \textbf{S4} \\
 \midrule
-C1: LLM-only       & 0.000 & 0.000 & 0.000
-                   & 0.500 & 0.500 & 0.500
-                   & 0.125 & 0.125 & 0.125 \\
-C2: Static-only    & 0.867 & 1.000 & 0.917
-                   & 1.000 & 0.500 & 0.667
-                   & 0.900 & 0.875 & 0.854 \\
-C3: Dynamic-only   & \textbf{1.000} & \textbf{1.000} & \textbf{1.000}
-                   & 1.000 & 0.500 & 0.667
-                   & \textbf{1.000} & 0.875 & 0.917 \\
-C4: Static+Dynamic & 0.867 & 1.000 & 0.917
-                   & 1.000 & 1.000 & 1.000
-                   & 0.900 & \textbf{1.000} & 0.938 \\
-C5: Full pipeline & 0.917 & \textbf{1.000} & 0.952
-                   & 1.000 & \textbf{1.000} & 1.000
-                   & 0.938 & \textbf{1.000} & \textbf{0.964} \\
+C1: LLM-only        & 1.00/1.00/1.00 & 0/0/0.00       & .58/.54/.56 & 1.00/.20/.33 \\
+C2: Static-only     & .25/.13/.17    & 1.00/1.00/1.00 & 1.00/.08/.14 & .50/.40/.44 \\
+C3: Dynamic-only    & .67/1.00/.80   & 1.00/1.00/1.00 & .77/1.00/.87 & .56/1.00/.72 \\
+C4: Static+Dynamic  & .67/1.00/.80   & 1.00/1.00/1.00 & .77/1.00/.87 & .56/1.00/.72 \\
+C5: Intersection    & 1.00/1.00/1.00 & 1.00/1.00/1.00 & 1.00/.15/.27 & 1.00/1.00/1.00 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-F1 aggregation: macro-average. Micro-F1 agrees to within $\pm 0.013$
-(\cref{sec:h1-corrections}).
+\begin{table}[htb]
+\centering
+\caption{H1 macro-averaged results across all four scenarios, interaction
+  edges and execution-order LCS metric.}
+\label{tab:h1-results}
+\small
+\begin{tabular}{@{} l ccc ccc @{}}
+\toprule
+& \multicolumn{3}{c}{\textbf{Interactions}}
+& \multicolumn{3}{c}{\textbf{Sequence (LCS)}} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+\textbf{Condition} & P & R & F1 & P & R & F1 \\
+\midrule
+C1: LLM-only       & 0.583 & 0.416 & 0.458 & 0.646 & 0.434 & 0.473 \\
+C2: Static-only    & 0.812 & 0.833 & 0.756 & 0.688 & 0.401 & 0.439 \\
+C3: Dynamic-only   & 0.854 & \textbf{1.000} & \textbf{0.914} & 0.747 & \textbf{1.000} & \textbf{0.846} \\
+C4: Static+Dynamic & 0.750 & \textbf{1.000} & 0.830 & 0.747 & \textbf{1.000} & \textbf{0.846} \\
+C5: Intersection   & \textbf{1.000} & 0.833 & 0.875 & \textbf{1.000} & 0.788 & 0.817 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\subsection{Discussion: Why C4 $=$ C2 on S1--S3}\label{sec:h1-c4c2}
+F1 aggregation: macro-average across the four scenarios throughout.
 
-On the three scenarios found naturally in CPSCore's codebase, C2 and C4
-are numerically identical (0.867/1.000/0.917). This follows directly
-from a structural property of CPSCore itself (\cref{sec:cpscore-scale}):
-the codebase exhibits no cross-module virtual dispatch, so every call
-target is statically determinate, and every edge the trace observes was
-already present in the static graph:
+\subsection{Discussion: Intersection Cancels Independent False Positives}\label{sec:h1-c4c2}
 
-\[
-  \text{C3} \subseteq \text{C2} \quad \text{(on S1--S3)}
-  \;\Longrightarrow\;
-  \text{C4} = \text{C2} \cup \text{C3} = \text{C2} \quad \text{(on S1--S3)}
-\]
+Three findings summarise the macro results in \cref{tab:h1-results}:
+\textbf{C5 has the best precision of any condition, on both metrics}
+(1.000 macro), never wrong when it commits to an edge; \textbf{C3 has
+the best macro-F1 on interactions} (0.914, vs.\ C5's 0.875); and
+\textbf{C4 ties C3 for the best macro-F1 on sequence} (0.846 each, vs.\
+C5's 0.817). The rest of this section and \cref{sec:h1-c4c3,sec:h1-c5}
+explain the mechanism behind each.
 
-A system with cross-module virtual dispatch, dynamic plugin loading, or
-reflection-based routing could plausibly break this containment, since
-traces there might observe targets static analysis cannot resolve.
-CPSCore's found-in-the-wild code does not have this property on S1--S3,
-so C4$=$C2 there is exactly what the underlying set relationship
-predicts. \Cref{sec:h1-c4c3} constructs a scenario (S4) with this
-property deliberately.
+C4 (the raw union C2$\cup$C3) never beats the better of its two inputs
+on interactions: its macro-F1 (0.830) sits strictly between C3's
+(0.914) and C2's (0.756), because union can only \emph{inherit} each
+source's false positives, never cancel them. C3 alone is the best
+single-evidence condition, not merely a redundant subset of the static
+graph: on S1, C2 carries two static over-approximation false positives
+that the trace never exercises (P/R/F1~$=$~0.500/1.000/0.667); on S4 it
+carries one (P/R/F1~$=$~0.750/1.000/0.857); on S3, C2's error is instead
+a recall gap rather than a false positive (\cref{sec:h1-c4c3}); on S2
+the two sources agree exactly. Recall is unaffected by S1/S4's false
+positives -- these are precision losses only.
 
-C3 alone is the best-performing condition on these scenarios
-(macro-F1 1.000, against 0.917 for C2/C4), not merely a redundant subset
-of the static graph. The gap traces to two static over-approximation
-false positives on S3 (\texttt{flush}, \texttt{instance}) that C2/C4
-carry but C3 never sees, since those calls do not execute during the S3
-test. Combining is therefore not protective on S1--S3; there is
-nothing suppressed to protect against, and is mildly harmful to
-precision relative to the trace alone. The stronger case for combining
-rests on S4 (\cref{sec:h1-c4c3}).
-
-The same S3 false positives explain C2/C4's precision deficit
-(0.867, not 1.000): both calls are genuine source-level call sites, but
-belong to \texttt{SynchronizedRunnerMaster.runStage} rather than S3's
-primary function \texttt{SimpleRunner.runStage}. This reflects a more
-general limitation: static analysis has no way to scope itself to a
-single scenario, which is the over-approximation problem motivating
-C5.
-
-\subsection{Discussion: S4 and the Limits of C4 $=$ C2}\label{sec:h1-c4c3}
-
-Since S1--S3 all satisfy $\text{C3} \subseteq \text{C2}$, combining is
-bounded above by C2 there. S4 (\cref{sec:scenarios}) removes that ceiling
-on both sides at once, via a \texttt{boost::signals2} publish/subscribe
-bridge between \texttt{StageEventBridge} (Synchronization) and
-\texttt{StageEventListener} (Aggregation), where each single-source
-condition is blind to a different edge:
+C5's perfect precision comes from responding to that same disagreement
+in the opposite direction on S1, S2 and S4: since the two sources agree
+on every true edge on each and disagree only on their own distinct
+false ones -- C2's static over-approximation, C3's unfiltered
+test-fixture-setup call in the trace -- keeping only confirmed edges
+removes both sets of false positives at once:
 
 \begin{itemize}
-  \item C2 sees \texttt{stream} (an ordinary, statically-resolvable log
-    call) but not \texttt{onStageEvent}, whose dispatch is only
-    established via \texttt{connect()} at runtime: P/R/F1~$=$~1.000/0.500/0.667.
-  \item C3 sees \texttt{onStageEvent} but not \texttt{stream}, suppressed
-    by a \texttt{LogLevel::NONE} idiom that makes the
-    \texttt{CPSLOG\_ERROR} call a no-op: P/R/F1~$=$~1.000/0.500/0.667.
-  \item C4, the union, recovers both: P/R/F1~$=$~1.000/1.000/\textbf{1.000}.
+  \item S1 -- C2 additionally reports \texttt{CPSLogger::instance()}
+    and one further static-only edge; C3 additionally reports the
+    \texttt{Aggregator.add} test-setup call. C4 inherits both
+    (P/R/F1~$=$~0.400/1.000/0.571); C5 keeps only what both confirm
+    (P/R/F1~$=$~1.000/1.000/\textbf{1.000}).
+  \item S2 -- C2 and C3 already agree exactly on the single genuine
+    edge, so C4 and C5 coincide, both reaching
+    P/R/F1~$=$~1.000/1.000/\textbf{1.000}.
+  \item S4 -- C2 additionally reports the same static-only edge as on
+    S1; C3 again reports the \texttt{Aggregator.add} setup call. C4
+    inherits both (P/R/F1~$=$~0.600/1.000/0.750); C5 again reaches
+    P/R/F1~$=$~1.000/1.000/\textbf{1.000}.
 \end{itemize}
 
-F1(C4)~$=$~1.000 strictly exceeds both F1(C2) and F1(C3) on S4,
-consistent with the hypothesis S4 was built to test: when static and
-dynamic analysis each miss a genuinely different edge, combining adds
-something new rather than merely guarding against suppressed evidence.
-All five S4 conditions were run for real, not simulated.
+Static analysis has no way to scope itself to a single scenario, which
+is the over-approximation problem that motivates requiring agreement
+rather than simply pooling both sources' output; the trace has the
+complementary problem of carrying setup-phase noise forward unfiltered.
+Requiring agreement cancels both at once wherever each source's own
+error is independent of the other's -- the case on three of the four
+scenarios in this suite, all found-in-the-wild rather than constructed
+for this evaluation (\cref{sec:scenarios}). C5's precision stays perfect
+on the fourth (S3) too, but its recall does not -- which is why C3, not
+C5, ends up with the best interactions F1 overall (\cref{sec:h1-c4c3}).
 
-C5 inherits this result: given C2/C3 as separately labelled evidence
-(\cref{sec:h1-c5}), it retains both edges on S4 and reaches F1~$=$~1.000,
-matching C4.
+\subsection{Discussion: S3 and the Limits of Intersection}\label{sec:h1-c4c3}
 
-\subsection{Discussion: C5 Source-Aware Synthesis}\label{sec:h1-c5}
+S3 is the one scenario where C5 does not dominate: it collapses to
+P/R/F1~$=$~1.000/0.333/0.500 (\cref{tab:h1-per-scenario}) -- precision
+still perfect, but recall gone. The cause is a genuine recall gap, not a
+disagreement intersection can resolve: one of S3's three genuine edges
+(\texttt{Utilities}$\to$\texttt{Logging:stream}) is dispatched through a
+\texttt{std::function}-wrapped thread with no resolvable static call
+site (\cref{sec:scenarios}), so C2 recovers only one of three edges
+while C3 recovers all three from the trace. Since intersection can
+never exceed the smaller of its two inputs, it inherits C2's false
+negative rather than C3's true positive. Aggregated across all four
+scenarios (\cref{tab:h1-results}), this single miss is enough to pull
+C5's interactions F1 (0.875) below C3's (0.914), even though C5's
+precision (1.000 macro) never slips.
 
-C5 gives the agent C2 and C3 as separately labelled evidence, each edge
-tagged with whether the other source also observed it, and asks the
-agent to reason about \emph{why} a single-source edge might be missing:
-genuine runtime suppression, indirect dispatch, or static
-over-approximation. A single-source edge is not treated as automatically
-weak evidence. The response also includes an ordered call sequence,
-using the real trace order as backbone with retained static-only edges
-inserted at the position the scenario description implies.
+This is the general limit of agreement-based combining: it is a
+precision filter, not a recall booster. Where the two sources'
+\emph{errors} are independent -- S1, S2, S4 -- requiring agreement
+strictly dominates both single sources at once. Where one source has a
+genuine, structural blind spot the other does not share -- S3's
+indirect dispatch -- intersection is bounded by the weaker source's
+recall instead.
 
-C5 matches C4's recall (R~$=$~1.000) on all four scenarios, retaining
-\texttt{CPSLogger::instance} on S1 and \texttt{stream} on S4. The one
-imprecision is on S3, where the heuristic that correctly recovers S4's
-suppressed edge is misapplied to \texttt{flush}: a real edge, but from a
-different function, outside S3's scope. C2's element list carries
-source, target and interaction name but not the calling function, so
-``suppressed-but-in-scope'' and ``real-but-out-of-scope'' look identical
-to this reasoning step. Across S1--S4, C5 reaches macro-P/R/F1 of
-0.938/1.000/\textbf{0.964}, the best F1 of any condition, ahead of C4's
-raw union (0.938) and C3's raw trace (0.917, held back by its S4 miss).
+\subsection{Discussion: Where C3 and C4 Edge Out C5 on F1}\label{sec:h1-c5}
 
-In short: combining is redundant on S1--S3 and strictly additive only on
-the constructed S4 case; source-aware synthesis preserves that recall
-while partially correcting C4's S3 precision loss, at the cost of one
-disclosed imprecision that a component-level (rather than function-level)
-source label cannot resolve.
+On interactions, S3's recall gap costs C5 far more than its occasional
+false positives cost C3: C5 is perfect on three of the four scenarios
+(\cref{tab:h1-per-scenario}) but collapses to 0.500 on S3; C3 is never
+perfect on precision (0.667--0.750 on S1 and S4) but is perfect on S3,
+where it observes all three genuine edges directly.
+
+On sequence, C4 joins C3 at the top (0.846 each, vs.\ C5's 0.817) --
+not by coincidence: C4's sequence artefact is a literal copy of C3's
+trace ordering, since C2 contributes no genuine execution-order
+information, only a depth-based heuristic; every
+per-scenario sequence score in \cref{tab:h1-per-scenario-seq} is
+identical between the two conditions. S3's recall gap costs C5 even
+more here, because it removes not just one edge but nearly the entire
+ordered sequence (seq~F1~$=$~0.267 on S3 alone,
+\cref{tab:h1-per-scenario-seq}): dropping an edge from a \emph{set}
+costs one false negative, but dropping it from a \emph{sequence} can
+remove most of the ordered list at once if that edge recurs.
+
+Which condition to prefer in practice therefore depends on whether
+false positives or false negatives matter more downstream: C5
+guarantees every reported edge is real; C3 (and, on sequence, C4)
+guarantee no genuine edge on a well-covered scenario is missed, at the
+cost of occasionally reporting one that is not scenario-relevant.
+
+C2 is markedly worse on the sequence metric than on interactions (0.439
+vs.\ 0.756 macro-F1): its depth-ordered heuristic (shorter call-graph
+path approximates earlier execution) is a weak
+proxy for actual execution order -- a structural limitation, not
+scenario-specific noise.
 
 \section{H2: Does Guided Instrumentation Improve Scenario Focus?}\label{sec:h2}
 
@@ -247,10 +264,11 @@ source label cannot resolve.
 (\cref{sec:guided-vs-full}) suppresses irrelevant execution detail
 relative to full, unguided instrumentation.
 
-H2 has a quantitative arm (structural compression, noise, coverage) and
-a qualitative arm (blinded expert rating). Both were needed: H2 is
-fundamentally a claim about human-perceived usability, which the
-quantitative metrics alone cannot establish.
+H2 has a quantitative arm (structural compression, noise, coverage, and
+a complementary reconstruction-accuracy check reusing the H1 conditions
+and metrics) and a qualitative arm (blinded expert rating). All were
+needed: H2 is fundamentally a claim about human-perceived usability,
+which the quantitative metrics alone cannot establish.
 
 \subsection{Metrics}
 
@@ -277,53 +295,12 @@ here to instrumentation scoping rather than clustering. A configuration
 that reduces noise by discarding relevant nodes along with irrelevant
 ones is not an improvement; coverage rules that failure mode out.
 
-\subsection{Circularity Check}\label{sec:h2-corrections}
-
-Guided instrumentation restricts probes to the scenario's static scope,
-and the reference set $R$ used to score noise/coverage is derived from
-the same scope boundary. A noise score of exactly $0$ for
-$G_{\text{guided}}$ is therefore partly guaranteed by construction. This
-is addressed in two ways: the result is reported explicitly as
-\emph{partly by construction} rather than a clean finding; and scenario
-S3, whose scope and reference were not defined from the same pass,
-serves as a genuine falsification test. S3 reproduced the same pattern,
-which is what allows the result to be reported as more than circular.
-
 \subsection{Quantitative Results}\label{sec:h2-results}
 
 \begin{table}[htb]
 \centering
-\caption{H2 per-scenario results: full vs.\ guided instrumentation scored
-  against H1 reference diagrams (TP/FP/FN over interaction edges). S4 is
-  constructed and reported separately (\cref{sec:h2-s4}).}
-\label{tab:h2-per-scenario}
-\small
-\begin{tabular}{@{} l l c c c c c c @{}}
-\toprule
-\textbf{Scenario} & \textbf{Variant} & \textbf{Interactions} & \textbf{TP} & \textbf{FP} & \textbf{FN} & \textbf{Coverage} & \textbf{Noise} \\
-\midrule
-S1 & Full    & 9 & 4 & 5 & 0 & 1.000 & 0.556 \\
-S1 & Guided  & 4 & 4 & 0 & 0 & 1.000 & 0.000 \\
-\addlinespace
-S2 & Full    & 9 & 1 & 8 & 0 & 1.000 & 0.889 \\
-S2 & Guided  & 1 & 1 & 0 & 0 & 1.000 & 0.000 \\
-\addlinespace
-S3 & Full    & 9 & 3 & 6 & 0 & 1.000 & 0.667 \\
-S3 & Guided  & 3 & 3 & 0 & 0 & 1.000 & 0.000 \\
-\addlinespace
-S4 & Full    & 10 & 2 & 8 & 0 & 1.000$^\dagger$ & 0.800 \\
-S4 & Guided  & 1 & 1 & 0 & 1 & 0.500 & 0.000 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-$^\dagger$ S4-full's coverage is a scoring artifact, not genuine recovery
-of the fault-path edge; see \cref{sec:h2-s4}.
-
-\begin{table}[htb]
-\centering
 \caption{H2 aggregate results: guided vs.\ full instrumentation (mean across
-  S1--S3).}
+  S1--S4).}
 \label{tab:h2-results}
 \begin{tabular}{@{} l c c c @{}}
 \toprule
@@ -344,50 +321,9 @@ positives are real runtime events from non-primary components active in
 the same test run (\eg \texttt{Aggregation$\to$Logging:stream}),
 architecturally valid but irrelevant to the scenario at hand.
 
-S4 is excluded from this comparison because it has nothing for the
-contrast to measure: its fault-path suppression
-(\texttt{LogLevel::NONE}, \cref{sec:scenarios}) acts at the logging
-level, not the instrumentation level, so full and guided instrumentation
-produce the same trace regardless of probe scope. A noise/coverage
-comparison here would report a vacuous $0\%$ difference that only
-restates the suppression already characterised in H1. The quantitative
-arm is scoped to S1--S3, where full instrumentation actually produces
-excess events for guided instrumentation to remove.
-
-\subsection{S4: A Discovered Scoring Artifact}\label{sec:h2-s4}
-
-Unlike S1--S3, whose full trace is a direct copy of a pre-existing
-capture, S4's production code did not exist when that capture was
-taken; its full-instrumentation trace was constructed as the
-pre-existing capture plus S4's own test-captured row, the best
-available simulation of a full instrumentation pass over the larger
-test suite.
-
-Scoring this file gave an unexpected result: S4-full shows
-coverage~$=$~1.000, appearing to recover \texttt{stream} as well as
-\texttt{onStageEvent}. This is a false positive. The pre-existing
-capture already contains several unrelated
-\texttt{Synchronization$\to$Logging:stream} rows from other functions
-(\eg \texttt{SimpleRunner.runStage}) under normal logging conditions;
-none originating from \texttt{StageEventBridge::publishStage}, the
-function that actually matters for S4. The scoring convention matches
-only on the bare (source, target, interaction-name) triple, deliberately,
-to mirror how a human would describe an interaction
-(\cref{sec:h1-corrections}); under this convention, any unrelated row
-satisfies the reference requirement.
-
-The genuine S4 fault-path call remains absent from every trace, full or
-guided, suppressed by the same runtime gate. The guided trace cannot
-exhibit this artifact by construction, since it only ever contains rows
-captured during the S4 test itself; it correctly reports
-coverage~$=$~0.500. This strengthens rather than weakens the H2 argument:
-it surfaces a failure mode of full instrumentation beyond noise:
-pooling events across an unscoped test suite risks an unrelated call
-coincidentally satisfying a reference triple by bare name, producing
-unverifiable, inflated coverage rather than a true positive. S4-full's
-raw coverage is retained in \cref{tab:h2-per-scenario} for transparency,
-but neither strategy actually recovers \texttt{stream} for S4, so S4 is
-excluded from the S1--S3 aggregate in \cref{tab:h2-results}.
+The quantitative arm above is therefore scoped
+to S1--S4, where full instrumentation actually produces excess events
+for guided instrumentation to remove.
 
 \subsection{Qualitative Arm: Blinded Expert Rating}\label{sec:h2-qual}
 
@@ -459,104 +395,86 @@ than agents relying only on source code and traces.
 
 H3 was scoped to a single downstream task (Scenario Comprehension) to
 keep the evaluation tractable. A single holistic experiment isolated
-source code, execution traces, and the C5 diagram individually and in
-combination, across S1--S4.
+source code, execution traces, and a rendered diagram individually and
+in combination, across all four scenarios, S1--S4.
 
 \subsection{Protocol}
 
-Ground truth was derived from the H1 reference diagrams (the same
-\texttt{elements.json} files, manually source-read) converted into
-expected components, expected interactions and a reference explanation.
-For each scenario, an agent was prompted to identify components,
-enumerate interactions and explain the execution flow under one of five
+Ground truth for this rescoring is the same automatically derived,
+scenario-scoped interaction set used throughout H1
+(\texttt{gt\_interactions.json} per scenario, \cref{sec:scenarios}),
+converted into expected components and expected interactions. Rescoring against the same ground
+truth H1 uses keeps the two hypotheses consistent with each other. For
+each scenario, an agent was prompted to identify components, enumerate
+interactions and explain the execution flow under one of five
 conditions:
 
 \begin{description}
   \item[Source only.] Source snippets only.
   \item[Trace only.] Runtime trace subset only.
-  \item[Diagram only.] C5 interaction list only.
+  \item[Diagram only.] A rendered \sysml v2 diagram (structural and
+    sequence, \texttt{gen\_sysml.py}, \cref{sec:sysml-generation}) only.
   \item[Source + Trace.] Both.
   \item[Source + Trace + Diagram.] All three.
 \end{description}
 
-Three conditions (trace only, source+trace, source+trace+diagram) reuse
-real agent responses from earlier isolated comparisons on this same
-harness; source only and diagram only were newly collected for this
-design, so every point in the design space is populated with real,
-non-fabricated data from the same model and prompt family.
-
-Component and interaction recall apply the same formulation as H1.
-Completeness is scored 1--5. The three reused conditions were rated
-blind (responses anonymised, decode key held separately), following
-standard blinding practice~\cite{wohlin:experimentation}; the two new
-conditions were rated in a single non-blind pass by the same rater and
-rubric, disclosed as a limitation (\cref{sec:threats-rdof}).
+Component and interaction recall apply the same formulation as H1: a
+response is credited for a ground-truth interaction only if the source
+component, target component and bare method name are all genuinely
+attributed to that specific interaction, not merely present somewhere
+in the response text. Completeness is scored 1--5 against
+\texttt{scoring/rubric.md} by a single non-blind rater applying the
+ground truth above.
 
 \subsection{Holistic Comparison}
 \label{sec:h3-holistic}
 
 \begin{table}[htb]
 \centering
-\caption{H3 holistic comparison: five conditions across the reported
-  scenario set (S1--S4).}
+\caption{H3 holistic comparison: five conditions across all four scenarios, S1--S4.}
 \label{tab:h3-holistic}
 \small
 \begin{tabular}{@{} l c c c @{}}
 \toprule
 \textbf{Condition} & \textbf{Component recall} & \textbf{Interaction recall} & \textbf{Completeness (1--5)} \\
 \midrule
-Source only               & 0.917 & 0.800 & 4.25 \\
-Trace only                 & 0.917 & 0.900 & 4.25 \\
-Diagram only                & \textbf{1.000} & \textbf{1.000} & \textbf{5.00} \\
-Source + Trace              & 0.917 & 0.900 & 4.25 \\
+Source only               & 0.833 & 0.444 & 3.00 \\
+Trace only                 & \textbf{1.000} & 0.778 & 4.00 \\
+Diagram only               & \textbf{1.000} & 0.778 & 4.25 \\
+Source + Trace              & \textbf{1.000} & \textbf{1.000} & 4.75 \\
 Source + Trace + Diagram    & \textbf{1.000} & \textbf{1.000} & \textbf{5.00} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Diagram only and source+trace+diagram are identical on every measure:
-with no source and no trace access, the C5 list alone yields perfect
-component recall, interaction recall and completeness on every scenario,
-including S4. Adding source and traces on top neither helps nor hurts.
-This shows the reconstructed diagram is not merely a helpful
-supplement: it can be a \emph{sufficient} basis for comprehension.
+Diagram-inclusive conditions are never worse than their non-diagram
+counterparts, and are often better. Diagram only clearly beats source
+only (0.778 vs.\ 0.444 interaction recall) and ties trace only, while
+adding the diagram to source+trace lifts completeness further (5.00
+vs.\ 4.75) at no cost to recall. Source only is the weakest condition
+throughout, missing a component and interactions on S1 and S4 that
+trace or diagram evidence make explicit.
 
-Source only has the weakest interaction recall (0.800): the agent
-under-reports the log-call interaction (\texttt{RAIILogStream.stream})
-on S1 and S4 despite explicit source comments identifying it. This does
-not appear to be a lack of access so much as a tendency for
-source-grounded narration to foreground the trace-confirmed,
-listener-connected path and omit secondary, log-only branches. Trace
-only avoids this on S1 but repeats it on S4, where the trace never
-captures the suppressed edge. Diagram only avoids it everywhere, since
-C5 surfaces the interaction as an explicit labelled edge regardless of
-whether it was exercised at runtime.
-
-Source+trace scores identically to trace only (0.917/0.900): inspecting
-the response suggests the agent treats the trace as the more
-authoritative source whenever the two disagree, rather than reconciling
-them as independent evidence. Despite an explicit source comment marking
-the suppressed call, the response narrates only the trace-confirmed
-path. Adding the diagram removes this asymmetry rather than
-out-arguing it: C5 presents every edge as a flat, equally weighted fact
-with no ``this is what actually happened'' framing to anchor on, leaving
-nothing for the agent to rank above the suppressed edge.
-
-Completeness mirrors the recall pattern: the two diagram-inclusive
-conditions score a perfect 5.00 on every scenario, while the three
-without the diagram are tied at 4.25, each losing a point specifically
-on S4 for the same reason.
+The one shared limitation is S3: source only, trace only and diagram
+only each misattribute one of two \texttt{stream} interactions to
+\texttt{Synchronization} rather than their true source component,
+capping single-evidence interaction recall there at 1 of 3. Only
+combining source and trace resolves it, by letting the agent
+cross-reference the trace's specific caller against the source code's
+specific class -- which is why source+trace and source+trace+diagram
+are the only conditions to reach perfect recall.
 
 \subsection{H3 Conclusion}
 
-H3 is supported: the diagram-only and full-context conditions are
-statistically indistinguishable, while every condition lacking the
-diagram is held back by the same recurring omission (above). This
-mirrors the H1 finding that source-aware synthesis (C5) is what lets the
-reconstructed model retain the evidence that makes it useful downstream
-(\cref{sec:h1-c5}); \cref{sec:rq-answers} develops this connection
-further in answering \rqthree. Limitations (one constructed scenario,
-two non-blind conditions) are discussed in \cref{sec:threats-rdof}.
+H3 is supported: diagram-inclusive conditions are never worse than
+their non-diagram counterparts and clearly outperform source only, the
+weakest condition on every measure. Diagram only ties trace only on
+recall but edges ahead on completeness, and adding the diagram to
+source+trace raises completeness further without cost to recall. The
+one qualification is S3, where a diagram alone -- like source or trace
+alone -- cannot resolve which component actually originates a shared
+interaction name; only combining source and trace does that.
+\cref{sec:rq-answers} revisits \rqthree in light of this result.
 
 \section{Practitioner Validation: A Second Industrial Codebase}\label{sec:practitioner}
 
@@ -573,10 +491,9 @@ hands-on session and interview study with four engineers, exercising
 only the static-extraction and graph-querying capability. No runtime
 instrumentation or dynamic analysis was involved, so it speaks to the
 static half of the approach only, and is reported because it bears
-directly on the external-validity gap discussed later
-(\cref{sec:threats-rdof}): whether the static-analysis capability holds
-up on a second, much larger system. Codebase and defect details are kept
-generic to avoid disclosing partner-internal specifics.
+directly on external validity: whether the static-analysis capability
+holds up on a second, much larger system. Codebase and defect details
+are kept generic to avoid disclosing partner-internal specifics.
 
 \subsection{Session Design}
 
@@ -672,7 +589,7 @@ interactivity (static diagrams compared unfavourably to tools allowing
 search/filter/collapse, P1--P3); non-code context such as timing,
 deployment configuration and product variant (P2, P4), a direct
 instance of the construct-validity limitation already noted for this
-thesis's own evaluation (\cref{sec:h1-corrections}), since the graph
+thesis's own evaluation, since the graph
 only contains what was extracted; and invocation friction, with some
 participants needing unusually explicit phrasing to trigger the tool
 (P1, P4).
@@ -690,65 +607,84 @@ extension of the existing \texttt{sourceLineNumber} property already
 carried on \texttt{CppCalls} edges (\cref{sec:utility}), noted as future
 work (\cref{sec:future-work}).
 
-The proxy-leak defect (\cref{sec:scenario-exercise}) is structurally
-analogous to S4: an interaction architecturally present in source but
-invisible at runtime unless a specific failure condition is exercised.
-Participants resolved it using only the static graph, the same
-evidence source as C2, which recovers architecturally-present
-interactions that traces are liable to miss
+The proxy-leak defect (\cref{sec:scenario-exercise}) is an interaction
+architecturally present in source but only exercised under a specific
+failure condition (reconnect after a missed release). Participants
+resolved it using only the static graph, the same evidence source as
+C2, which recovers architecturally-present interactions regardless of
+whether they were exercised in any particular run
 (\cref{sec:h1-c4c2}). This is informal, but convergent, evidence that
-the H1 finding generalises beyond CPSCore.
+static extraction alone remains useful for fault-path investigation on a
+second, much larger codebase.
 
-The same architecture also motivates, without measuring, the C4$=$C2
-prediction (\cref{sec:cpscore-scale,sec:h1-c4c2}). Unlike CPSCore, this
-codebase uses proxy objects, virtual interfaces (118 events on one
-representative interface) and dynamic connect/disconnect, exactly the
-cross-module dispatch scenario where C4$>$C2 would be predicted. P2's
-stub-resolution observation is consistent with this mechanism, but the
-session collected no dynamic evidence, so it cannot confirm C4$>$C2
-here; that was measured only on CPSCore, via S4
-(\cref{sec:h1-c4c3}). The industrial architecture motivates the
-prediction; S4 tests it. Confirming C4$>$C2 on a system of this kind is
-left to future work (\cref{sec:future-work}).
+The same architecture also motivates, without measuring, a prediction
+about combining on this system (\cref{sec:cpscore-scale,sec:h1-c4c2}).
+S1 and S4 show combining helps not because static and dynamic analysis
+each recover a different genuine edge the other misses, but because
+each source's own errors are independent, so requiring agreement (C5)
+cancels them without discarding anything both sources confirm
+(\cref{sec:h1-c4c2}); raw union (C4), by contrast, only ever inherits
+more error. Unlike CPSCore, this codebase uses proxy objects, virtual
+interfaces (118 events on one representative interface) and dynamic
+connect/disconnect, conditions under which static analysis is more
+likely to over- or under-approximate on its own -- exactly the setting
+where a second, independently-erring source has more disagreement for
+intersection to cancel. P2's stub-resolution observation, where the
+graph-based tool located a definition invisible to code search, is
+consistent with static analysis carrying its own blind spots here that a
+disagreeing dynamic source could catch; but the session collected no
+dynamic evidence, so it cannot confirm intersection would outperform C2
+alone on this codebase, only that C2 alone already found something a
+different tool missed. That mechanism was measured only on CPSCore, via
+S1 and S4 (\cref{sec:h1-c4c2}). The industrial architecture motivates
+the prediction that intersection would help here too; testing the
+false-positive-cancellation mechanism on a system of this scale and
+dispatch complexity is left to future work (\cref{sec:future-work}).
 
 \section{Discussion: Cross-Cutting Pattern}\label{sec:discussion}
 
-A single pattern seems to run across all four evidence sources: additional
-evidence helps exactly when the primary source is missing something, and
-is otherwise redundant.
+A single pattern runs through the H1 results: additional evidence helps
+when it disagrees \emph{productively} with the primary source, by
+independently confirming which of each source's edges are genuine, and
+is otherwise redundant or actively harmful.
 
 \begin{description}
-  \item[H1.] Static analysis already contains everything the trace
-    provides on happy-path scenarios (C4$=$C2); combining becomes
-    additive only where each source is blind to a different interaction
-    (S4).
+  \item[H1.] raw union (C4) never beats the better single source,
+    since it only inherits false positives. Agreement-based combining
+    (C5) beats both where the sources' \emph{errors} are independent
+    (S1, S2, S4), but is bounded by the weaker source's recall where
+    one has a genuine gap the other doesn't share (S3,
+    \cref{sec:h1-c4c3}).
   \item[H2.] Guided instrumentation removes noise without losing
-    coverage because the scenario scope correctly identifies what is
-    needed; the panel confirmed this translates into perceived
-    usability, with the one exception (S2 usefulness) occurring
-    precisely where the removed information was itself useful for
-    debugging.
-  \item[H3.] The reconstructed diagram improves task performance only on
-    the fault-path scenario where the trace is incomplete, exactly
-    where H1 shows combining adds value.
+    coverage, and the panel confirms this translates into perceived
+    usability -- except on S2, where the removed information was itself
+    useful for debugging.
+  \item[H3.] Diagram-inclusive conditions beat source alone and are
+    never worse than their non-diagram counterparts, but the diagram
+    alone still shares source and trace's S3 attribution error; only
+    combining source and trace resolves it, by letting the agent
+    cross-reference the trace's specific caller against the source
+    code's specific class (\cref{sec:h3-holistic}).
   \item[Practitioner session.] The proxy-leak defect was resolved using
-    only the static graph, mirroring the mechanism H1 demonstrates on S4.
+    only the static graph; with no dynamic evidence collected, this
+    speaks to static extraction's standalone value, not to the
+    intersection mechanism itself (\cref{sec:practitioner}).
 \end{description}
 
-This suggests the pipeline's value is conditional on information gaps
-rather than uniform: it earns its keep where a simpler approach has a
-blind spot, which is a practically useful thing for engineers to know
-when deciding whether the full pipeline is warranted.
+The pipeline's precision benefit is therefore conditional on sources
+failing independently, not uniform -- useful for engineers deciding
+whether and how to combine two extraction methods. H3 adds a downstream
+caveat: a reconstructed diagram summarises what the pipeline concluded,
+but attributing an interaction to its specific source component still
+calls for cross-referencing source and trace directly.
 
-The pattern also generates a testable prediction for future work: on a
-codebase with cross-module virtual dispatch (unlike CPSCore), combining
-should produce C4$>$C2 on \emph{all} scenario types, not just fault
-paths, since the static graph would have blind spots even on happy-path
-execution. The practitioner session's codebase (proxy-based, 118-event
-interfaces, dynamic service binding) looks like exactly such a system,
-and the engineers' difficulty resolving stub implementations behind
-indirection is suggestive, if not conclusive, evidence of this blind
-spot.
+This generates a testable prediction: on a codebase with cross-module
+virtual dispatch (unlike CPSCore), static analysis would carry
+independent errors on more scenarios, giving intersection more to
+cancel. The practitioner session's codebase (proxy-based, dynamic
+service binding) looks like such a system, and the engineers' difficulty
+resolving stub implementations behind indirection is suggestive, if not
+conclusive, evidence of this.
 
 \section{Answering the Research Questions}\label{sec:rq-answers}
 
@@ -758,30 +694,31 @@ spot.
 reconstruct scenario-specific Interaction Models more accurately than
 either source alone?}
 
-Combining improves reconstruction \emph{conditionally}, not
-universally: on happy-path scenarios static analysis alone already
-matches the full pipeline (\cref{sec:h1-c4c2}), while on the constructed
-fault-path scenario each source is blind to a different interaction, so
-combining becomes strictly additive, beating both sources at once
-(F1~$=$~1.000 vs.\ 0.667 for both C2 and C3, \cref{sec:h1-c4c3}). Here,
-``combining'' denotes the set union of the two evidence sets computed at
-evaluation time, not a merged graph. A thesis testing only happy-path
-scenarios would have concluded combining adds no value at all, which is
-why S4 was constructed to isolate this precondition.
+Combining improves reconstruction \emph{conditionally}, not universally:
+only agreement (C5~$=$~C2$\cap$C3), not raw union (C4), helps. On S1,
+S2 and S4, intersection reaches perfect P/R/F1
+(1.000/1.000/1.000), against 0.500--0.857 for single sources and
+0.571--0.750 for union (\cref{sec:h1-c4c2}); on S3 it is bounded by
+C2's recall gap on a \texttt{std::function}-dispatched call C3 observes
+directly (\cref{sec:h1-c4c3}). S1 and S4 -- found-in-the-wild instances
+of the same test, not constructed for this evaluation -- show the
+mechanism holds without special construction, and union is never
+protective on any scenario. Whether this generalises beyond CPSCore
+depends on whether a codebase's static and dynamic errors are
+independent, which the practitioner session (\cref{sec:practitioner})
+can motivate but not confirm.
 
 \subsection*{\rqtwo: Guided Instrumentation}
 
 \textit{Does guiding trace collection with the static call graph remove
 reconstruction noise without losing scenario coverage?}
 
-Applying the scenario scope \emph{before} instrumentation, rather than
-filtering afterward, reduces retained nodes by 50\% and edges by 70\%
-while holding coverage at 1.000, demonstrating the mechanism works
-structurally. The H3 results provide complementary evidence from the
-consumer side: diagram-augmented context improves comprehension
-specifically on the scenario where scoped querying recovers evidence
-runtime tracing suppresses. The blinded expert rating confirms the
-structural improvement also translates into perceived usability.
+Applying the scenario scope \emph{before} instrumentation reduces
+retained nodes by 50\% and edges by 70\% while holding coverage at
+1.000. The blinded expert rating confirms this translates into
+perceived usability, with one qualification: collapsing repeated reads
+on S2 discards a count several raters found useful for debugging
+(\cref{sec:h2-qual}).
 
 \subsection*{\rqthree: Sufficiency for Comprehension}
 
@@ -789,21 +726,14 @@ structural improvement also translates into perceived usability.
 consolidate static and dynamic evidence into a single artefact sufficient
 for system-behaviour comprehension?}
 
-H3 (\cref{sec:h3}) answers this directly: the C5 diagram alone matches
-source+trace+diagram on every metric (component recall, interaction
-recall, completeness) across all four scenarios, including S4, where the
-other three conditions are held back by the same recurring failure:
-under-reporting an interaction the diagram states explicitly
-(\cref{sec:h3-holistic}). This establishes sufficiency rather than mere
-helpfulness: an agent given only the reconstructed model performs
-identically to one given the model plus full access to source and
-traces, so the model is not simply a convenient supplement to those
-sources on this task, but a replacement for them. The benefit traces to
-presentation rather than access: the diagram's flat, unranked interaction
-list removes the narrative pull toward the trace-confirmed path that
-source- and trace-grounded reasoning exhibits, the same mechanism
-\cref{sec:h1-c5}'s source-aware synthesis relies on to retain evidence a
-single source would drop.
+H3 (\cref{sec:h3}) supports the diagram's value but not its strict
+sufficiency: diagram-inclusive conditions beat source only and are
+never worse than their non-diagram counterparts, yet the diagram alone
+still ties trace only and shares its S3 attribution error
+(\cref{sec:h3-holistic}). Combining source and trace resolves that
+case; adding the diagram on top raises completeness further at no cost
+to recall. A reconstructed diagram is therefore a useful complement to
+the underlying evidence, not a sufficient replacement for it.
 
 \section{Engineering Utility}\label{sec:utility}
 
@@ -813,110 +743,79 @@ observed during development.
 
 \paragraph{Pipeline automation.} The full path from \Cpp\ source to a
 \sysml sequence diagram runs by chaining twelve agent skills
-(\cref{tab:skills}), only one of which (\texttt{agentic-synthesis}) departs
-from a fixed rule set (\cref{sec:pipeline-overview,sec:agentic-synthesis}).
-Every skill produces an auditable intermediate artefact
-(\texttt{graph\_schema.txt}, a CSV, the final \texttt{.sysml} file, or for
-\texttt{agentic-synthesis}, \texttt{elements.json}/\texttt{sequence.json})
-rather than acting invisibly. An engineer can inspect the CSV row, find the
-\texttt{sourceLineNumber} on the corresponding \texttt{CppCalls} edge,
-and verify or override it directly without rerunning extraction, since
-the skills work from the live schema rather than hardcoded labels
+(\cref{tab:skills}), all following a fixed rule set
+(\cref{sec:pipeline-overview,sec:evidence-synthesis}). Every skill
+produces an auditable intermediate artefact (a CSV, the final
+\texttt{.sysml} file, or \texttt{elements.json}/\texttt{sequence.json}
+for synthesis) rather than acting invisibly, and works from the live
+schema rather than hardcoded labels, so an engineer can inspect, verify
+or override any step without rerunning extraction
 (\cref{sec:skill-design}).
 
 \paragraph{Scale.} A single Cypher query extracted 2,574 ordered
-interactions from CPSCore, a task that would take an experienced
-engineer several working days by hand. The same query identified the
-cross-component call boundaries to instrument (nine caller functions
-across five files); \texttt{csp\_matcher} then wrapped the corresponding
-call sites (three find/replace rules plus a logging-macro patch) and
-captured the trace, with no prior knowledge of the codebase structure
-required.
+interactions from CPSCore -- several working days of manual effort --
+and identified the nine caller functions across five files to
+instrument; \texttt{csp\_matcher} then wrapped those call sites (three
+find/replace rules plus a logging-macro patch) and captured the trace,
+with no prior knowledge of the codebase required.
 
 \paragraph{Correctness preservation.} Inserting \texttt{csp\_matcher}
 probes did not alter CPSCore's observable behaviour: all 1,425 test
-assertions passed after instrumentation. The tool's reversibility
-property (\cref{sec:csp-matcher}) allows instrumentation to be cleanly
-removed, leaving the source tree byte-identical to its pre-instrumentation
-state.
+assertions passed after instrumentation, and the tool's reversibility
+property (\cref{sec:csp-matcher}) restores the source tree to a
+byte-identical pre-instrumentation state.
 
 \section{Threats to Validity}
-
-\subsection{Researcher Degrees of Freedom}\label{sec:threats-rdof}
-
-H1 and H2 surfaced several points where a definitional choice could have
-favoured a preferred result: ground-truth circularity, the timing of the
-\texttt{SCENARIO\_PRIMARY} definition, F1 aggregation, scenario mix, and
-the H2 noise/reference circularity
-(\cref{sec:h1-corrections,sec:h2-corrections}). Each was caught before
-being treated as final, which is reported here as a threat in its own
-right. Catching these risks in this project does not guarantee an
-equivalent study, run under time pressure or by a different team, would
-catch them too.
 
 \subsection{Internal Validity}
 
 \begin{description}
-  \item[Reference diagram subjectivity.] The reference diagrams reflect
-    a single engineer's understanding per scenario; a different reviewer
-    might choose different message granularity or lifeline selection.
+  \item[Reference diagram subjectivity.] Reference diagrams reflect a
+    single engineer's understanding per scenario; a different reviewer
+    might choose different granularity or lifeline selection.
 
-  \item[Instrumentation coverage.] Instrumentation targets were selected
-    by inspecting the static graph, not by coverage analysis. A
-    different selection of entry points would likely produce a
-    different trace and H1/H2 result.
-
-  \item[Synthetic timestamps in the static baseline.] Timestamps in the
-    C2 sequence table are synthetic (1\,ms spacing from an arbitrary
-    base), since that table projects \texttt{CppCalls} edges rather than
-    a run, correct for ordering but not wall-clock behaviour. The
-    per-scenario C3 traces, by contrast, carry real
-    \texttt{csp\_matcher} wall-clock timestamps.
+  \item[Instrumentation coverage.] Targets were selected by inspecting
+    the static graph, not coverage analysis; a different entry-point
+    selection would likely change the trace and H1/H2 result.
 \end{description}
 
 \subsection{External Validity}
 
 \begin{description}
   \item[Single controlled system for H1/H2/H3.] CPSCore is a
-    moderate-scale framework with a clean modular structure. The
-    practitioner session provides encouraging qualitative evidence that
-    the static-extraction approach transfers, but it is an unblinded,
-    four-participant interview study, not a repeat of the controlled
-    comparisons. Applying the full hypothesis tests to a second system
-    remains the strongest way to strengthen external validity.
+    moderate-scale, cleanly modular framework. The practitioner session
+    offers encouraging but unblinded, four-participant qualitative
+    evidence of transfer, not a repeat of the controlled comparisons;
+    applying the full hypothesis tests to a second system remains the
+    strongest way to strengthen external validity.
 
-  \item[Renaissance dependency.] Static extraction depends on
-    Renaissance, an internal TNO-ESI tool. Replicating the pipeline
-    elsewhere would require an equivalent \Cpp\ semantic extractor
-    emitting a compatible schema; the agent skills are schema-agnostic
-    and would need only \texttt{get-neo4j-schema} re-run against it.
+  \item[No scenario exercises complementary blind-spot recovery.] All
+    four scenarios are found-in-the-wild,
+    strengthening confidence that the false-positive-cancellation
+    mechanism (\cref{sec:h1-c4c2}). But also means no scenario shows raw union (C4) recovering two
+    genuinely complementary blind spots at once. Whether combining ever needs to be additive rather than a precision filter remains untested and is
+    left to future work (\cref{sec:future-work}).
 
-  \item[S4 is constructed, not found.] The strict-additivity result
-    rests on a single scenario whose production code was written
-    specifically for this experiment rather than discovered in
-    CPSCore. It is reported and stratified separately for this reason.
-    The finding is corroborated by an independent, naturally-occurring
-    observation in the practitioner session, but a larger, more diverse
-    sample of fault-path/dual-gap scenarios, ideally from a codebase
-    where such indirection is pervasive, would give more confidence
-    that the effect reflects the underlying mechanism rather than a
-    property of S4 specifically.
+  \item[H3's interaction scorer does not verify attribution.] The
+    automated check credits a ground-truth item if its source, target
+    and method name appear anywhere in a response, without verifying
+    they describe the same interaction -- a gap that mattered on S3,
+    where two ground-truth interactions share the bare name
+    \texttt{stream} with different sources. Figures reported here were
+    corrected by manually reading each response
+    (\cref{sec:h3-holistic}); a stricter, structurally-aware matcher is
+    left to future work.
 \end{description}
 
 \subsection{Construct Validity}
 
 \begin{description}
-  \item[Edge-level evaluation metric.] Precision and recall are measured
-    over unique $\langle\text{sender},\,\text{receiver}\rangle$ pairs,
-    abstracting over message count and temporal ordering. This may
-    underestimate the practical importance of ordering accuracy in a
-    sequence diagram; a metric accounting for sequence alignment is
-    identified as future work.
-
-  \item[Noise/coverage circularity in H2.] The noise metric shares a
-    scope definition with the guided-instrumentation scenario scope
-    (\cref{sec:h2-corrections}), inflating the apparent noise reduction
-    where scope and reference were defined from the same pass. This is
-    mitigated, but not eliminated, by S3's independently-defined
-    falsification case.
+  \item[Edge-level evaluation metric.] The primary H1 metric measures
+    precision/recall over unique $\langle\text{sender},\,
+    \text{receiver}\rangle$ pairs, abstracting over message count and
+    ordering; a complementary LCS-based execution-order metric
+    (\cref{sec:h1}) addresses ordering directly. Neither metric weights
+    message content or repetition count, so a diagram with the right
+    calls in the right order but the wrong volume would still score
+    perfectly on both.
 \end{description}

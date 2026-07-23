@@ -2,7 +2,7 @@
 
 This chapter describes the design of the hybrid reconstruction pipeline:
 the property graph schema that stores the static artefacts, the separate
-trace-collection pipeline, the agent skill architecture that orchestrates
+trace-collection pipeline, the agent skill architecture that can optionally be used to orchestrate
 extraction and generation, the pattern-based instrumentation tool used for
 trace collection, and the scenario-scoped querying that produces
 scenario-specific interaction models.
@@ -12,48 +12,22 @@ scenario-specific interaction models.
 The pipeline takes a \Cpp\ source tree and, optionally, a set of
 timestamped execution traces, and produces \sysml sequence diagrams
 scoped to a user-specified scenario. It runs as six stages
-(\cref{fig:pipeline-overview}), each implemented as a composable agent
-skill invocable by natural-language query and backed by a shared \neo
-property graph. Five stages follow a fixed, deterministic rule set given
-their inputs; the sixth (Stage~5, Agentic Synthesis) is the one skill
-whose own instructions are reasoning guidance rather than a strict rule
-set which resists a fixed lookup.
+(\cref{fig:pipeline-overview}). All six stages follow a fixed, deterministic rule set
+given their inputs.
 
 \begin{figure}[htb]
 \centering
-\begin{tikzpicture}[
-  node distance = 8mm and 14mm,
-  stage/.style = {rectangle, draw, rounded corners, thick,
-                  minimum width=2.6cm, minimum height=1.05cm,
-                  align=center, font=\small},
-  dyn/.style   = {stage, fill=blue!15},
-  stat/.style  = {stage, fill=gray!12},
-  agentic/.style = {stage, fill=orange!20},
-  arr/.style   = {-{Stealth[length=2.2mm]}, thick}
-]
-  \node[stat] (extract)  {1. Static\\Extraction};
-  \node[stat, right=of extract] (query) {2. Code Graph\\Query};
-  \node[stat, right=of query]   (matrix) {3. Dependency\\Matrix Extraction};
-  \node[dyn,  below=of matrix]  (trace)  {4. Trace Instrumentation\\\& Runtime Tracing};
-  \node[agentic, left=of trace] (synth)  {5. Agentic\\Synthesis};
-  \node[stat, left=of synth]    (sysml)  {6. SysML~v2\\Generation};
-
-  \draw[arr] (extract) -- (query);
-  \draw[arr] (query)   -- (matrix);
-  \draw[arr] (matrix)  -- (trace);
-  \draw[arr] (trace)   -- (synth);
-  \draw[arr] (synth)   -- (sysml);
-
-  \begin{scope}[on background layer]
-    \node[draw, dashed, fit=(extract)(query)(matrix),
-          inner sep=6mm, label={[font=\small]above:Static graph construction \& scoping}] {};
-  \end{scope}
-\end{tikzpicture}
-\caption{Pipeline overview. Numbered stages correspond to the enumeration
-  below. Stage~4 (blue) is the only stage that reads dynamic (runtime)
-  information directly; the static graph and the trace-derived table
-  are kept separate up to this point and combined only here
-  (\cref{sec:combine-scope,sec:agentic-synthesis}).}
+\includegraphics[width=1.2\textwidth, height=2\textheight, keepaspectratio]{figures/h1-full-pipeline.png}
+\caption{The concrete pipeline as run for the H1 experiments, with the
+  actual tools and artefacts behind each stage: Renaissance populating
+  the \neo code graph (Phase~1), \texttt{csp\_matcher}-guided
+  instrumentation producing the scenario trace (Phase~2), and
+  \texttt{gen\_sysml.py} rendering the final \sysml v2 output
+  (Phase~4). Phase~3, union and tagging of the Phase~1/Phase~2
+  artefacts by provenance, is the deterministic synthesis step the
+  evaluated H1 conditions (\cref{sec:conditions}) use directly, and its
+  tagged output feeds \sysml generation directly
+  (\cref{sec:evidence-synthesis}).}
 \label{fig:pipeline-overview}
 \end{figure}
 
@@ -64,15 +38,19 @@ set which resists a fixed lookup.
     the CPSCore case-study graph contains 67,104 nodes.
 
   \item \textbf{Code graph query} (\texttt{text-to-cypher}, built on
-    \texttt{get-neo4j-schema}; \texttt{cypher-to-output}). A
-    natural-language scenario description is translated into a
-    schema-aware Cypher query by \texttt{text-to-cypher} and executed by
-    \texttt{cypher-to-output} against the live graph, retaining only
-    interactions whose caller and callee belong to the scenario's
-    declared components (\cref{sec:scoping-impl}).
-    \texttt{get-neo4j-schema} is queried first so query generation
-    targets the live schema rather than hardcoded node labels, keeping
-    the pipeline codebase-agnostic.
+    \texttt{get-neo4j-schema}; \texttt{cypher-to-output}). Two Cypher
+    queries are run against the live graph. The first is
+    scenario-scoped: a forward traversal from the scenario's
+    entry-point functions, retaining only cross-component
+    \texttt{CppCalls} edges reachable within a bounded number of hops
+    (\cref{sec:scoping-impl}); its output is the static interaction set
+    Synthesis consumes. The second is global and scenario-independent:
+    it aggregates every cross-component \texttt{CppCalls} edge in the
+    codebase into an architectural interface map, which determines
+    which call sites are eligible for instrumentation
+    (\cref{sec:csp-matcher}). \texttt{get-neo4j-schema} is queried first
+    so query generation targets the live schema rather than hardcoded
+    node labels, keeping the pipeline codebase-agnostic.
 
   \item \textbf{Dependency matrix extraction}
     (\texttt{get-interface-dependency-table},
@@ -84,15 +62,15 @@ set which resists a fixed lookup.
   \item \textbf{Trace instrumentation and runtime tracing}
     (\texttt{add-runtime-instrumentation}). Pattern-based code
     transformation injects trace probes at the call sites named in the
-    dependency matrix; the instrumented binary is rebuilt and run, and
-    the emitted \texttt{[TRACE]} lines are normalised into the same table
-    schema.
+    architectural interface map (\cref{sec:csp-matcher}); the
+    instrumented binary is rebuilt and run, and the emitted
+    \texttt{[TRACE]} lines are normalised into the same table schema.
 
-  \item \textbf{Agentic synthesis} (\texttt{agentic-synthesis},
-    \cref{sec:agentic-synthesis}). An \ac{LLM} is given the static
-    dependency matrix and the runtime trace as two separately-labelled,
-    un-merged evidence sources and settles the final interaction set by
-    judgement rather than a fixed rule, writing the result to
+  \item \textbf{Synthesis} (\texttt{synthesis}, \cref{sec:evidence-synthesis}).
+    The static dependency matrix and the runtime trace are combined by
+    set algebra: their union and their intersection are computed over
+    the scenario-scoped edge sets, each edge tagged with which source
+    (or both) reported it, and the tagged result is written to
     \texttt{elements.json} and \texttt{sequence.json}.
 
   \item \textbf{SysML v2 generation} (\texttt{draw-sysml-sequence-model},
@@ -103,16 +81,14 @@ set which resists a fixed lookup.
 Two further skills, \texttt{draw-sequential-mermaid-general} and
 \texttt{draw-structural-mermaid}, offer a Mermaid-syntax visualisation of
 the same reconstruction; they read the Stage~3 dependency tables directly
-and are not part of this six-stage numbering, since they bypass agentic
-synthesis rather than consuming its output.
+and are not part of this six-stage numbering, since they bypass the
+synthesis stage rather than consuming its output.
 
 Each skill is stateless and read-only with respect to the graph, except
 the instrumentation skill, which modifies source files. Every skill
 accepts a natural-language prompt and returns a structured artefact (CSV,
 Cypher query, or model file), which allows the chain to be reused on a
-new codebase without code changes. The agentic synthesis skill is the
-one exception, per \cref{sec:pipeline-overview}: its judgement calls
-(\cref{sec:agentic-synthesis}) resist a deterministic procedure.
+new codebase without code changes.
 
 \section{Property Graph Schema}\label{sec:pg-schema}
 
@@ -122,9 +98,7 @@ A \ac{PG} in \neo was chosen for the static knowledge store over a
 relational database, a document store, and an in-memory graph library.
 The pipeline traverses function$\to$file$\to$folder paths,
 function$\to$function call chains, and class$\to$function containment
-within the same query; a typed, directed property graph represents each
-as a first-class edge, where a relational schema would need join tables.
-The static graph can also be re-derived or extended without disturbing
+within the same query. The static graph can also be re-derived or extended without disturbing
 the separate trace pipeline, since static edges are typed and
 distinguishable from anything added later, and Cypher's pattern-matching
 syntax maps directly onto the \texttt{text-to-cypher} skill
@@ -232,8 +206,8 @@ implementation for three reasons:
 \end{itemize}
 
 \Cref{tab:skills} summarises all twelve skills, their inputs, outputs,
-and role in the pipeline; only the agentic synthesis skill departs from
-a fixed rule set (\cref{sec:pipeline-overview,sec:agentic-synthesis}).
+and role in the pipeline; every skill follows a fixed rule set given its
+inputs (\cref{sec:pipeline-overview,sec:evidence-synthesis}).
 
 \begin{table}[htb]
 \centering
@@ -269,10 +243,10 @@ a fixed rule set (\cref{sec:pipeline-overview,sec:agentic-synthesis}).
   & Source files + patterns
   & Instrumented source + Trace CSV
   & Probe injection via csp\_matcher, rebuild, run, and trace collection \\
-\texttt{agentic-synthesis}
+\texttt{synthesis}
   & Static table + trace (CSV or JSON)
   & \texttt{elements.json} + \texttt{sequence.json}
-  & Evidence adjudication (reasoning guidance, not a fixed rule set) \\
+  & Evidence combination by set algebra (union, intersection, tagging) \\
 \texttt{draw-sysml-sequence-model}
   & Sequence CSV or \texttt{sequence.json}
   & \texttt{.sysml} file
@@ -347,6 +321,13 @@ test-internal call sites.
 
 \subsection{Integration with the Pipeline}
 
+The call-site patterns instrumented are not chosen ad hoc: they come
+from the global, scenario-independent Cypher query over all
+cross-component \texttt{CppCalls} edges (\cref{sec:pipeline-overview}),
+which yields the codebase's architectural interface map -- every call
+site where one component invokes another. Only call sites appearing in
+that map are eligible for a probe.
+
 The \texttt{add-runtime-instrumentation} skill invokes
 \texttt{csp\_matcher} with a rules file (\texttt{add\_tracing.txt}) and a
 filter definitions file (\texttt{tracing\_filters.cpp}), following a
@@ -371,8 +352,8 @@ edge-for-edge: it does not pass through
 \texttt{get-sequence-dependency-table}, which extracts static
 \texttt{CppCalls} edges from the property graph rather than reading
 trace output; the normalised trace log instead feeds the evidence
-combination and agentic synthesis stages directly
-(\cref{sec:combine-scope,sec:agentic-synthesis}).
+combination and synthesis stages directly
+(\cref{sec:combine-scope,sec:evidence-synthesis}).
 
 \subsection{Reversibility via Filter Functions}\label{sec:reversibility}
 
@@ -418,7 +399,7 @@ subscriber declarations on that identifier: every
 call site is located in the static graph, and pairs sharing the same
 \texttt{id} are linked by a synthetic \texttt{PubSubRoute} edge. This
 lets the sequence dependency table contain cross-component interactions
-invisible to naive call-graph extraction, and generalises to any
+invisible to raw call-graph extraction, and generalises to any
 publish-subscribe system keyed by a shared identifier (topic name,
 channel ID, signal slot).
 
@@ -426,7 +407,9 @@ This only resolves \texttt{subscribeOnPacket}/\texttt{sendPacket} pairs
 sharing an \texttt{id}. A pair wired directly through a
 \texttt{boost::signals2::signal} and \texttt{connect()}, outside the IDC
 abstraction, has no shared identifier to match and is observable only in
-a runtime trace (S4, \cref{sec:h1-c4c3}).
+a runtime trace, as with CPSCore's \texttt{StageEventBridge}/%
+\texttt{StageEventListener} classes, whose direct signal connection this
+macro-resolution rule does not cover.
 
 \section{Combining Evidence and Scenario Scoping}\label{sec:combine-scope}
 
@@ -449,44 +432,71 @@ RETURN caller, callee
 \end{minted}
 
 The dynamic edge set is read from the real runtime trace, normalised
-into the same schema. The union of the two, tagged by which source each
-interaction came from, is what condition C4 of the H1 experiment operates
-over directly (\cref{ch:experiments}), a set operation over two separate
-artefacts computed at evaluation time. Condition C5, the full
-pipeline, takes this same tagged union as the input to the agentic
-synthesis stage (\cref{sec:agentic-synthesis}), which prunes it further
-before SysML generation rather than passing it through unchanged.
+into the same schema. Both the union and the intersection of the two,
+tagged by which source each interaction came from, are set operations
+over these two separate artefacts computed at evaluation time: the union
+is what condition C4 of the H1 experiment operates over directly, and
+the intersection is what condition C5 operates over
+(\cref{ch:experiments}) -- C5 is the evaluated pipeline's default
+output. This tagged union is also
+what \sysml generation (\cref{sec:evidence-synthesis}) consumes directly:
+synthesis is this same set-algebraic combination, not a further
+adjudication step past it.
 
 \subsection{Scenario Scoping by Component Constraint}\label{sec:scoping-impl}
 
-Scenario scoping is a plain, scope-constrained Cypher query rather than
-the program-dependence-graph slice described in \cref{sec:scenario-scoping}.
-A scenario's scope is a conjunction of a
-\emph{primary component} constraint (only edges whose caller belongs to
-it are retained), a \emph{target component set} (only edges whose callee
-belongs to a declared participant is retained), and optionally a
-\emph{client function filter} restricting to specific entry-point
-functions. For scenario S1, concretely:
+Scenario scoping is a component-level filter applied around a forward
+call-graph traversal, rather than the program-dependence-graph slice
+described in \cref{sec:scenario-scoping}. For each scenario, the
+traversal starts from the scenario's declared entry-point functions --
+the specific production methods the exercising test calls, \eg
+\texttt{SynchronizedRunner.runSynchronized} and
+\texttt{SynchronizedRunnerMaster.runStage} for S1/S4, or all four of
+\texttt{AggregatableRunner.runAllStages},
+\texttt{AggregatableRunner.notifyAggregationOnUpdate},
+\texttt{MultiThreadingScheduler.schedule} and
+\texttt{MultiThreadingScheduler.run} for S3 -- and follows
+\texttt{CppCalls} edges outward, combining a direct
+\texttt{entry}$\to$\texttt{callee} pattern with a
+declaration-to-implementation bridge (\texttt{CppImplements}) so that a
+call made through an interface still resolves to its concrete target:
 
-\begin{minted}{text}
-ClientComponent == Synchronization
-ServerComponent in {Aggregation, Logging}
+\begin{minted}[fontsize=\footnotesize]{cypher}
+MATCH (entry {type:'CppFunctionDefinition'})
+WHERE entry.symbol = $method AND entry.name CONTAINS $cls
+WITH entry LIMIT 1
+MATCH (entry)-[:Source]->(ef)
+WITH entry, ef
+CALL {
+  WITH entry, ef
+  MATCH (entry)-[:CppCalls]->(decl)<-[:CppImplements]-(step_def)-[:CppCalls]->(callee)
+  MATCH (callee)-[:Source]->(cf)
+  WHERE ef.name <> cf.name
+  RETURN callee.symbol AS sym, cf.name AS callee_file
+  UNION
+  WITH entry, ef
+  MATCH (entry)-[:CppCalls]->(callee)
+  MATCH (callee)-[:Source]->(cf)
+  WHERE ef.name <> cf.name
+  RETURN callee.symbol AS sym, cf.name AS callee_file
+}
+RETURN DISTINCT sym, callee_file, ef.name AS entry_file
 \end{minted}
 
-This is what \texttt{text-to-cypher} generates from a scenario
-description such as ``Using agent skills, show me Synchronization
-calling into Aggregation and Logging''. The explicit \emph{Using agent
-skills} prefix anchors the model to the skill invocation, preventing it
-from hallucinating an ad-hoc codebase inspection instead of generating a
-Cypher query.
+The query runs once per declared entry point and the results are
+pooled. A bounded variable-length variant of the same traversal
+(\texttt{CppCalls*1..6}) additionally ranks each call by its minimum
+distance from the entry point, giving the depth-based ordering used for
+the sequence metric.
 
-The same constraint applies to both evidence sources: a \texttt{WHERE}
-clause over the static graph, and an equivalent row filter over the
-trace-derived table (both carry \texttt{ClientComponent} and
-\texttt{ServerComponent} metadata). Since the scope is defined over
-components, it can be computed \emph{before} instrumentation and used to
-decide where to place probes (\cref{sec:guided-vs-full}), rather than
-applied only as a post-hoc filter.
+The traversal itself returns every cross-file call reachable from an
+entry point; the scenario's component allowlist is then applied as a
+filter over the results, keeping only edges whose caller and callee
+both resolve to one of the scenario's declared components and
+discarding same-component calls. The same allowlist filters the
+trace-derived table by row, so both evidence sources end up scoped to
+the same component set even though the queries that produce them are
+otherwise independent (\cref{sec:csp-matcher}).
 
 \subsection{Formal Description}
 
@@ -506,62 +516,98 @@ calls are shallow (typically one hop through the IDC layer); multi-hop
 scoping is a straightforward extension via Cypher's variable-length path
 syntax.
 
-\section{Agentic Synthesis}\label{sec:agentic-synthesis}
+\begin{figure}[htb]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/gt-derivation.png}
+\caption{Ground-truth derivation and validation: two independent paths
+  from the same \Cpp\ source. The automated path (\texttt{derive\_gt.py},
+  \cref{sec:appendix-groundtruth}) reduces the \Cpp\ source through
+  Renaissance-based tooling into \texttt{gt\_interactions.json} and
+  \texttt{gt\_sequence.json}; a human independently reads the same
+  source to produce hand-drawn Excalidraw reference diagrams
+  (reproduced in \cref{sec:appendix-groundtruth}). Human review checks
+  the automated output against the independently drawn diagrams rather
+  than the reverse.}
+\label{fig:gt-derivation}
+\end{figure}
 
-The tagged union $E_s \cup E_t$ (\cref{sec:combine-scope}) is not yet the
-final interaction set: a static edge with no trace corroboration is
-either a genuine over-approximation (a call the source code permits but
-this scenario never takes) or a real interaction that test coverage
-simply missed, and a dynamic edge outside the static scope may be a real
-indirect-dispatch interaction the call graph could not see
-(\cref{sec:macro-resolution}) rather than noise. Telling these apart
-requires judgement a set operation cannot make on its own, so the union
-is passed to an \ac{LLM} (GPT-5, invoked via Azure OpenAI) as the final
-pipeline stage before diagram generation.
+On the automated path, \texttt{derive\_gt.py} reduces the static graph
+and per-scenario trace to \texttt{gt\_interactions.json} and
+\texttt{gt\_sequence.json}, restricted to calls reachable from the
+scenario's entry points (excluding test-fixture setup/teardown) and
+validated against an independently produced clang-uml edge list
+(\cref{sec:appendix-groundtruth} gives the full three-source
+derivation). On the independent path, a reviewer reads the relevant
+source directly, with no access to the pipeline's output, and
+hand-draws a structural and sequence diagram per scenario, later
+transcribed into the \sysml reference used for scoring. Agreement
+between the two paths guards against ground-truth circularity.
+
+\section{Synthesis: Union, Intersection and Tagging}\label{sec:evidence-synthesis}
+
+Synthesis is the deterministic step that turns the two separate evidence
+sources into the interaction set SysML generation consumes, entirely by
+set algebra: no LLM or other judgement step is involved anywhere in the
+pipeline.
+
+A static edge with no trace corroboration is either a genuine
+over-approximation (a call the source code permits but this scenario
+never takes) or a real interaction that test coverage simply missed, and
+a dynamic edge outside the static scope may be a real indirect-dispatch
+interaction the call graph could not see (\cref{sec:macro-resolution})
+rather than noise. Rather than resolving that ambiguity by judgement,
+synthesis keeps both possibilities available as separate, explicitly
+computed outputs: the tagged union $E_s \cup E_t$ (condition C4,
+\cref{sec:conditions}) retains every edge either source reports, and the
+tagged intersection $E_s \cap E_t$ (condition C5) retains only edges
+both sources independently confirm. Which to use is then a downstream
+choice between recall and precision (\cref{sec:h1-c5}), not something
+synthesis itself decides.
 
 \subsection{Mechanism}
 
-The \ac{LLM} receives the static and dynamic evidence as two separately
-labelled, un-merged sources (it is never shown a pre-merged edge list)
-and reasons over three judgement categories:
+Synthesis tags each edge in $E_s \cup E_t$ by provenance:
 
 \begin{description}
-  \item[Corroboration.] An interaction present in both sources is kept
-    without further scrutiny.
-  \item[Suppression.] A static-only interaction is kept if it is
-    plausibly real but untested by this scenario's runtime coverage, and
-    dropped if it reads as a structural over-approximation.
-  \item[Indirect dispatch.] A dynamic-only interaction is kept if it
-    reflects a real call path the static graph could not resolve, such as
-    a \texttt{boost::signals2} connection made outside the \ac{IDC}
-    abstraction (S4, \cref{sec:h1-c4c3}).
+  \item[Corroboration.] An interaction present in both sources is tagged
+    \emph{both} and is retained under either combination rule.
+  \item[Static-only.] A static-only interaction is retained under union
+    (C4) and dropped under intersection (C5); it may be a genuine
+    interaction untested by this scenario's runtime coverage, or a
+    structural over-approximation.
+  \item[Dynamic-only.] A dynamic-only interaction is retained under
+    union (C4) and dropped under intersection (C5); it may reflect a
+    real call path the static graph could not resolve, such as a
+    \texttt{std::function}-wrapped thread dispatch outside what static
+    traversal can follow (S3, \cref{sec:h1-c4c3}), or a
+    \texttt{boost::signals2} connection made outside the \ac{IDC}
+    abstraction.
 \end{description}
 
 The output is written to two files: \texttt{elements.json}, an array of
 deduplicated \texttt{(source, target, interaction)} triples forming the
-final structural element set, and \texttt{sequence.json}, the same
-interactions in execution order, each step optionally carrying a
-free-text \texttt{note} field. The \texttt{note} field is populated only
-when a step's evidence came from a single source rather than being
-corroborated both ways, so an empty \texttt{note} marks a trivial
-judgement call and a populated one marks a step where the agent actually
-exercised discretion.
+structural element set, and \texttt{sequence.json}, the same
+interactions in execution order, each step carrying a \texttt{note}
+field recording its provenance tag. An empty \texttt{note} marks a
+corroborated step; a populated one marks a step reported by only one
+source -- a tag, not a judgement call.
 
-\subsection{Where the Judgement Is Trivial versus Non-Trivial}
+\subsection{Where Agreement Is Complete versus Partial}
 
-For scenario S1, every static edge in scope is corroborated by the trace
-and vice versa, so the agent's task reduces to relabelling an
-already-agreeing union: all steps carry an empty \texttt{note}. The
-harder cases are where Stage~5 has to do something non-trivial with the
-freedom it is given, for instance S4's suppressed fault-path log entry
-and the \texttt{boost::signals2} indirect-dispatch edge
-(\cref{sec:h1-c4c3}), where corroboration alone cannot resolve whether an
-edge belongs in the final model.
+For scenarios S1 and S4, every static edge in scope is corroborated by
+the trace and vice versa, so union and intersection coincide exactly:
+every step carries an empty \texttt{note}, and C4 and C5 report the same
+edge set. S3 is where they diverge: C2's static edge set is missing the
+indirectly-dispatched \texttt{Utilities}$\to$\texttt{Logging:stream}
+edge entirely (\cref{sec:h1-c4c3}), so intersection (C5) drops it while
+union (C4) retains it, tagged dynamic-only -- the case that motivates
+keeping both a permissive and a strict combination available rather than
+collapsing synthesis to a single fixed rule.
 
 \section{SysML v2 Generation}\label{sec:sysml-generation}
 
-The final stage projects Stage~5's output, \texttt{elements.json} and
-\texttt{sequence.json} (\cref{sec:agentic-synthesis}), into \sysml
+The final stage projects synthesis's tagged output, \texttt{elements.json}
+and \texttt{sequence.json} (\cref{sec:evidence-synthesis}), into \sysml
 textual notation, using the SysML v2 constructs described in
 \cref{sec:sysml}. The \texttt{draw-sysml-structural-model} skill reads
 \texttt{elements.json}: each unique component becomes a \texttt{part
@@ -572,8 +618,7 @@ ports. The \texttt{draw-sysml-sequence-model} skill reads
 \texttt{sequence.json}: each unique component becomes a lifeline
 (\texttt{part def}), and each step becomes an ordered, labelled
 \texttt{SynchronousCall} between the corresponding lifelines, with the
-step number preserving the execution order decided during agentic
-synthesis.
+step number preserving the execution order recorded by synthesis.
 
 Component names are derived algorithmically from file paths, not from a
 hardcoded mapping table, using a path-to-component resolution function

@@ -1,0 +1,10 @@
+[
+  {
+    "order": 0,
+    "source": "Synchronization",
+    "target": "Aggregation",
+    "interaction": "getAll",
+    "evidence": "static",
+    "method": "entry_order"
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "order": 0,
+    "source": "Synchronization",
+    "target": "Logging",
+    "interaction": "stream",
+    "evidence": "static",
+    "depth": 1
+  },
+  {
+    "order": 1,
+    "source": "Aggregation",
+    "target": "Synchronization",
+    "interaction": "subscribeStage",
+    "evidence": "static",
+    "depth": 1
+  }
+]

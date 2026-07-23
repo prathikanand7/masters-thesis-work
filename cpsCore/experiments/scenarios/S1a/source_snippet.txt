@@ -1,0 +1,106 @@
+// S1a — Synchronized Runner Test (happy path)
+// Two SynchronizedRunner threads driven through INIT→NORMAL→FINAL by a master; all succeed.
+
+// === tests/Synchronization/RunnerTest.cpp ===
+TEST_CASE("Synchronized Runner Test")
+{
+	auto runObj1 = std::make_shared<RunnableTestClass>();
+	auto runObj2 = std::make_shared<RunnableTestClass>();
+	Aggregator agg1;
+	agg1.add(runObj1);
+	agg1.add(runObj2);
+
+	auto runObj3 = std::make_shared<RunnableTestClass>();
+	auto runObj4 = std::make_shared<RunnableTestClass>();
+	Aggregator agg2;
+	agg2.add(runObj3);
+	agg2.add(runObj4);
+
+	SynchronizedRunnerMaster master(2);
+
+	std::shared_ptr<SynchronizedRunner> runner1(new SynchronizedRunner);
+	std::shared_ptr<SynchronizedRunner> runner2(new SynchronizedRunner);
+
+	std::thread run1(std::bind(&SynchronizedRunner::runSynchronized, runner1, std::ref(agg1)));
+	std::thread run2(std::bind(&SynchronizedRunner::runSynchronized, runner2, std::ref(agg2)));
+
+	CHECK(!master.runStage(RunStage::INIT));
+	CHECK(!master.runStage(RunStage::NORMAL));
+	CHECK(!master.runStage(RunStage::FINAL));
+
+	run1.join();
+	run2.join();
+}
+
+// === src/Synchronization/SynchronizedRunnerMaster.cpp ===
+// Component: Synchronization
+
+bool
+SynchronizedRunnerMaster::runAllStages()
+{
+	CPSLOG_DEBUG << "Run Stage INIT";
+	if (runStage(RunStage::INIT))
+		return true;
+	CPSLOG_DEBUG << "Run Stage NORMAL";
+	if (runStage(RunStage::NORMAL))
+		return true;
+	CPSLOG_DEBUG << "Run Stage FINAL";
+	if (runStage(RunStage::FINAL))
+		return true;
+	CPSLOG_DEBUG << "All stages succeeded";
+	return false;
+}
+
+// === src/Synchronization/SynchronizedRunner.cpp ===
+// Component: Synchronization
+
+bool
+SynchronizedRunner::runSynchronized(Aggregator& agg)
+{
+	using namespace boost::interprocess;
+	mapped_region region(sync_, read_write);
+	auto synchronizer = static_cast<Synchronizer*>(region.get_address());
+
+	auto runnableObjects = agg.getAll<IRunnableObject>();
+
+	RunStage lastRunStage = RunStage::SYNCHRONIZE;
+
+	while (lastRunStage != RunStage::FINAL)
+	{
+		RunStage stage;
+		std::unique_lock<boost::interprocess::interprocess_mutex> lock(
+				synchronizer->runStageMutex);
+		if (synchronizer->failure)
+			return true;
+		stage = synchronizer->runStage;
+		if (stage == lastRunStage)
+		{
+			synchronizer->runStageChanged.wait(lock);
+			if (synchronizer->failure)
+				return true;
+			stage = synchronizer->runStage;
+		}
+		lock.unlock();
+
+		bool failed = false;
+		for (auto it : runnableObjects)
+		{
+			if (it->run(stage))
+				failed = true;
+		}
+		if (failed)
+			return true;
+		lastRunStage = stage;
+
+		CPSLogger::instance()->flush(); //Synchronize stdio
+		synchronizer->finishedStage.post();
+	}
+	return false;
+}
+
+// === include/cpsCore/Logging/CPSLogger.h (macro expansion) ===
+// Every CPSLOG_* macro (CPSLOG_DEBUG, CPSLOG_WARN, CPSLOG_ERROR, …) expands to:
+//   RAIILogStream(CPSLogger::instance(), LogLevel::X, __FILE__, __LINE__).stream << ...
+// i.e., each CPSLOG_* call produces TWO Logging interactions:
+//   Synchronization → Logging : instance   (via CPSLogger::instance())
+//   Synchronization → Logging : stream     (via RAIILogStream::stream)

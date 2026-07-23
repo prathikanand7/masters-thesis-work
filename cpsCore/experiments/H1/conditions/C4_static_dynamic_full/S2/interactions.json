@@ -1,0 +1,7 @@
+[
+  {
+    "source": "Configuration",
+    "target": "Logging",
+    "interaction": "stream"
+  }
+]

@@ -1,0 +1,87 @@
+Software systems in safety-critical domains such as medical imaging and
+industrial automation evolve continuously, making manually maintained
+behavioural documentation increasingly difficult to keep up to date.
+\sysml Interaction Models, structure and sequence diagrams that capture
+the components involved in a scenario and the interactions between them,
+are a natural target for automated reconstruction, but existing
+reconstruction approaches rely on partial information sources and
+therefore provide an incomplete view of system interactions: static
+analysis over-approximates possible behaviour and cannot by itself
+determine which interactions are exercised during a specific execution,
+while execution traces provide execution-specific information but only
+for behaviour exercised during the observed runs. This thesis
+investigates: (RQ1) whether combining a static call graph with runtime
+execution traces reconstructs scenario-specific Interaction Models more
+accurately than either source alone; (RQ2) whether guiding trace
+collection with the static call graph removes reconstruction noise
+without losing scenario coverage; and (RQ3) how well a reconstructed
+\sysml Interaction Model consolidates static and dynamic evidence into a
+single artefact sufficient for system-behaviour comprehension.
+
+\textbf{Methods:} A hybrid pipeline was built that synthesises Interaction
+Models for event-driven \Cpp\ systems by combining a static call graph
+with timestamped runtime traces collected by a separate pipeline. Static
+and dynamic evidence were maintained as separate artefacts due to their
+different evolution rates and storage characteristics; the call graph,
+stored in a \neo property graph, contains only trace anchors, preserving
+traceability without embedding large execution traces. The scenario-scoped
+Cypher queries isolated the subset of static interactions associated with
+a given scenario, where relevance was established through trace analysis
+and corresponding static call-graph anchors. The pipeline was implemented
+as twelve composable, natural-language-invocable agent skills and
+evaluated on \emph{CPSCore}, an open-source event-driven framework, across
+four found-in-the-wild scenarios drawn from its existing test suite. Each
+scenario was reconstructed under nine conditions (C1--C9), five of them
+fully deterministic and reproducible (C2--C6): an \ac{LLM}-only baseline
+(C1); static call-graph traversal (C2); unfiltered dynamic trace (C3);
+guided instrumentation only (C4); guided instrumentation with a runtime
+reachability filter (C5); full-trace instrumentation with the same filter
+(C6); and three \ac{LLM}-augmented conditions (C7--C9) that post-process
+C2, C3, and C4 candidates respectively. A
+blinded six-rater expert panel compared diagrams reconstructed from
+unfiltered trace output against diagrams reconstructed from trace output
+scoped using static call-graph analysis of the scenario. The underlying
+static approach was further tested in a practitioner session on a second,
+larger industrial codebase to assess industrial usefulness beyond
+reconstruction accuracy.
+
+\textbf{Results:} Guided instrumentation with a Neo4j runtime reachability
+filter (C5) achieved perfect F1 on both interaction-set and execution-order
+metrics across all four scenarios (macro-F1~$=$~1.000\,/\,1.000). Full-trace
+instrumentation with the same filter (C6) matched C5 exactly, showing the
+filter is sufficient regardless of instrumentation strategy. Guided
+instrumentation without the filter (C4) is the strongest Neo4j-free
+deterministic baseline (macro-F1~$=$~0.914), while unfiltered dynamic tracing
+(C3) was the weakest (0.530), dominated by intra-component false positives.
+The \ac{LLM}-only baseline (C1) reached macro-F1~$=$~0.964, failing only on
+S3 where a teardown-phase call appears in the source snippet. \ac{LLM}
+augmentation of evidence priors (C7--C9) showed diminishing returns as the
+prior improved: C7 substantially recovered C2's recall on three of four
+scenarios; C8 partially denoised C3; C9 degraded C4's already-precise output
+(0.783\,vs.\ C4's~0.914), confirming that \ac{LLM} post-processing is
+counterproductive when the prior is already clean. Code-graph-guided
+instrumentation eliminated all noise (50\%
+fewer nodes, 70\% fewer edges) without losing scenario coverage, and was
+rated higher by the expert panel in 47 of 54 comparisons. In a
+scenario-comprehension task, no single evidence source alone, including a
+reconstructed diagram, was sufficient: source code alone was weakest,
+missing components and interactions that trace or diagram evidence made
+explicit, while a diagram alone tied with runtime traces alone; only
+combining source code with runtime traces reached perfect recall. In the
+practitioner session, structural and dependency diagrams were rated
+consistently useful, while sequence-diagram message labelling was
+identified as the clearest area for improvement.
+
+\textbf{Evaluation and Conclusion:} The three results converge on one
+pattern: additional evidence improves reconstruction or comprehension
+specifically when the primary evidence source is missing something, and
+is otherwise redundant. The thesis contributes an empirical assessment of
+hybrid static and dynamic analysis for reconstructing scenario-specific
+\sysml diagrams. The results show when combining static and dynamic
+evidence improves reconstruction, when scenario-guided instrumentation
+reduces reconstruction noise without sacrificing coverage, and to what
+extent reconstructed diagrams can replace the underlying evidence in
+program-comprehension tasks. The work further provides an implementation
+comprising a scenario-scoping method, a reversible instrumentation tool
+(\texttt{csp\_matcher}), and an automated workflow based on
+natural-language agent skills.
